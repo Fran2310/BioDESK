@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./../../node_modules/@prisma/client/system"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://biodesk:biodesk123@localhost:5432/system_db"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  ci          String   @unique
+  name        String
+  lastName    String
+  email       String
+  password    String
+  salt        String
+  
+  // Relación con Lab (muchos usuarios pueden pertenecer a un lab)
+  labId       Int?
+  lab         Lab?     @relation(fields: [labId], references: [id])
+  
+  // Relación con Role (muchos usuarios pueden tener un mismo rol)
+  roleId      Int?
+  role        Role?    @relation(fields: [roleId], references: [id])
+}
+
+model Role {
+  id         Int      @id @default(autoincrement())
+  role       String
+  patientMod String
+  labMod     String
+  reportsMod String
+  configMod  String
+  
+  // Relación inversa con User
+  users       User[]
+}
+
+model Lab {
+  id          Int      @id @default(autoincrement())
+  name        String
+  dbName      String   @unique
+  status      String   @default("active")
+  rif         String?
+  dir         String?
+  phoneNums   String?
+  logoPath    String?
+  createdAt   DateTime @default(now())
+  
+  // Relación inversa con User
+  users       User[]
+  
+  @@unique([name, dbName])
+}
