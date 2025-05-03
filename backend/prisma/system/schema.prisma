@@ -14,34 +14,20 @@ datasource db {
   url      = "postgresql://biodesk:biodesk123@localhost:5432/system_db"
 }
 
-model User {
+model SystemUser {
   id          Int      @id @default(autoincrement())
+  uuid        String   @unique @default(uuid())  // Identificador universal
   ci          String   @unique
   name        String
   lastName    String
   email       String
   password    String
   salt        String
-  
-  // Relación con Lab (muchos usuarios pueden pertenecer a un lab)
+  isActive    Boolean  @default(true)
+  lastAccess  DateTime?
+
   labId       Int?
   lab         Lab?     @relation(fields: [labId], references: [id])
-  
-  // Relación con Role (muchos usuarios pueden tener un mismo rol)
-  roleId      Int?
-  role        Role?    @relation(fields: [roleId], references: [id])
-}
-
-model Role {
-  id         Int      @id @default(autoincrement())
-  role       String
-  patientMod String
-  labMod     String
-  reportsMod String
-  configMod  String
-  
-  // Relación inversa con User
-  users       User[]
 }
 
 model Lab {
@@ -49,14 +35,14 @@ model Lab {
   name        String
   dbName      String   @unique
   status      String   @default("active")
-  rif         String?
+  rif         String
   dir         String?
   phoneNums   String?
   logoPath    String?
   createdAt   DateTime @default(now())
   
   // Relación inversa con User
-  users       User[]
+  users       SystemUser[]
   
   @@unique([name, dbName])
 }
