@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://biodesk:biodesk123@localhost:5432/lab_db"
+  url      = env("LAB_DATABASE_URL")
 }
 
 model LabUser {
