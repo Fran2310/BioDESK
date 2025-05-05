@@ -6,7 +6,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { SystemUser } from '@prisma/client-system'; // Importa el tipo SystemUser
 
 // Define un DTO simple para las credenciales de login (puedes crearlo en un archivo separado)
-class LoginDto {
+export class LoginDto {
   email: string;
   password: string;
 }

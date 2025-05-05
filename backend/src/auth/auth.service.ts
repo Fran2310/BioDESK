@@ -25,7 +25,8 @@ export class AuthService {
     }
 
     // Compara la contraseña proporcionada con la contraseña hasheada en la DB
-    const isMatch = await bcrypt.compare(pass, user.password);
+    // const isMatch = await bcrypt.compare(pass, user.password);
+    const isMatch = pass == user.password;
 
     if (!isMatch) {
       return null; // Contraseña incorrecta
