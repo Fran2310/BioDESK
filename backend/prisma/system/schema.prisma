@@ -20,7 +20,7 @@ model SystemUser {
   ci          String   @unique
   name        String
   lastName    String
-  email       String
+  email       String   @unique
   password    String
   salt        String
   isActive    Boolean  @default(true)
