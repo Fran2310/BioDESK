@@ -6,9 +6,14 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "prisma:generate:system": "npx prisma generate --schema=prisma/system/schema.prisma",
+    "prisma:generate:lab": "npx prisma generate --schema=prisma/lab/schema.prisma",
+    "prisma:migrate:dev:system": "npx prisma migrate dev --schema=prisma/system/schema.prisma",
+    "prisma:migrate:dev:lab": "npx prisma migrate dev --schema=prisma/lab/schema.prisma",
+
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "npm run prisma:migrate:dev:system && npm run prisma:migrate:dev:lab && nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -21,9 +26,11 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.7.0",
+    "class-transformer": "^0.5.1",
     "prisma": "^6.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
