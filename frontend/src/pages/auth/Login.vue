@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gray-200 p-4 rounded shadow-lg border-4 border-blue-500 block w-full max-w-500">
+  <div class="bg-quaternary p-4 py-7 rounded shadow-lg border-4 border-blue-500 block w-full max-w-500">
     <h1 class="font-semibold text-4xl mb-4">Iniciar sesión</h1>
 
     <!-- <p class="text-base mb-4 leading-5">

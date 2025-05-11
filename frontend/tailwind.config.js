@@ -21,6 +21,9 @@ module.exports = {
       colors: {
         primary: 'var(--va-primary)',
         secondary: 'var(--va-secondary)',
+        //COLORES ADICIONALES
+        tertiary: 'var(--va-tertiary)',
+        quaternary: 'var(--va-quaternary)',
         success: 'var(--va-success)',
         info: 'var(--va-info)',
         danger: 'var(--va-danger)',
