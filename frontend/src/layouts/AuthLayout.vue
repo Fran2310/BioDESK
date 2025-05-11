@@ -11,7 +11,7 @@
       </RouterLink>
     </template>
     <template #content>
-      <main class="h-full flex items-center justify-center mx-auto max-w-[420px]">
+      <main class="h-full flex items-center justify-center mx-auto max-w-[600px]">
         <RouterView />
       </main>
     </template>

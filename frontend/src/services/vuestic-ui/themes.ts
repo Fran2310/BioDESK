@@ -1,6 +1,17 @@
 export default {
   presets: {
     light: {
+
+
+      //COLORES PREDEFINIDOS
+
+      primary: "#215A6D",
+      secondary: "#3CA2A2",
+
+      tertiary: "#92C7A3",
+      quaternary: "#DFECE6",
+
+
       backgroundPrimary: '#F4F6F8',
       backgroundSecondary: '#FFFFFF',
       backgroundCardPrimary: '#F7F9F9',

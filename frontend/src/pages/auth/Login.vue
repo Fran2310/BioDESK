@@ -1,49 +1,53 @@
 <template>
-  <VaForm ref="form" @submit.prevent="submit">
-    <h1 class="font-semibold text-4xl mb-4">Log in</h1>
-    <p class="text-base mb-4 leading-5">
-      New to Vuestic?
-      <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary">Sign up</RouterLink>
-    </p>
-    <VaInput
-      v-model="formData.email"
-      :rules="[validators.required, validators.email]"
-      class="mb-4"
-      label="Email"
-      type="email"
-    />
-    <VaValue v-slot="isPasswordVisible" :default-value="false">
+  <div class="bg-gray-200 p-4 rounded shadow-lg border-4 border-blue-500 block w-full max-w-500">
+    <h1 class="font-semibold text-4xl mb-4">Iniciar sesión</h1>
+
+    <!-- <p class="text-base mb-4 leading-5">
+      ¿Nuevo en BioDesk?
+      <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary">Regístrese</RouterLink>
+    </p> -->
+
+
+    <VaForm ref="form" @submit.prevent="submit">
       <VaInput
-        v-model="formData.password"
-        :rules="[validators.required]"
-        :type="isPasswordVisible.value ? 'text' : 'password'"
-        class="mb-4"
-        label="Password"
-        @clickAppendInner.stop="isPasswordVisible.value = !isPasswordVisible.value"
-      >
-        <template #appendInner>
-          <VaIcon
-            :name="isPasswordVisible.value ? 'mso-visibility_off' : 'mso-visibility'"
-            class="cursor-pointer"
-            color="secondary"
-          />
-        </template>
-      </VaInput>
-    </VaValue>
+        v-model="formData.email"
+        :rules="[validators.required, validators.email]"
+        class="mb-5"
+        label="Email"
+        type="email"
+      />
+      <VaValue v-slot="isPasswordVisible" :default-value="false">
+        <VaInput
+          v-model="formData.password"
+          :rules="[validators.required]"
+          :type="isPasswordVisible.value ? 'text' : 'password'"
+          class="mb-4"
+          label="Contraseña"
+          @clickAppendInner.stop="isPasswordVisible.value = !isPasswordVisible.value"
+        >
+          <template #appendInner>
+            <VaIcon
+              :name="isPasswordVisible.value ? 'mso-visibility_off' : 'mso-visibility'"
+              class="cursor-pointer"
+              color="secondary"
+            />
+          </template>
+        </VaInput>
+      </VaValue>
 
-    <div class="auth-layout__options flex flex-col sm:flex-row items-start sm:items-center justify-between">
-      <VaCheckbox v-model="formData.keepLoggedIn" class="mb-2 sm:mb-0" label="Keep me signed in on this device" />
-      <RouterLink :to="{ name: 'recover-password' }" class="mt-2 sm:mt-0 sm:ml-1 font-semibold text-primary">
-        Forgot password?
-      </RouterLink>
-    </div>
+      <div class="auth-layout__options flex flex-col sm:flex-row items-start sm:items-center justify-between">
+        <VaCheckbox v-model="formData.keepLoggedIn" class="mb-2 sm:mb-0 checkbox-square-border-3" label="Recordarme en este dispositivo" />
+        <RouterLink :to="{ name: 'recover-password' }" class="mt-2 sm:mt-0 sm:ml-1 font-semibold text-primary">
+          ¿Olvidó su contraseña?
+        </RouterLink>
+      </div>
 
-    <div class="flex justify-center mt-4">
-      <VaButton class="w-full" @click="submit"> Login</VaButton>
-    </div>
-  </VaForm>
+      <div class="flex justify-center mt-4">
+        <VaButton class="w-full" @click="submit"> Ingresar</VaButton>
+      </div>
+    </VaForm>
+  </div>
 </template>
-
 <script lang="ts" setup>
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
@@ -67,3 +71,20 @@ const submit = () => {
   }
 }
 </script>
+
+<!-- CÓDIGO CSS PARA MODIFICAR EL GROSOR DEL BORDE DE INPUT Y CHECKBOX -->
+
+<style scoped>
+
+::v-deep(.va-checkbox:not(.va-checkbox--checked)) {
+  --va-checkbox-square-border: 3px solid #4a5568; /* gris oscuro (Tailwind gray-700) */
+
+
+}
+
+::v-deep(.va-input-wrapper__field::after) {
+  border: solid 1px gray;
+
+  
+}
+</style>
