@@ -41,31 +41,7 @@ export class AppController {
     console.log(`Found ${users.length} system users.`);
     return users;
   }
-
-  // --- NUEVA FUNCIÓN DE EJEMPLO PARA PROBAR LOGIN ---
-  @Post('test-login') // Define una nueva ruta POST específica para este ejemplo
-  async testLogin(@Body() loginDto: LoginDto): Promise<{ access_token: string }> {
-    console.log('Received test login request for email:', loginDto.email);
-
-    // 1. Usa el AuthService para validar las credenciales
-    const user = await this.authService.validateUser(loginDto.email, loginDto.password);
-
-    // 2. Si validateUser retorna null (credenciales inválidas), lanza una excepción 401
-    if (!user) {
-      console.log('Test login failed: Invalid credentials');
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    // 3. Si el usuario es válido, usa AuthService para generar el token
-    console.log('Test login successful, generating token...');
-    const token = await this.authService.login(user);
-
-    // 4. Retorna el token
-    console.log('Generated token:', token);
-    return token;
-  }
-  // -------------------------------------------------
-
+  
   // No añadiremos una ruta protegida aquí todavía, como pediste.
   // Eso lo haríamos usando @UseGuards(JwtAuthGuard) en un método.
 }
