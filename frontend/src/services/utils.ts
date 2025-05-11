@@ -6,7 +6,9 @@ export const sleep = (ms = 0) => {
 export const validators = {
   email: (v: string) => {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return pattern.test(v) || 'Please enter a valid email address'
+    return pattern.test(v) || 'Por favor, introduzca un correo válido.'
   },
-  required: (v: any) => !!v || 'This field is required',
+  required: (v: any) => !!v || 'Campo requerido.',
 }
+
+//SE DEBE USAR  i18n
