@@ -12,6 +12,7 @@
     "prisma:migrate:dev:lab": "npx prisma migrate dev --schema=prisma/lab/schema.prisma",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "now": "nest start",
     "start": "npm run prisma:migrate:dev:system && npm run prisma:migrate:dev:lab && nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
