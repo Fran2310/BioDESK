@@ -15,10 +15,10 @@ datasource db {
 }
 
 model LabUser {
-  id         Int      @id @default(autoincrement())
-  systemUuid String   @unique  // Relación con SystemUser.uuid
-  roleId     Int?
-  role       Role?    @relation(fields: [roleId], references: [id])
+  id             Int      @id @default(autoincrement())
+  systemUserUuid String   @unique @db.Uuid  // Relación con SystemUser.uuid
+  roleId         Int?
+  role           Role?    @relation(fields: [roleId], references: [id])
 }
 
 model Role {

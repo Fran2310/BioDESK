@@ -16,7 +16,7 @@ datasource db {
 
 model SystemUser {
   id          Int      @id @default(autoincrement())
-  uuid        String   @unique @default(uuid())  // Identificador universal
+  uuid        String   @unique @db.Uuid @default(uuid()) // Identificador universal
   ci          String   @unique
   name        String
   lastName    String
