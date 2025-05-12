@@ -33,7 +33,7 @@ model SystemUser {
 model Lab {
   id          Int      @id @default(autoincrement())
   name        String
-  dbName      String   @unique
+  dbName      String   @unique @default(nanoid())
   status      String   @default("active")
   rif         String
   dir         String?
@@ -43,6 +43,4 @@ model Lab {
   
   // Relación inversa con User
   users       SystemUser[]
-  
-  @@unique([name, dbName])
 }
