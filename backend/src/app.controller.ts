@@ -52,13 +52,13 @@ export class AppController {
   @Get('lab/:dbName')
   async getLabUsers(@Param('dbName') dbName: string) {
     // Luego obtener los usuarios
-    const prisma = this.labPrismaFactory.create(dbName);
-    return prisma.labUser.findMany();
+    const prisma = this.labPrismaFactory.create(dbName); // Esta función crea un prisma client dado un dbName
+    return prisma.labUser.findMany(); // ORM
   }
 
   @Post('lab/:dbName/init')
   async initLabDatabase(@Param('dbName') dbName: string) {
-    await this.labMigrationService.migrateDatabase(dbName);
+    await this.labMigrationService.migrateDatabase(dbName); // Esta función crea hace una migración dado un dbName
     return { message: `Database ${dbName} initialized successfully` };
   }
   }
