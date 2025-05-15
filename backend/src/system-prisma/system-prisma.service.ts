@@ -1,8 +1,24 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+// src/system-prisma/system-prisma.controller.ts
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client-system';
 
 @Injectable()
-export class SystemPrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+/*
+  Es un PrismaClient especializado con la URL definida por SYSTEM_DATABASE_URL.
+
+  Se encarga de conectarse/desconectarse correctamente durante el ciclo de vida de la app.
+
+  Es el único punto de conexión con la base de datos "core" del sistema.
+*/
+export class SystemPrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(SystemPrismaService.name);
 
   constructor() {
@@ -15,14 +31,17 @@ export class SystemPrismaService extends PrismaClient implements OnModuleInit, O
     // Llama al constructor de PrismaClient
     super({
       datasources: {
-        db: { // 'db' debe coincidir con el nombre de la datasource en tu schema.prisma
+        db: {
+          // 'db' debe coincidir con el nombre de la datasource en tu schema.prisma
           url: systemDatabaseUrl, // Aquí pasas la URL de la variable de entorno
         },
       },
       log: ['query', 'error', 'warn'], // Opcional: habilita logging para ver las queries
     });
 
-    this.logger.log(`SystemPrismaService initialized with URL: ${systemDatabaseUrl}`);
+    this.logger.log(
+      `SystemPrismaService initialized with URL: ${systemDatabaseUrl}`,
+    );
   }
 
   async onModuleInit() {

@@ -1,17 +1,22 @@
-// src/lab-prisma/lab-prisma.service.ts
+// src/lab-prisma/services/lab-prisma.service.ts
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client-lab';
-import { LabMigrationService } from './lab-migration.service';
 
 @Injectable()
 export class LabPrismaService extends PrismaClient {
+  /*
+  Extiende de PrismaClient generado desde lab/schema.prisma.
+
+  Usa una URL dinámica basada en el nombre de la db (LAB_DATABASE_BASE_URL + dbName).
+
+  Se conecta y desconecta automáticamente.
+
+  Este servicio es el cliente por tenant, cargado según el nombre de la DB.
+  */
   private readonly logger = new Logger(LabPrismaService.name);
-  
-  constructor(
-    private readonly dbName: string,
-    private readonly labMigrationService: LabMigrationService
-  ) {
-    const dynamicUrl = `${process.env.LAB_DATABASE_BASE_URL}_${dbName}`;
+
+  constructor(private readonly dbName: string) {
+    const dynamicUrl = `${process.env.LAB_DATABASE_BASE_URL}${dbName}`;
     console.log(`Database URL: ${dynamicUrl}`);
     super({
       datasources: {
@@ -21,7 +26,7 @@ export class LabPrismaService extends PrismaClient {
       },
       log: ['error', 'warn'],
     });
-  
+
     this.logger.log(`LabPrismaService initialized for database: ${dbName}`);
     this.logger.debug(`Database URL: ${dynamicUrl}`);
   }
@@ -29,11 +34,13 @@ export class LabPrismaService extends PrismaClient {
   async onModuleInit() {
     this.logger.log(`Connecting to Database ${this.dbName}...`);
     try {
-      await this.labMigrationService.createDatabaseIfNotExists(this.dbName); // Para iniciar la migración de la base de datos si no existe
       await this.$connect();
       this.logger.log(`Successfully connected to Database ${this.dbName}.`);
     } catch (error) {
-      this.logger.error(`Failed to connect to Database ${this.dbName}:`, error.stack);
+      this.logger.error(
+        `Failed to connect to Database ${this.dbName}:`,
+        error.stack,
+      );
       throw error; // Relanza el error para que NestJS lo maneje
     }
   }
