@@ -1,4 +1,4 @@
-// user/dto/create-admin.dto.ts
+// user/dto/create-admin-lab.dto.ts
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateAdminLabDto {

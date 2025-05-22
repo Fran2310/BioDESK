@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { SystemPrismaModule } from './system-prisma/system-prisma.module'; // Importa tu módulo de Prisma System
 import { LabPrismaModule } from './lab-prisma/lab-prisma.module';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { UserModule } from './user/user.module';
     SystemPrismaModule,
     LabPrismaModule,
     UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
