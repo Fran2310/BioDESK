@@ -43,7 +43,7 @@ export class UserService {
     const dbExists = await this.labMigrationService.isDatabaseExists(dbName);
     if (dbExists) {
       throw new ConflictException(
-        `Ya existe una base de datos con el nombre "${labName}".`,
+        `Ya existe una base de datos con el nombre ${labName}.`,
       );
     }
 
@@ -94,5 +94,14 @@ export class UserService {
         dbName: lab.dbName,
       },
     };
+  }
+
+  async findByEmail(email: string) {
+    return this.systemPrisma.systemUser.findUnique({
+      where: { email },
+      include: {
+        lab: true, // necesitamos esto para incluir el dbName
+      },
+    });
   }
 }
