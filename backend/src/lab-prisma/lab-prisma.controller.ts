@@ -25,7 +25,8 @@ export class LabPrismaController {
   async initDatabase(@Body() dto: InitDatabaseDto) {
     const { dbName } = dto;
     const wasCreated = await this.labMigrationService.createDatabase(dbName);
-    await this.labMigrationService.migrateDatabase(dbName);
+    const normalizedDbName = normalizeDbName(dbName);
+    await this.labMigrationService.migrateDatabase(normalizedDbName);
 
     return {
       message: wasCreated

@@ -1,7 +1,7 @@
 // user/dto/create-admin.dto.ts
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateAdminDto {
+export class CreateAdminLabDto {
   @IsNotEmpty()
   @IsString()
   ci: string;

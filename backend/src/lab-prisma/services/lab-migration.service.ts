@@ -1,6 +1,7 @@
 // src/lab-prisma/services/lab-migration.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { Client } from 'pg';
+import { normalizeDbName } from '../../common/utils/normalize-db-name';
 
 @Injectable()
 export class LabMigrationService {
@@ -36,6 +37,7 @@ export class LabMigrationService {
   }
 
   async createDatabase(dbName: string): Promise<boolean> {
+    dbName = normalizeDbName(dbName);
     const exists = await this.isDatabaseExists(dbName);
     if (exists) {
       this.logger.log(
@@ -51,7 +53,7 @@ export class LabMigrationService {
     try {
       await client.connect();
       this.logger.log(`Creating database "${dbName}"...`);
-      await client.query(`CREATE DATABASE "lab_${dbName}"`);
+      await client.query(`CREATE DATABASE "${dbName}"`);
       this.logger.log(`Database "${dbName}" created successfully.`);
       return true;
     } catch (error) {
@@ -64,7 +66,7 @@ export class LabMigrationService {
 
   async migrateDatabase(dbName: string): Promise<void> {
     const schemaPath = './prisma/lab/schema.prisma';
-    const dynamicUrl = `${process.env.LAB_DATABASE_BASE_URL}_${dbName}`;
+    const dynamicUrl = `${process.env.LAB_DATABASE_BASE_URL}${dbName}`;
 
     this.logger.log(`🔄 Running migration for database "${dbName}"...`);
 
