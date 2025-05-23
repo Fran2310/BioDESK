@@ -41,7 +41,7 @@ export class LabMigrationService {
     const exists = await this.isDatabaseExists(dbName);
     if (exists) {
       this.logger.log(
-        `ℹ️ Database "${dbName}" already exists. Skipping creation.`,
+        `Database "${dbName}" already exists. Skipping creation.`,
       );
       return false;
     }
@@ -68,7 +68,7 @@ export class LabMigrationService {
     const schemaPath = './prisma/lab/schema.prisma';
     const dynamicUrl = `${process.env.LAB_DATABASE_BASE_URL}${dbName}`;
 
-    this.logger.log(`🔄 Running migration for database "${dbName}"...`);
+    this.logger.log(`Running migration for database "${dbName}"...`);
 
     try {
       const { execSync } = await import('child_process');

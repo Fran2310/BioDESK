@@ -20,14 +20,94 @@ model LabUser {
   systemUserUuid String   @db.Uuid   @unique // Relación con SystemUser.uuid
   roleId         Int?
   role           Role?    @relation(fields: [roleId], references: [id])
+
+  actionHistory        ActionHistory[]
 }
 
 model Role {
   id          Int      @id @default(autoincrement())
-  role        String
+  role        String   @unique
   description String
   permissions Json
   
   users       LabUser[]
 }
 
+model ActionHistory {
+  id        Int        @id @default(autoincrement())
+
+  action    String  // Técnico del sistema
+  details   String  // Texto para el usuario
+
+  madeAt    DateTime @default(now())
+
+  labUserId Int
+  labUser   LabUser    @relation(fields: [labUserId], references: [id])
+}
+
+model Patient {
+  id             Int      @id @default(autoincrement())
+  ci             String   @unique
+  name           String
+  lastName       String
+  secondName     String?
+  secondLastName String?
+  email          String   @unique
+  phoneNums      String[] @default([""])
+  dir            String
+  birthDate      DateTime?
+
+  medicHistory MedicHistory?
+}
+
+model MedicHistory {
+  id          Int        @id @default(autoincrement())
+  allergies   String?
+  pathologies String?
+
+  patientId   Int        @unique
+  patient     Patient    @relation(fields: [patientId], references: [id])
+
+  requestMedicTests RequestMedicTest[]
+}
+
+model RequestMedicTest {
+  id              Int      @id @default(autoincrement())
+  requestedAt     DateTime
+  completedAt     DateTime? 
+  state           State      @default(PENDING)
+  priority        Priority   @default(MEDIUM)
+
+  observation     String?
+
+  medicHistoryId  Int
+  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id])
+
+  medicTestCatalogId Int
+  medicTestCatalog   MedicTestCatalog   @relation(fields: [medicTestCatalogId], references: [id])
+}
+
+model MedicTestCatalog {
+  id              Int      @id   @default(autoincrement())
+  name            String   @unique
+  description     String?
+  properties      Json?
+  supplies        String[] @default([""])
+  price           Float
+
+  requestMedicTests RequestMedicTest[]
+}
+
+enum State {
+  PENDING
+  IN_PROCESS
+  TO_VERIFY
+  CANCELED
+  COMPLETED
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
