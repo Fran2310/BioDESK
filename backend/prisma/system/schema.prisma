@@ -27,8 +27,7 @@ model SystemUser {
   isActive    Boolean  @default(true)
   lastAccess  DateTime?
 
-  labId       Int?
-  lab         Lab?     @relation(fields: [labId], references: [id])
+  labs Lab[]
 }
 
 model Lab {
@@ -36,12 +35,11 @@ model Lab {
   name        String
   dbName      String   @unique @default(nanoid())
   status      String   @default("active")
-  rif         String
-  dir         String?
-  phoneNums   String?
+  rif         String   @unique
+  dir         String
+  phoneNums   String[]
   logoPath    String?
   createdAt   DateTime @default(now())
   
-  // Relación inversa con User
   users       SystemUser[]
 }
