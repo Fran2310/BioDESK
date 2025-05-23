@@ -43,7 +43,7 @@ export class AuthService {
     const payload = {
       sub: user.uuid,
       email: user.email,
-      labDb: user.lab.dbName,
+      labDb: user.lab.dbName, //TODO Esto genera problemas porque se modificó la relación a m-n, el user ya no tiene un .lab
     };
 
     return {

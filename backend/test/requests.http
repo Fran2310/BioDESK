@@ -1,0 +1,19 @@
+POST http://localhost:3000/api/auth/register
+content-type: application/json
+
+{
+    "ci": "12312",
+    "name": "pass",
+    "lastName": "word",
+    "email": "prueba@test.com",
+    "password": "pass",
+    "labName": "Caritas",
+    "labRif": "DASdsasasd",
+    "labDir": "Donde sea",
+    "labPhone": ["04129908266"]
+}
+
+-------------------------------------------------
+
+GET http://localhost:3000/api/lab/lab_Caritas
+content-type: application/json

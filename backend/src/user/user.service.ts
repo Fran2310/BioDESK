@@ -75,7 +75,6 @@ export class UserService {
         email,
         password: hashedPassword,
         salt,
-        labId: lab.id,
       },
     });
 
@@ -99,9 +98,6 @@ export class UserService {
   async findByEmail(email: string) {
     return this.systemPrisma.systemUser.findUnique({
       where: { email },
-      include: {
-        lab: true, // necesitamos esto para incluir el dbName
-      },
     });
   }
 }

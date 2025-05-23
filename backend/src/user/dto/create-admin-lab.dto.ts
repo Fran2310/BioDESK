@@ -1,5 +1,5 @@
 // user/dto/create-admin-lab.dto.ts
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, ArrayMinSize, IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateAdminLabDto {
   @IsNotEmpty()
@@ -33,6 +33,8 @@ export class CreateAdminLabDto {
   @IsString()
   labDir: string;
 
-  @IsString()
-  labPhone: string;
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMinSize(1)
+  labPhone: string[];
 }

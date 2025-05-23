@@ -1,0 +1,35 @@
+# Ignorar la carpeta de dependencias de Node
+node_modules
+
+# Ignorar la carpeta de construcción/distribución local
+dist
+
+# Archivos de configuración y caché específicos de desarrollo local
+.env
+.env.*
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+tmp/
+temp/
+
+# Archivos de Git y VCS (Sistema de Control de Versiones)
+.git
+.gitignore
+
+# Archivos de Docker específicos de desarrollo (si los tienes)
+# docker-compose.yml
+# .dockerignore
+
+# Archivos TypeScript que serán compilados
+*.ts
+*.map
+
+# Archivos de caché del SO (macOS, Windows)
+.DS_Store
+Thumbs.db

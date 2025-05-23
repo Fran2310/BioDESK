@@ -8,6 +8,7 @@
   "scripts": {
     "prisma:generate:system": "npx prisma generate --schema=prisma/system/schema.prisma",
     "prisma:generate:lab": "npx prisma generate --schema=prisma/lab/schema.prisma",
+    "prisma:generate:all": "npm run prisma:generate:system && npm run prisma:generate:lab",
     "prisma:migrate:dev:system": "npx prisma migrate dev --schema=prisma/system/schema.prisma",
     "prisma:migrate:dev:lab": "npx prisma migrate dev --schema=prisma/lab/schema.prisma",
     "prisma:migrate:dev:all": "npm run prisma:migrate:dev:system && npm run prisma:migrate:dev:lab",
