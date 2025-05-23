@@ -2,7 +2,8 @@
 services:
   nestapp:
     image: nestapp:latest
-    command: "npm run start:dev"
+    command: >
+      sh -c "npm run prisma:migrate:dev:all && npm run start:dev"
     ports:
       - "3000:3000"
     environment:
