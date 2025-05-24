@@ -1,4 +1,4 @@
-POST http://localhost:3000/api/auth/register
+POST https://biodesk.onrender.com/api/auth/register
 content-type: application/json
 
 {
@@ -15,5 +15,14 @@ content-type: application/json
 
 -------------------------------------------------
 
-GET http://localhost:3000/api/lab/lab_Caritas
+GET https://biodesk.onrender.com/api/lab/lab_Caritas
 content-type: application/json
+
+-------------------------------------------------
+
+POST https://biodesk.onrender.com/api/lab/init
+content-type: application/json
+
+{
+    "dbName": "Milenia"
+}
