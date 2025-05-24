@@ -2,6 +2,8 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client-lab';
 
+import { generateLabDbUrl } from '../../common/utils/generate-lab-db-url';
+
 @Injectable()
 export class LabPrismaService extends PrismaClient {
   /*
@@ -16,18 +18,7 @@ export class LabPrismaService extends PrismaClient {
   private readonly logger = new Logger(LabPrismaService.name);
 
   constructor(private readonly dbName: string) {
-    const baseUrlWithQuery: string = `${process.env.LAB_DATABASE_BASE_URL}`;
-    // 1. Crea un objeto URL a partir de la cadena completa.
-    // El constructor analizará automáticamente la ruta, el host, los parámetros, etc.
-    const url = new URL(baseUrlWithQuery);
-    // 2. Modifica el 'pathname' para añadir el nombre de la base de datos.
-    // Es importante asegurarse de que la unión se haga correctamente.
-    // Usar `path.join` o una lógica similar es más seguro.
-    // Aquí, una forma simple es asegurar que no haya dobles barras (//).
-    url.pathname = `${url.pathname.replace(/\/$/, '')}/${dbName}`;
-    // 3. Convierte el objeto URL modificado de nuevo a una cadena de texto.
-    // Los parámetros de consulta originales se conservarán automáticamente.
-    const dynamicUrl = url.toString();
+    const dynamicUrl = generateLabDbUrl(`${process.env.LAB_DATABASE_BASE_URL}`, dbName);
     console.log(`Database URL: ${dynamicUrl}`);
     super({
       datasources: {

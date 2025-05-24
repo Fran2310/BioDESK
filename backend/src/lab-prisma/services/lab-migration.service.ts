@@ -2,19 +2,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Client } from 'pg';
 import { normalizeDbName } from '../../common/utils/normalize-db-name';
+import { generateLabDbUrl } from '../../common/utils/generate-lab-db-url';
+
 
 @Injectable()
 export class LabMigrationService {
   private readonly logger = new Logger(LabMigrationService.name);
 
   private getPgConnectionUrl(): string {
-    // Conexión base a postgres
-    // Lo que hace el siguiente código es concatenar el un nombre de DB teniendo en cuenta un query
-    const baseUrlWithQuery: string = `${process.env.LAB_DATABASE_BASE_URL}`; //TODO Esto se puede mejorar para hacerlo más legible
-    const url = new URL(baseUrlWithQuery);
-    url.pathname = `${url.pathname.replace(/\/$/, '')}/postgres`;
-    const dynamicUrl = url.toString();
-    return dynamicUrl;
+    return generateLabDbUrl(`${process.env.LAB_DATABASE_BASE_URL}`, 'postgres');
   }
 
   async isDatabaseExists(dbName: string): Promise<boolean> {
@@ -71,18 +67,7 @@ export class LabMigrationService {
 
   async migrateDatabase(dbName: string): Promise<void> {
     const schemaPath = './prisma/lab/schema.prisma';
-    const baseUrlWithQuery: string = `${process.env.LAB_DATABASE_BASE_URL}`;
-    // 1. Crea un objeto URL a partir de la cadena completa.
-    // El constructor analizará automáticamente la ruta, el host, los parámetros, etc.
-    const url = new URL(baseUrlWithQuery);
-    // 2. Modifica el 'pathname' para añadir el nombre de la base de datos.
-    // Es importante asegurarse de que la unión se haga correctamente.
-    // Usar `path.join` o una lógica similar es más seguro.
-    // Aquí, una forma simple es asegurar que no haya dobles barras (//).
-    url.pathname = `${url.pathname.replace(/\/$/, '')}/${dbName}`;
-    // 3. Convierte el objeto URL modificado de nuevo a una cadena de texto.
-    // Los parámetros de consulta originales se conservarán automáticamente.
-    const dynamicUrl = url.toString();
+    const dynamicUrl = generateLabDbUrl(`${process.env.LAB_DATABASE_BASE_URL}`, dbName);
 
     this.logger.log(`Running migration for database "${dbName}"...`);
 
