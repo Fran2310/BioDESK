@@ -1,3 +1,4 @@
+// /src/common/utils/normalize-db-name.ts
 export function normalizeDbName(raw: string): string {
   if (typeof raw !== 'string') return raw;
 

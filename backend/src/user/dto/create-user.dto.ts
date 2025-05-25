@@ -1,7 +1,7 @@
-// user/dto/create-admin-lab.dto.ts
+// user/dto/create-user.dto.ts
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateAdminLabDto {
+export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   ci: string;
@@ -20,19 +20,4 @@ export class CreateAdminLabDto {
   @IsNotEmpty()
   @IsString()
   password: string;
-
-  @IsNotEmpty()
-  @IsString()
-  labName: string;
-
-  @IsNotEmpty()
-  @IsString()
-  labRif: string;
-
-  @IsNotEmpty()
-  @IsString()
-  labDir: string;
-
-  @IsString()
-  labPhone: string;
 }

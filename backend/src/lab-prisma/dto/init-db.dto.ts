@@ -1,3 +1,4 @@
+// /src/lab-prisma/dto/init-db.dto.ts
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { normalizeDbName } from '../../common/utils/normalize-db-name';
