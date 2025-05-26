@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { UserService } from 'src/user/user.service';
+import { Express } from 'express';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -12,8 +13,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const { uuid, labs } = await this.usersService.createSystemUserAndLab(dto);
+  async register(dto: RegisterDto, logo: Express.Multer.File) {
+    const { uuid, labs } = await this.usersService.createSystemUserAndLab(
+      dto,
+      logo,
+    );
 
     const payload = { sub: uuid };
 

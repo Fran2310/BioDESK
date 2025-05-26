@@ -1,11 +1,5 @@
 // /src/user/dto/create-lab.dto.ts
-import {
-  IsNotEmpty,
-  IsString,
-  IsOptional,
-  IsArray,
-  ArrayMinSize,
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, ArrayMinSize } from 'class-validator';
 
 export class CreateLabDto {
   @IsNotEmpty()
@@ -24,8 +18,4 @@ export class CreateLabDto {
   @IsString({ each: true })
   @ArrayMinSize(1)
   phoneNums: string[];
-
-  @IsOptional()
-  @IsString()
-  logoPath?: string;
 }
