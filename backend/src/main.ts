@@ -15,17 +15,8 @@ async function bootstrap() {
     .setTitle('BioDESK API')
     .setDescription('Sistema de gestión para laboratorios clínicos')
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description: 'Ingrese el token JWT en el formato: Bearer <token>',
-      },
-      'JWT',
-    )
-    .addTag('Laboratorios')
-    .addTag('Autenticación')
+    .addServer('/api')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
