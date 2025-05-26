@@ -13,6 +13,41 @@ content-type: application/json
     "labPhone": ["04129908266"]
 }
 
+--------------------------------------------------
+
+POST http://localhost:3000/api/auth/register
+content-type: application/json
+
+{
+  "ci": "29910837",
+  "name": "Fran",
+  "lastName": "Doe",
+  "email": "fra@example.com",
+  "password": "securePass123",
+  "lab": {
+    "name": "Laboratorio Central",
+    "rif": "J-12345678-7",
+    "dir": "Av. Principal, calle 123, caracas",
+    "phoneNums": ["0212-1234567", "0414-7654321"]
+  }
+}
+
+--------------------------------------------------
+
+POST http://localhost:3000/api/auth/login
+content-type: application/json
+
+{
+  "email": "fra@example.com",
+  "password": "securePass123"
+}
+
+-------------------------------------------------
+
+GET http://localhost:3000/api/lab/lab_Laboratorio_Central
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZjQ1MzBmNi0wNWRhLTQwZjEtYTQ3OC04ZTBlNTMzZDRjZmEiLCJpYXQiOjE3NDgyMjMzODQsImV4cCI6MTc0ODMwOTc4NH0.D_v_WZFN4BSJOhTgOowY5oGDOG-2KBimzqFwOTHPmSU
+
 -------------------------------------------------
 
 GET https://biodesk.onrender.com/api/lab/lab_Caritas
