@@ -59,7 +59,6 @@ export class AuthService {
       labs: user.labs.map((lab) => ({
         id: lab.id,
         name: lab.name,
-        dbName: lab.dbName,
         status: lab.status,
         rif: lab.rif,
       })),

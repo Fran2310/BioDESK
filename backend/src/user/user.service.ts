@@ -32,15 +32,8 @@ export class UserService {
       throw new ConflictException('Ya existe un usuario con este email o CI.');
     }
 
-    // 2. Normaliza el nombre de la base de datos
-    const dbName = normalizeDbName(lab.name);
-    const dbExists = await this.labMigrationService.isDatabaseExists(dbName);
-
-    if (dbExists) {
-      throw new ConflictException(
-        `Ya existe una base de datos para el laboratorio "${lab.name}".`,
-      );
-    }
+    // 2. Normaliza el nombre de la base de datos y valida campos únicos (rif, dbName)
+    const dbName = await this.validateUniqueLabFields(lab);
 
     // 3. Crea el laboratorio en la base central
     const labRecord = await this.systemPrisma.lab.create({
@@ -98,14 +91,8 @@ export class UserService {
   }
 
   async createLabForUser(userUuid: string, dto: CreateLabDto) {
-    const dbName = normalizeDbName(dto.name);
-
-    const dbExists = await this.labMigrationService.isDatabaseExists(dbName);
-    if (dbExists) {
-      throw new ConflictException(
-        `Ya existe una base de datos para el laboratorio "${dto.name}".`,
-      );
-    }
+    // validacion de campos unicos
+    const dbName = await this.validateUniqueLabFields(dto);
 
     // 1. Verifica que el usuario existe
     const user = await this.systemPrisma.systemUser.findUnique({
@@ -166,5 +153,31 @@ export class UserService {
         labs: true, // Incluye todos los laboratorios asociados a ese usuario
       },
     });
+  }
+
+  private async validateUniqueLabFields(dto: CreateLabDto) {
+    const { rif, name } = dto;
+    const dbName = normalizeDbName(name);
+
+    const existing = await this.systemPrisma.lab.findFirst({
+      where: {
+        OR: [{ rif }, { dbName }],
+      },
+    });
+
+    if (existing) {
+      if (existing.rif === rif) {
+        throw new ConflictException(
+          `Ya existe un laboratorio con el RIF ${rif}.`,
+        );
+      }
+      if (existing.dbName === dbName) {
+        throw new ConflictException(
+          `Ya existe una base de datos para el nombre ${name}.`,
+        );
+      }
+    }
+
+    return dbName; // lo normalizas aquí y lo reutilizas
   }
 }
