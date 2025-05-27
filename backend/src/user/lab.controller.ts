@@ -9,7 +9,7 @@ export class LabController {
 
   @Post()
   async createLab(@Body() dto: CreateLabDto, @Request() req) {
-    const userUuid = req.user.Uuid;
+    const userUuid = req.user.sub;
     return this.userService.createLabForUser(userUuid, dto);
   }
 }

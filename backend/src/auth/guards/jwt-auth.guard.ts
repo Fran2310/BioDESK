@@ -3,6 +3,8 @@ import {
   Injectable,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -29,6 +31,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err, user) {
     if (err || !user) {
+      console.log(typeof(err))
+      console.log(err.error, 'Forbidden')
+      if (err instanceof ForbiddenException) {
+        throw new ForbiddenException(err.message);
+      }
+      if (err instanceof BadRequestException) {
+        throw new BadRequestException(err.message);
+      }
       throw new UnauthorizedException('Token inválido o no enviado.');
     }
     return user;

@@ -9,9 +9,11 @@ import { ConfigService } from '@nestjs/config';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { LabModule } from 'src/lab/lab.module';
 
 @Module({
   imports: [
+    LabModule,
     UserModule,
     PassportModule,
     JwtModule.registerAsync({

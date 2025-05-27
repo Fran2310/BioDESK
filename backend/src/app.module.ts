@@ -9,6 +9,8 @@ import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core'; // Importa APP_GUARD para usar guards globales
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'; // Importa el guard de autenticación JWT
 import { AuthModule } from './auth/auth.module';
+import { SharedCacheModule } from './shared-cache/shared-cache.module';
+import { LabModule } from './lab/lab.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { AuthModule } from './auth/auth.module';
     LabPrismaModule,
     UserModule,
     AuthModule,
+    SharedCacheModule,
+    LabModule,
   ],
   controllers: [AppController],
   providers: [
