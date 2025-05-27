@@ -14,11 +14,6 @@ export class LabController {
     private readonly userService: UserService,
 ) {}
 
-  @Post('selected-lab')
-  async selectedLab(@Request() req) {
-    this.labService.selectedLab(req.user.sub, req.headers['x-lab-id']);
-  }
-
   @UseInterceptors(FileInterceptor('logo'))
   @Post('create')
   async createLab(
