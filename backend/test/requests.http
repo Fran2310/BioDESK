@@ -16,20 +16,20 @@ content-type: application/json
 --------------------------------------------------
 
 POST http://localhost:3000/api/auth/register
-content-type: application/json
+content-type: multipart/form-data
 
 {
-  "ci": "29910837",
-  "name": "Fran",
-  "lastName": "Doe",
-  "email": "fra@example.com",
+  "ci": "29910820",
+  "name": "Joshua",
+  "lastName": "Carrera",
+  "email": "joshualab2@example.com",
   "password": "securePass123",
   "lab": {
-    "name": "Laboratorio Central",
-    "rif": "J-12345678-7",
+    "name": "Laboratorio Extranjero",
+    "rif": "J-12345678-6",
     "dir": "Av. Principal, calle 123, caracas",
     "phoneNums": ["0212-1234567", "0414-7654321"]
-  }
+  },
 }
 
 --------------------------------------------------

@@ -4,7 +4,7 @@ import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
 import { LabMigrationService } from 'src/lab-prisma/services/lab-migration.service';
 import { LabSeedingService } from 'src/lab-prisma/services/lab-seeding.service';
 import { normalizeDbName } from 'src/common/utils/normalize-db-name';
-import { saveLabLogo } from 'src/common/utils/save-logo';
+import { LabSaveLogoService } from 'src/lab/services/save-logo.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
@@ -17,6 +17,7 @@ export class UserService {
     private readonly systemPrisma: SystemPrismaService,
     private readonly labMigrationService: LabMigrationService,
     private readonly labSeedingService: LabSeedingService,
+    private readonly labSaveLogoService: LabSaveLogoService,
   ) {}
 
   async createSystemUserAndLab(dto: RegisterDto, logo?: Express.Multer.File) {
@@ -39,7 +40,7 @@ export class UserService {
     //Guarda el logo si existe y devuelve la ruta
     let logoPath: string | undefined = undefined;
     if (logo) {
-      logoPath = await saveLabLogo(logo, dbName);
+      logoPath = await this.labSaveLogoService.saveLabLogo(logo, dbName);
     }
     // 3. Crea el laboratorio en la base central
     const labRecord = await this.systemPrisma.lab.create({
@@ -106,7 +107,7 @@ export class UserService {
 
     let logoPath: string | undefined = undefined;
     if (logo) {
-      logoPath = await saveLabLogo(logo, dbName);
+      logoPath = await this.labSaveLogoService.saveLabLogo(logo, dbName);
     }
 
     // 1. Verifica que el usuario existe
