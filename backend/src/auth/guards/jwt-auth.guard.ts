@@ -31,8 +31,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err, user) {
     if (err || !user) {
-      console.log(typeof(err))
-      console.log(err.error, 'Forbidden')
       if (err instanceof ForbiddenException) {
         throw new ForbiddenException(err.message);
       }

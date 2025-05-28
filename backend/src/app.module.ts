@@ -8,6 +8,7 @@ import { LabPrismaModule } from './lab-prisma/lab-prisma.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core'; // Importa APP_GUARD para usar guards globales
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'; // Importa el guard de autenticación JWT
+import { LabHeaderGuard } from './auth/guards/lab-header.guard'; // Importa el guard para validar x-lab-id
 import { AuthModule } from './auth/auth.module';
 import { SharedCacheModule } from './shared-cache/shared-cache.module';
 import { LabModule } from './lab/lab.module';
@@ -28,6 +29,10 @@ import { LabModule } from './lab/lab.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: LabHeaderGuard, // valida x-lab-id, si aplica
     },
   ],
 })
