@@ -3,11 +3,11 @@ import {
   Injectable,
   ExecutionContext,
   UnauthorizedException,
-  ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { getMetadataFlags } from 'src/common/utils/get-metadata-decorators.util';
 
 @Injectable()
 // registra la estrategia jwt.strategy.ts
@@ -18,27 +18,29 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   canActivate(context: ExecutionContext) {
     // Verifica si la ruta tiene el flag @Public
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
+    //Obtener todos los flags
+    const flags = getMetadataFlags(this.reflector, context, [IS_PUBLIC_KEY]);
+
+    if (flags.isPublic) {
+      // Si es pública, no requiere autenticación
+      console.log('Ruta pública, no se requiere autenticación');
       return true;
     }
 
     return super.canActivate(context);
   }
 
-  handleRequest(err, user) {
-    if (err || !user) {
-      if (err instanceof ForbiddenException) {
-        throw new ForbiddenException(err.message);
-      }
-      if (err instanceof BadRequestException) {
-        throw new BadRequestException(err.message);
-      }
-      throw new UnauthorizedException('Token inválido o no enviado.');
+  handleRequest(err: any, user: any) {
+    if (err) {
+      throw err;
     }
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'Token inválido o no enviado, inicie sesión',
+      );
+    }
+
     return user;
   }
 }

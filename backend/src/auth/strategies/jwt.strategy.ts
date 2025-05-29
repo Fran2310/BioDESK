@@ -1,22 +1,15 @@
 // /src/auth/strategies/jwt.strategy.ts
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 
-import { LabService } from 'src/lab/lab.service';
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    configService: ConfigService,
-    private readonly labService: LabService,
-  ) {
+  /*
+    Validar token JWT para proteger rutas
+  */
+  constructor(configService: ConfigService) {
     const secret = configService.get<string>('JWT_SECRET');
 
     if (!secret) {
@@ -27,7 +20,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: secret,
-      passReqToCallback: true,
     });
   }
 
