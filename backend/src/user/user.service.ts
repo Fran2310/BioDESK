@@ -4,7 +4,6 @@ import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
 import { LabMigrationService } from 'src/lab-prisma/services/lab-migration.service';
 import { LabSeedingService } from 'src/lab-prisma/services/lab-seeding.service';
 import { normalizeDbName } from 'src/common/utils/normalize-db-name';
-import { LabSaveLogoService } from 'src/lab/services/save-logo.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
@@ -17,10 +16,9 @@ export class UserService {
     private readonly systemPrisma: SystemPrismaService,
     private readonly labMigrationService: LabMigrationService,
     private readonly labSeedingService: LabSeedingService,
-    private readonly labSaveLogoService: LabSaveLogoService,
   ) {}
 
-  async createSystemUserAndLab(dto: RegisterDto, logo?: Express.Multer.File) {
+  async createSystemUserAndLab(dto: RegisterDto) {
     const { email, ci, password, name, lastName, lab } = dto;
 
     // 1. Verifica si el usuario ya existe por email o CI
@@ -37,11 +35,6 @@ export class UserService {
     // 2. Normaliza el nombre de la base de datos y valida campos únicos (rif, dbName)
     const dbName = await this.validateUniqueLabFields(lab);
 
-    //Guarda el logo si existe y devuelve la ruta
-    let logoPath: string | undefined = undefined;
-    if (logo) {
-      logoPath = await this.labSaveLogoService.saveLabLogo(logo, dbName);
-    }
     // 3. Crea el laboratorio en la base central
     const labRecord = await this.systemPrisma.lab.create({
       data: {
@@ -50,7 +43,6 @@ export class UserService {
         dbName,
         dir: lab.dir,
         phoneNums: lab.phoneNums,
-        logoPath: logoPath,
       },
     });
 
@@ -97,18 +89,9 @@ export class UserService {
     };
   }
 
-  async createLabForUser(
-    userUuid: string,
-    dto: CreateLabDto,
-    logo?: Express.Multer.File,
-  ) {
+  async createLabForUser(userUuid: string, dto: CreateLabDto) {
     // validacion de campos unicos
     const dbName = await this.validateUniqueLabFields(dto);
-
-    let logoPath: string | undefined = undefined;
-    if (logo) {
-      logoPath = await this.labSaveLogoService.saveLabLogo(logo, dbName);
-    }
 
     // 1. Verifica que el usuario existe
     const user = await this.systemPrisma.systemUser.findUnique({
@@ -127,7 +110,6 @@ export class UserService {
         dbName,
         dir: dto.dir,
         phoneNums: dto.phoneNums,
-        logoPath: logoPath,
         users: {
           connect: [{ id: user.id }],
         },

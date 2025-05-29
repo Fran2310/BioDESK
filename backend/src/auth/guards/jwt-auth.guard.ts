@@ -23,7 +23,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     if (flags.isPublic) {
       // Si es pública, no requiere autenticación
-      console.log('Ruta pública, no se requiere autenticación');
       return true;
     }
 

@@ -10,7 +10,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { SKIP_LAB_ID_CHECK_KEY } from '../decorators/skip-lab-id-check.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { LabService } from 'src/lab/lab.service';
+import { LabService } from 'src/lab/services/lab.service';
 import { getMetadataFlags } from 'src/common/utils/get-metadata-decorators.util';
 
 @Injectable()
@@ -27,8 +27,7 @@ export class LabHeaderGuard implements CanActivate {
     const flags = getMetadataFlags(this.reflector, context, metadataKeys);
 
     if (flags.isPublic || flags.skipLabIdCheck) {
-      // Lógica para endpoints públicos o que omiten verificación del header
-      console.log('Skipping lab ID check for public or skipped routes...');
+      // para endpoints públicos o que omiten verificación del header
       return true;
     }
 
