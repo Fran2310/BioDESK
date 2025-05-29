@@ -7,7 +7,8 @@ import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
-
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { RoleDto } from 'src/lab-prisma/dto/create-lab-user.dto';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -18,7 +19,127 @@ export class UserService {
     private readonly labSeedingService: LabSeedingService,
   ) {}
 
+  private async getDbNameByLabId(labId: number): Promise<string> {
+    /**
+     * Obtiene el nombre de la base de datos asociada a un laboratorio por su ID.
+     * @param labId ID del laboratorio.
+     * @returns Nombre de la base de datos del laboratorio.
+     * @throws ConflictException si el laboratorio no existe.
+     */
+    const lab = await this.systemPrisma.lab.findUnique({
+      where: { id: labId },
+      select: { dbName: true },
+    });
+
+    if (!lab) {
+      throw new ConflictException(`Laboratorio con id=${labId} no encontrado.`);
+    }
+
+    return lab.dbName;
+  }
+
+  private async createLabRecord(dto: CreateLabDto, userId?: number) {
+    /**
+     * Crea un laboratorio y valida campos únicos (RIF y nombre de base de datos).
+     * @param dto Datos del laboratorio a crear.
+     * @param userId ID del usuario que será asociado al laboratorio (opcional).
+     * @returns Información del laboratorio creado y el nombre de la base de datos.
+     */
+    const dbName = await this.validateUniqueLabFields(dto);
+    const labRecord = await this.systemPrisma.lab.create({
+      data: {
+        name: dto.name,
+        rif: dto.rif,
+        dbName: dbName,
+        dir: dto.dir,
+        phoneNums: dto.phoneNums,
+        ...(userId && {
+          users: {
+            connect: [{ id: userId }],
+          },
+        }),
+      },
+    });
+
+    return { labRecord, dbName };
+  }
+
+  // DEPRECATED
+  private async seedLabAdminUser(dbName: string, userUuid: string) {
+    /**
+     * Inserta un usuario administrador en la base de datos dinámica del laboratorio.
+     * @param dbName Nombre de la base de datos del laboratorio.
+     * @param userUuid UUID del usuario del sistema que será administrador.
+     * @returns Promesa que resuelve cuando se completa la inserción.
+     */
+    return this.labSeedingService.seedLabUser(dbName, {
+      systemUserUuid: userUuid,
+      role: {
+        name: 'admin',
+        description: 'Administrador del laboratorio',
+        permissions: ['all'],
+      },
+    });
+  }
+
+  async createUserAndAssignToLab(
+    labId: number,
+    systemUserDto: CreateUserDto,
+    role: RoleDto,
+  ) {
+    const { ci, name, lastName, email, password } = systemUserDto;
+
+    // 1. Validar duplicado en DB del sistema
+    const existingUser = await this.systemPrisma.systemUser.findFirst({
+      where: {
+        OR: [{ email }, { ci }],
+      },
+    });
+    if (existingUser) {
+      throw new ConflictException('Ya existe un usuario con este email o CI.');
+    }
+
+    // 2. Hashear la contraseña
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 3. Crear usuario en la DB del sistema
+    const systemUser = await this.systemPrisma.systemUser.create({
+      data: {
+        ci,
+        name,
+        lastName,
+        email,
+        password: hashedPassword,
+        salt,
+        labs: {
+          connect: [{ id: labId }],
+        },
+      },
+    });
+
+    // 4. Obtener dbName dinámicamente
+    const dbName = await this.getDbNameByLabId(labId);
+
+    // 4. Insertar en la base de datos del laboratorio
+    await this.labSeedingService.seedLabUser(dbName, {
+      systemUserUuid: systemUser.uuid,
+      role,
+    });
+
+    return {
+      uuid: systemUser.uuid,
+      email: systemUser.email,
+    };
+  }
+
+  // DEPRECATED
   async createSystemUserAndLab(dto: RegisterDto) {
+    /**
+     * Crea un usuario del sistema y un laboratorio asociado.
+     * @param dto Datos del usuario y laboratorio a crear.
+     * @returns Información del usuario creado y el laboratorio asociado.
+     */
     const { email, ci, password, name, lastName, lab } = dto;
 
     // 1. Verifica si el usuario ya existe por email o CI
@@ -27,34 +148,22 @@ export class UserService {
         OR: [{ email }, { ci }],
       },
     });
-
     if (existingUser) {
       throw new ConflictException('Ya existe un usuario con este email o CI.');
     }
 
-    // 2. Normaliza el nombre de la base de datos y valida campos únicos (rif, dbName)
-    const dbName = await this.validateUniqueLabFields(lab);
+    // 2. Normaliza el nombre de la base de datos y valida campos únicos (rif, dbName) y Crea el laboratorio en la base central
+    const { labRecord, dbName } = await this.createLabRecord(lab);
 
-    // 3. Crea el laboratorio en la base central
-    const labRecord = await this.systemPrisma.lab.create({
-      data: {
-        name: lab.name,
-        rif: lab.rif,
-        dbName,
-        dir: lab.dir,
-        phoneNums: lab.phoneNums,
-      },
-    });
-
-    // 4. Crea la base de datos y ejecuta la migración
+    // 3. Crea la base de datos y ejecuta la migración
     await this.labMigrationService.createDatabase(dbName);
     await this.labMigrationService.migrateDatabase(dbName);
 
-    // 5. Hashea la contraseña
+    // 4. Hashea la contraseña
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 6. Crea el usuario del sistema y lo asocia al laboratorio
+    // 5. Crea el usuario del sistema y lo asocia al laboratorio
     const systemUser = await this.systemPrisma.systemUser.create({
       data: {
         ci,
@@ -69,15 +178,8 @@ export class UserService {
       },
     });
 
-    // Inserta usuario en base de datos dinámica del laboratorio
-    await this.labSeedingService.seedLabUser(dbName, {
-      systemUserUuid: systemUser.uuid,
-      role: {
-        name: 'admin',
-        description: 'Administrador del laboratorio',
-        permissions: ['all'],
-      },
-    });
+    // 6.Inserta usuario admin en base de datos dinámica del laboratorio
+    await this.seedLabAdminUser(dbName, systemUser.uuid);
 
     this.logger.log(
       `🧪 Usuario registrado: ${systemUser.email} → Lab: ${labRecord.name}`,
@@ -89,62 +191,79 @@ export class UserService {
     };
   }
 
-  async createLabForUser(userUuid: string, dto: CreateLabDto) {
-    // validacion de campos unicos
-    const dbName = await this.validateUniqueLabFields(dto);
+  async createUserAdminAndLab(dto: RegisterDto) {
+    /**
+     * Crea un nuevo laboratorio y un usuario del sistema asociado a él como administrador.
+     * Retorna uuid del usuario y el lab registrado.
+     */
+    const { lab, ...userDto } = dto;
 
+    // 1. Crea el laboratorio (validando RIF y nombre únicos)
+    const { labRecord, dbName } = await this.createLabRecord(lab);
+
+    // 2. Crea la base de datos dinámica y aplica migraciones
+    await this.labMigrationService.createDatabase(dbName);
+    await this.labMigrationService.migrateDatabase(dbName);
+
+    // 3. Crea el usuario y lo asocia al laboratorio con rol admin
+    const { uuid, email } = await this.createUserAndAssignToLab(
+      labRecord.id,
+      userDto,
+      {
+        name: 'admin',
+        description: 'Administrador del laboratorio',
+        permissions: ['all'],
+      },
+    );
+
+    this.logger.log(`🧪 Usuario registrado: ${email} → Lab: ${labRecord.name}`);
+
+    return {
+      uuid,
+      labs: [labRecord],
+    };
+  }
+
+  async createLabForUser(userUuid: string, dto: CreateLabDto) {
+    /**
+     * Crea un laboratorio para un usuario específico.
+     * @param userUuid UUID del usuario al que se le asociará el laboratorio.
+     * @param dto Datos del laboratorio a crear.
+     * @returns Información del laboratorio creado.
+     */
     // 1. Verifica que el usuario existe
     const user = await this.systemPrisma.systemUser.findUnique({
       where: { uuid: userUuid },
     });
-
     if (!user) {
       throw new ConflictException('Usuario no encontrado.');
     }
 
     // 2. Crea el laboratorio
-    const lab = await this.systemPrisma.lab.create({
-      data: {
-        name: dto.name,
-        rif: dto.rif,
-        dbName,
-        dir: dto.dir,
-        phoneNums: dto.phoneNums,
-        users: {
-          connect: [{ id: user.id }],
-        },
-      },
-    });
+    const { labRecord, dbName } = await this.createLabRecord(dto, user.id);
 
     // 3. Crea la base de datos física y la migra
     await this.labMigrationService.createDatabase(dbName);
     await this.labMigrationService.migrateDatabase(dbName);
 
     // Inserta en la DB dinámica el usuario como admin del nuevo lab
-    await this.labSeedingService.seedLabUser(dbName, {
-      systemUserUuid: user.uuid,
-      role: {
-        name: 'admin',
-        description: 'Administrador del laboratorio',
-        permissions: ['all'],
-      },
-    });
+    await this.seedLabAdminUser(dbName, user.uuid);
 
     return {
-      id: lab.id,
-      name: lab.name,
-      rif: lab.rif,
-      status: lab.status,
-      createdAt: lab.createdAt,
+      id: labRecord.id,
+      name: labRecord.name,
+      rif: labRecord.rif,
+      status: labRecord.status,
+      createdAt: labRecord.createdAt,
     };
   }
 
-  /**
-   * Busca un usuario del sistema por su email.
-   * @param email El email del usuario a buscar.
-   * @returns El usuario encontrado o null si no existe.
-   */
   async findByEmail(email: string) {
+    /**
+     * Busca un usuario del sistema por su email.
+     * @param email El email del usuario a buscar.
+     * @returns El usuario encontrado o null si no existe.
+     */
     return this.systemPrisma.systemUser.findUnique({
       where: { email },
       include: {
@@ -154,6 +273,12 @@ export class UserService {
   }
 
   private async validateUniqueLabFields(dto: CreateLabDto) {
+    /**
+     * Valida que los campos únicos del laboratorio (RIF y nombre) no existan en la base de datos.
+     * @param dto Datos del laboratorio a validar.
+     * @returns El nombre de la base de datos normalizado.
+     * @throws ConflictException si ya existe un laboratorio con el mismo RIF o nombre de base de datos.
+     */
     const { rif, name } = dto;
     const dbName = normalizeDbName(name);
 

@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const { uuid, labs } = await this.usersService.createSystemUserAndLab(dto);
+    const { uuid, labs } = await this.usersService.createUserAdminAndLab(dto);
 
     const payload = { sub: uuid };
 
