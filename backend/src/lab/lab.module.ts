@@ -6,7 +6,7 @@ import { SystemPrismaModule } from 'src/system-prisma/system-prisma.module';
 import { LabPrismaModule } from 'src/lab-prisma/lab-prisma.module';
 import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
 import { UserModule } from 'src/user/user.module';
-import { LabSaveLogoService } from './services/save-logo.service';
+import { ManageLogoLabService } from './services/manage-logo-lab.service';
 
 @Module({
   imports: [
@@ -15,8 +15,8 @@ import { LabSaveLogoService } from './services/save-logo.service';
     SharedCacheModule,
     forwardRef(() => UserModule),
   ],
-  providers: [LabService, LabSaveLogoService],
+  providers: [LabService, ManageLogoLabService],
   controllers: [LabController],
-  exports: [LabService, LabSaveLogoService],
+  exports: [LabService, ManageLogoLabService],
 })
 export class LabModule {}
