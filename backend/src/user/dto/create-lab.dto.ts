@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString, IsArray, ArrayMinSize } from 'class-validator';
 
 export class CreateLabDto {
   @ApiProperty({
-    example: 'Laboratorio pruebas',
+    example: 'Laboratorio de pruebas',
     description: 'Nombre comercial del laboratorio',
   })
   @IsNotEmpty()
@@ -12,9 +12,9 @@ export class CreateLabDto {
   name: string;
 
   @ApiProperty({
-    example: 'J-123456789',
-    description: 'RIF en formato J-XXXXXXXXX',
-    pattern: '^J-\\d{9}$',
+    example: 'j123456789',
+    description: 'RIF en formato jXXXXXXXXX',
+    pattern: '^j\\d{9}$',
   })
   @IsNotEmpty()
   @IsString()
@@ -31,7 +31,7 @@ export class CreateLabDto {
   @ApiProperty({
     type: [String],
     minItems: 1,
-    example: ['04141234567', '02121234567'],
+    example: ['04121234567', '02121234567'],
   })
   @IsArray()
   @IsString({ each: true })

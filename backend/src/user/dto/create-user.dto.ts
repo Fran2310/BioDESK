@@ -4,25 +4,25 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({
-    example: 'V-12345678',
+    example: 'v12345678',
     description: 'Cédula de identidad',
   })
   @IsNotEmpty()
   @IsString()
   ci: string;
 
-  @ApiProperty({ example: 'nombre', description: 'Nombre del usuario' })
+  @ApiProperty({ example: 'john', description: 'Nombre del usuario' })
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'apellido', description: 'Apellido del usuario' })
+  @ApiProperty({ example: 'doe', description: 'Apellido del usuario' })
   @IsNotEmpty()
   @IsString()
   lastName: string;
 
   @ApiProperty({
-    example: 'maria@laboratorio.com',
+    example: 'johndoe@xample.com',
     description: 'Correo electrónico válido',
   })
   @IsEmail()

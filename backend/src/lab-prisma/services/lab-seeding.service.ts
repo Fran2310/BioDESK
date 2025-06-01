@@ -1,3 +1,4 @@
+// /src/lab-prisma/services/lab-seeding.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { LabPrismaFactory } from '../lab-prisma.factory';
 import { CreateLabUserDto } from '../dto/create-lab-user.dto';
@@ -29,7 +30,7 @@ export class LabSeedingService {
           data: {
             role: role.name,
             description: role.description,
-            permissions: role.permissions,
+            permissions: JSON.parse(JSON.stringify(role.permissions)), // Asegúrate de que las permissions estén en el formato correcto
           },
         });
       }

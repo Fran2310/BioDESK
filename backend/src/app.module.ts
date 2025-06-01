@@ -9,9 +9,11 @@ import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core'; // Importa APP_GUARD para usar guards globales
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'; // Importa el guard de autenticación JWT
 import { LabHeaderGuard } from './auth/guards/lab-header.guard'; // Importa el guard para validar x-lab-id
+import { CaslAbilityGuard } from './casl/guards/casl-ability.guard'; // Importa el guard de CASL
 import { AuthModule } from './auth/auth.module';
 import { SharedCacheModule } from './shared-cache/shared-cache.module';
 import { LabModule } from './lab/lab.module';
+import { CaslModule } from './casl/casl.module';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { LabModule } from './lab/lab.module';
     AuthModule,
     SharedCacheModule,
     LabModule,
+    CaslModule,
   ],
   controllers: [AppController],
   providers: [
@@ -33,6 +36,10 @@ import { LabModule } from './lab/lab.module';
     {
       provide: APP_GUARD,
       useClass: LabHeaderGuard, // valida x-lab-id, si aplica
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CaslAbilityGuard, // Importa el guard de CASL
     },
   ],
 })

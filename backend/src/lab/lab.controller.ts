@@ -1,8 +1,7 @@
 import {
   Body,
   Controller,
-  Param,
-  ParseIntPipe,
+  Headers,
   Post,
   Request,
   UploadedFile,
@@ -11,10 +10,12 @@ import {
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
 import { UserService } from 'src/user/user.service';
 import { SkipLabIdCheck } from 'src/auth/decorators/skip-lab-id-check.decorator';
+import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiHeaders,
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
@@ -41,12 +42,21 @@ export class LabController {
     return this.userService.createLabForUser(userUuid, dto);
   }
 
-  @SkipLabIdCheck()
-  @Post(':id/logo')
+  @Post('logo')
+  @CheckAbility({ actions: 'update', subject: 'Lab', fields: 'logoPath' })
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('logo'))
   @ApiOperation({ summary: 'Subir logo para un laboratorio' })
   @ApiConsumes('multipart/form-data')
+  @ApiHeaders([
+    {
+      name: 'x-lab-id',
+      required: true,
+      description:
+        'ID del laboratorio al que se le sube el logo, esto debe mantenerse en cache desde el momento que el usuario selecciona un laboratorio',
+      schema: { type: 'integer', example: 1 },
+    },
+  ])
   @ApiBody({
     description: 'Archivo de logo del laboratorio',
     schema: {
@@ -64,7 +74,7 @@ export class LabController {
     status: 200,
     description: 'Logo actualizado exitosamente',
     schema: {
-      example: { logoPath: '/img/logolab/lab_123_logo.png' },
+      example: { logoPath: '/img/logolab/lab_8_logo.png' },
     },
   })
   @ApiResponse({
@@ -73,9 +83,11 @@ export class LabController {
   })
   @ApiResponse({ status: 404, description: 'Laboratorio no encontrado' })
   async uploadLabLogo(
-    @Param('id', ParseIntPipe) labId: number,
+    @Headers('x-lab-id') labIdHeader: string,
     @UploadedFile() logo: Express.Multer.File,
   ) {
+    const labId = Number(labIdHeader);
+
     return this.manageLogoLabService.saveLabLogo(logo, labId);
   }
 }

@@ -77,7 +77,7 @@ export class UserService {
       role: {
         name: 'admin',
         description: 'Administrador del laboratorio',
-        permissions: ['all'],
+        permissions: [{ actions: 'manage', subject: 'all' }],
       },
     });
   }
@@ -212,7 +212,7 @@ export class UserService {
       {
         name: 'admin',
         description: 'Administrador del laboratorio',
-        permissions: ['all'],
+        permissions: [{ actions: 'manage', subject: 'all' }],
       },
     );
 
