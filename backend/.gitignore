@@ -43,6 +43,7 @@ lerna-debug.log*
 .env.production.local
 .env.local
 init_db.txt
+img/*
 
 # temp directory
 .temp
