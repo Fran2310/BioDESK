@@ -21,11 +21,13 @@ export class AbilityFactory {
       const actionList = actions.split(',').map((a) => a.trim());
 
       actionList.forEach((action) => {
-        if (!fields || fields === '*') {
+        if (!fields || fields === '*' || fields === 'all') {
           builder.can(action, subject);
         } else {
           const fieldList = fields.split(',').map((f) => f.trim());
-          builder.can(action, subject, fieldList);
+          fieldList.forEach((field) => {
+            builder.can(action, subject, field); // Permite acciones específicas sobre campos concretos
+          });
         }
       });
     });

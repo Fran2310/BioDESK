@@ -1,7 +1,14 @@
 // /src/casl/app-ability.type.ts
 import { MongoAbility, createMongoAbility, MongoQuery } from '@casl/ability';
 
-export type Actions = 'create' | 'read' | 'update' | 'delete' | 'manage';
+export type Actions =
+  | 'create'
+  | 'read'
+  | 'update'
+  | 'delete'
+  | 'manage'
+  | 'set_state';
+
 export type Subjects =
   | 'SystemUser'
   | 'LabUser'

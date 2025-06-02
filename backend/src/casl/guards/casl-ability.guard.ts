@@ -48,19 +48,28 @@ export class CaslAbilityGuard implements CanActivate {
     }
 
     const role = cachedData.permissions;
-    console.log(
-      `Permisos del usuario en el guard : ${JSON.stringify(role.permissions)}`,
-    );
+
     const ability = this.abilityFactory.createAbility(role.permissions);
 
     const isAllowed = requiredAbilities.every(
       ({ actions, subject, fields }) => {
         const actionList = actions.split(',').map((a) => a.trim());
+        const stateRequested = req.body?.state; // 👈 obtenemos el valor de state si viene
 
         return actionList.every((action) => {
           const typedAction = action as Actions;
           const typedSubject = subject as Subjects;
 
+          // CASO ESPECIAL: Validar estado dinámicamente si el permiso es set_state
+          if (
+            typedAction === 'set_state' &&
+            typedSubject === 'RequestMedicTest' &&
+            stateRequested
+          ) {
+            return ability.can(typedAction, typedSubject, stateRequested);
+          }
+
+          // CASO NORMAL: Validación por campo o general
           if (!fields || fields === '*' || fields === 'all') {
             return ability.can(typedAction, typedSubject);
           } else {

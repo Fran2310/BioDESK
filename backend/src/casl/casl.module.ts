@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AbilityFactory } from './ability.factory';
 import { CaslAbilityGuard } from './guards/casl-ability.guard';
 import { LabModule } from 'src/lab/lab.module';
+import { CaslController } from './casl.controller';
 
 /**
  * Módulo CASL que configura la gestión de habilidades y permisos.
@@ -13,5 +14,6 @@ import { LabModule } from 'src/lab/lab.module';
   imports: [LabModule], // Porque CaslAbilityGuard usa LabService
   providers: [AbilityFactory, CaslAbilityGuard],
   exports: [AbilityFactory, CaslAbilityGuard],
+  controllers: [CaslController],
 })
 export class CaslModule {}
