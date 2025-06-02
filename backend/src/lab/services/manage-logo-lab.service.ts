@@ -22,91 +22,171 @@ export class ManageLogoLabService {
     file: Express.Multer.File,
     labId: number,
   ): Promise<{ logoPath: string }> {
-    /**
-     * Guarda el logo de un laboratorio.
-     * Primero elimina los logos existentes, luego guarda el nuevo archivo y actualiza la base de datos.
-     * @param file Archivo subido por el usuario
-     * @param labId ID del laboratorio al que pertenece el logo
-     * @returns Ruta del logo guardado
-     */
     this.validateFile(file);
 
     if (file.mimetype === 'image/png') {
       await this.validatePngDimensions(file);
     }
 
-    // PRIMERO: Eliminar logos existentes para este laboratorio
-    await this.deleteExistingLogos(labId);
+    // Generar nombre de archivo y rutas
+    const newFilename = this.generateFilename(labId, file.originalname);
+    const newFilePath = join(this.uploadDir, newFilename);
+    const newLogoPath = `/img/logolab/${newFilename}`;
 
-    const filename = this.generateFilename(labId, file.originalname);
-    const filepath = join(this.uploadDir, filename);
-    const logoPath = `/img/logolab/${filename}`;
+    // Verificar si existe logo con diferente extensión
+    const hasDifferentExtension = await this.checkForDifferentExtension(
+      labId,
+      newFilename,
+    );
 
-    // SEGUNDO: Guardar el nuevo archivo
-    await fs.writeFile(filepath, file.buffer);
+    // Eliminar logos existentes solo si hay cambio de extensión
+    if (hasDifferentExtension) {
+      await this.deleteExistingLogos(labId);
+    }
 
+    // Guardar el nuevo archivo
+    await fs.writeFile(newFilePath, file.buffer);
+
+    // Determinar si es necesario actualizar la base de datos
+    if (await this.needsDbUpdate(labId, newLogoPath, hasDifferentExtension)) {
+      await this.updateLabLogoInDatabase(labId, newLogoPath);
+    } else {
+      this.logger.log(
+        `Logo actualizado sin cambios en DB para laboratorio ID: ${labId}`,
+      );
+    }
+
+    return { logoPath: newLogoPath };
+  }
+
+  /**
+   * Verifica si existe un logo con diferente extensión para el mismo laboratorio
+   */
+  private async checkForDifferentExtension(
+    labId: number,
+    newFilename: string,
+  ): Promise<boolean> {
+    const existingFiles = await this.getExistingLogos(labId);
+    return existingFiles.some(
+      (file) => file !== newFilename && file.startsWith(`logo_lab_${labId}`),
+    );
+  }
+
+  /**
+   * Determina si es necesario actualizar la base de datos
+   */
+  private async needsDbUpdate(
+    labId: number,
+    newLogoPath: string,
+    hasDifferentExtension: boolean,
+  ): Promise<boolean> {
+    // Si hay cambio de extensión, siempre actualizamos DB
+    if (hasDifferentExtension) return true;
+
+    // Obtener el path actual de la base de datos
+    const currentDbPath = await this.getCurrentLogoPathFromDb(labId);
+
+    // Actualizar DB si:
+    // - No había logo previo
+    // - El path en DB es diferente al nuevo
+    return !currentDbPath || currentDbPath !== newLogoPath;
+  }
+
+  /**
+   * Obtiene todos los nombres de archivo de logos existentes para un laboratorio
+   */
+  private async getExistingLogos(labId: number): Promise<string[]> {
     try {
-      // TERCERO: Actualizar la base de datos
-      await this.updateLabLogoInDatabase(labId, logoPath);
-      this.logger.log(`Logo actualizado para laboratorio ID: ${labId}`);
-      return { logoPath };
+      const files = await fs.readdir(this.uploadDir);
+      const pattern = new RegExp(`^logo_lab_${labId}(\\.|_)`);
+      return files.filter((file) => pattern.test(file));
     } catch (error) {
-      // Revertir: eliminar el archivo nuevo si falla la actualización en DB
-      await fs
-        .unlink(filepath)
-        .catch((unlinkError) =>
-          this.logger.error('Error eliminando archivo fallido', unlinkError),
-        );
-      throw new BadRequestException('Error actualizando logo en base de datos');
+      this.logger.error(
+        `Error obteniendo logos existentes para lab ${labId}`,
+        error,
+      );
+      return [];
     }
   }
 
+  /**
+   * Elimina todos los logos existentes para un laboratorio
+   */
   private async deleteExistingLogos(labId: number): Promise<void> {
     try {
-      const files = await fs.readdir(this.uploadDir);
-      const pattern = new RegExp(`^logo_lab_${labId}\\.`); // Busca logos con este ID
-
+      const files = await this.getExistingLogos(labId);
       for (const file of files) {
-        if (pattern.test(file)) {
-          const filePath = join(this.uploadDir, file);
-          if (existsSync(filePath)) {
-            await fs
-              .unlink(filePath)
-              .catch((error) =>
-                this.logger.warn(
-                  `Error eliminando logo existente: ${filePath}`,
-                  error,
-                ),
-              );
-          }
+        const filePath = join(this.uploadDir, file);
+        if (existsSync(filePath)) {
+          await fs
+            .unlink(filePath)
+            .catch((error) =>
+              this.logger.warn(
+                `Error eliminando logo existente: ${filePath}`,
+                error,
+              ),
+            );
         }
       }
     } catch (error) {
       this.logger.error(
-        `Error buscando logos existentes para lab ${labId}`,
+        `Error eliminando logos existentes para lab ${labId}`,
         error,
       );
     }
   }
 
-  private async updateLabLogoInDatabase(labId: number, logoPath: string) {
-    // Verificar si el laboratorio existe
-    const labExists = await this.systemPrisma.lab.findUnique({
-      where: { id: labId },
-      select: { id: true },
-    });
-
-    if (!labExists) {
-      throw new BadRequestException(
-        `Laboratorio con ID ${labId} no encontrado`,
+  /**
+   * Obtiene el path actual del logo desde la base de datos
+   */
+  private async getCurrentLogoPathFromDb(
+    labId: number,
+  ): Promise<string | null> {
+    try {
+      const lab = await this.systemPrisma.lab.findUnique({
+        where: { id: labId },
+        select: { logoPath: true },
+      });
+      return lab?.logoPath || null;
+    } catch (error) {
+      this.logger.error(
+        `Error obteniendo path de logo desde DB para lab ${labId}`,
+        error,
       );
+      return null;
     }
+  }
 
-    // SOLO actualizar la base de datos (sin eliminar archivos)
-    await this.systemPrisma.lab.update({
-      where: { id: labId },
-      data: { logoPath },
-    });
+  /**
+   * Actualiza el path del logo en la base de datos
+   */
+  private async updateLabLogoInDatabase(labId: number, logoPath: string) {
+    try {
+      // Verificar si el laboratorio existe
+      const labExists = await this.systemPrisma.lab.findUnique({
+        where: { id: labId },
+        select: { id: true },
+      });
+
+      if (!labExists) {
+        throw new BadRequestException(
+          `Laboratorio con ID ${labId} no encontrado`,
+        );
+      }
+
+      // Actualizar la base de datos
+      await this.systemPrisma.lab.update({
+        where: { id: labId },
+        data: { logoPath },
+      });
+      this.logger.log(`Logo actualizado en DB para laboratorio ID: ${labId}`);
+    } catch (error) {
+      this.logger.error(
+        `Error actualizando logo en base de datos para lab ${labId}`,
+        error,
+      );
+      throw new BadRequestException('Error actualizando logo en base de datos');
+    }
   }
 
   private validateFile(file: Express.Multer.File): void {
