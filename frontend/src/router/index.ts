@@ -34,7 +34,24 @@ const routes: Array<RouteRecordRaw> = [
       {
         name: 'users',
         path: 'users',
+        component: RouteViewComponent,
+        children: [
+        {
+        name: 'patients', //Patients route
+        path: '/patients',
         component: () => import('../pages/users/UsersPage.vue'),
+        },
+        {
+        name: 'med-history', //Medical records route
+        path: '/med-history',
+        component: () => import('../pages/users/UsersPage.vue'),
+        },
+        {
+        name: 'test-req', //Test request route
+        path: '/test-req',
+        component: () => import('../pages/users/UsersPage.vue'),
+        },
+        ],
       },
       {
         name: 'projects',

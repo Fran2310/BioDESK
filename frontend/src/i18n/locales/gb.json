@@ -54,6 +54,9 @@
     "404": "404",
     "faq": "FAQ",
     "users": "Users",
+    "patients": "Patients",
+    "testreq": "Test request",
+    "history": "Medical records",
     "projects": "Projects"
   },
   "messages": {

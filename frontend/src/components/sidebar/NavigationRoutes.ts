@@ -20,10 +20,27 @@ export default {
     },
     {
       name: 'users',
-      displayName: 'menu.users',
+      displayName: 'Datos de pacientes',
       meta: {
         icon: 'group',
       },
+
+      //Elements that will appear in the dropdown (Users).
+
+      children: [
+        {
+        name: 'patients', //Patients
+        displayName:'menu.patients',
+        },
+        {
+        name: 'med-history', //Medic history
+        displayName:'menu.history',
+        },
+        {
+        name: 'test-req', //Test request
+        displayName:'menu.testreq',
+        },
+      ],
     },
     {
       name: 'projects',

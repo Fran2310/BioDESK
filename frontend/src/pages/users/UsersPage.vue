@@ -6,6 +6,9 @@ import { User } from './types'
 import { useUsers } from './composables/useUsers'
 import { useModal, useToast } from 'vuestic-ui'
 import { useProjects } from '../projects/composables/useProjects'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const doShowEditUserModal = ref(false)
 
@@ -91,7 +94,7 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
 </script>
 
 <template>
-  <h1 class="page-title">Users</h1>
+  <h1 class="page-title">{{ t('menu.patients') }}</h1>
 
   <VaCard>
     <VaCardContent>
