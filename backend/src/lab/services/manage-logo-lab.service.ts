@@ -22,30 +22,70 @@ export class ManageLogoLabService {
     file: Express.Multer.File,
     labId: number,
   ): Promise<{ logoPath: string }> {
+    /**
+     * Guarda el logo de un laboratorio.
+     * Primero elimina los logos existentes, luego guarda el nuevo archivo y actualiza la base de datos.
+     * @param file Archivo subido por el usuario
+     * @param labId ID del laboratorio al que pertenece el logo
+     * @returns Ruta del logo guardado
+     */
     this.validateFile(file);
 
     if (file.mimetype === 'image/png') {
       await this.validatePngDimensions(file);
     }
 
+    // PRIMERO: Eliminar logos existentes para este laboratorio
+    await this.deleteExistingLogos(labId);
+
     const filename = this.generateFilename(labId, file.originalname);
     const filepath = join(this.uploadDir, filename);
     const logoPath = `/img/logolab/${filename}`;
 
+    // SEGUNDO: Guardar el nuevo archivo
     await fs.writeFile(filepath, file.buffer);
 
     try {
+      // TERCERO: Actualizar la base de datos
       await this.updateLabLogoInDatabase(labId, logoPath);
       this.logger.log(`Logo actualizado para laboratorio ID: ${labId}`);
       return { logoPath };
     } catch (error) {
-      // Revertir la operación si falla la actualización en DB
+      // Revertir: eliminar el archivo nuevo si falla la actualización en DB
       await fs
         .unlink(filepath)
         .catch((unlinkError) =>
           this.logger.error('Error eliminando archivo fallido', unlinkError),
         );
       throw new BadRequestException('Error actualizando logo en base de datos');
+    }
+  }
+
+  private async deleteExistingLogos(labId: number): Promise<void> {
+    try {
+      const files = await fs.readdir(this.uploadDir);
+      const pattern = new RegExp(`^logo_lab_${labId}\\.`); // Busca logos con este ID
+
+      for (const file of files) {
+        if (pattern.test(file)) {
+          const filePath = join(this.uploadDir, file);
+          if (existsSync(filePath)) {
+            await fs
+              .unlink(filePath)
+              .catch((error) =>
+                this.logger.warn(
+                  `Error eliminando logo existente: ${filePath}`,
+                  error,
+                ),
+              );
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error buscando logos existentes para lab ${labId}`,
+        error,
+      );
     }
   }
 
@@ -62,35 +102,11 @@ export class ManageLogoLabService {
       );
     }
 
-    // Obtener logo anterior para eliminarlo después
-    const currentLab = await this.systemPrisma.lab.findUnique({
-      where: { id: labId },
-      select: { logoPath: true },
-    });
-
-    // Actualizar la base de datos
+    // SOLO actualizar la base de datos (sin eliminar archivos)
     await this.systemPrisma.lab.update({
       where: { id: labId },
       data: { logoPath },
     });
-
-    // Eliminar archivo antiguo si existe
-    if (currentLab?.logoPath) {
-      const oldFilename = currentLab.logoPath.split('/').pop();
-      if (oldFilename) {
-        const oldFilePath = join(this.uploadDir, oldFilename);
-        if (existsSync(oldFilePath)) {
-          await fs
-            .unlink(oldFilePath)
-            .catch((error) =>
-              this.logger.warn(
-                `Error eliminando logo antiguo: ${oldFilePath}`,
-                error,
-              ),
-            );
-        }
-      }
-    }
   }
 
   private validateFile(file: Express.Multer.File): void {
@@ -126,9 +142,10 @@ export class ManageLogoLabService {
   }
 
   private generateFilename(labId: number, originalName: string): string {
-    const sanitized = originalName.replace(/[^a-zA-Z0-9_\-.]+/g, '');
-    const extension = extname(sanitized) || '.png';
-    const baseName = sanitized.replace(extension, '') || 'logo';
-    return `lab_${labId}_${baseName.slice(0, 50)}${extension}`;
+    // Obtener solo la extensión del archivo original
+    const extension = extname(originalName) || '.png';
+
+    // Usar el formato: logo_lab_{idLab}.{extension}
+    return `logo_lab_${labId}${extension}`;
   }
 }

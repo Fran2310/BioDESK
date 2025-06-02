@@ -43,7 +43,11 @@ export class LabController {
   }
 
   @Post('logo')
-  @CheckAbility({ actions: 'update', subject: 'Lab', fields: 'logoPath' })
+  @CheckAbility({
+    actions: 'update, create',
+    subject: 'Lab',
+    fields: 'logoPath',
+  })
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('logo'))
   @ApiOperation({ summary: 'Subir logo para un laboratorio' })
