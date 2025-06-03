@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { LabService } from './services/lab.service';
 import { LabController } from './lab.controller';
-
+import { AuditModule } from 'src/audit/audit.module';
 import { SystemPrismaModule } from 'src/system-prisma/system-prisma.module';
 import { LabPrismaModule } from 'src/lab-prisma/lab-prisma.module';
 import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
@@ -13,6 +13,7 @@ import { ManageLogoLabService } from './services/manage-logo-lab.service';
     SystemPrismaModule,
     LabPrismaModule,
     SharedCacheModule,
+    AuditModule,
     forwardRef(() => UserModule),
   ],
   providers: [LabService, ManageLogoLabService],

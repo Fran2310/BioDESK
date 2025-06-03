@@ -3,6 +3,7 @@ import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
 import { LabMigrationService } from 'src/lab-prisma/services/lab-migration.service';
 import { LabSeedingService } from 'src/lab-prisma/services/lab-seeding.service';
+import { AuditService } from 'src/audit/audit.service';
 import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
@@ -17,6 +18,7 @@ export class UserService {
     private readonly systemPrisma: SystemPrismaService,
     private readonly labMigrationService: LabMigrationService,
     private readonly labSeedingService: LabSeedingService,
+    private readonly auditService: AuditService,
   ) {}
 
   private async getDbNameByLabId(labId: number): Promise<string> {
@@ -85,6 +87,7 @@ export class UserService {
     labId: number,
     systemUserDto: CreateUserDto,
     role: RoleDto,
+    performedByUserUuid?: string,
   ) {
     const { ci, name, lastName, email, password } = systemUserDto;
 
@@ -125,6 +128,25 @@ export class UserService {
       systemUserUuid: systemUser.uuid,
       role,
     });
+
+    // 5. Registrar auditoría si se especifica un usuario que realizó la acción
+    if (performedByUserUuid) {
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'create',
+        details: `Creó al usuario ${name} ${lastName} con rol ${role.name}`,
+        entity: 'LabUser',
+        recordEntityId: systemUser.uuid,
+        operationData: {
+          after: {
+            ciField: ci,
+            nameField: name,
+            lastNameField: lastName,
+            emailField: email,
+            role: role.name,
+          },
+        },
+      });
+    }
 
     return {
       uuid: systemUser.uuid,

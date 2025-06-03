@@ -5,6 +5,7 @@ import * as sharp from 'sharp';
 import { existsSync, mkdirSync } from 'fs';
 import { promises as fs } from 'fs';
 import { SystemPrismaService } from '../../system-prisma/system-prisma.service';
+import { AuditService } from 'src/audit/audit.service';
 
 @Injectable()
 export class ManageLogoLabService {
@@ -14,13 +15,17 @@ export class ManageLogoLabService {
   private readonly maxDimensions = 512; // 512px
   private readonly uploadDir = join(process.cwd(), 'img', 'logolab');
 
-  constructor(private systemPrisma: SystemPrismaService) {
+  constructor(
+    private systemPrisma: SystemPrismaService,
+    private readonly auditService: AuditService,
+  ) {
     this.createUploadDirectory();
   }
 
   async saveLabLogo(
     file: Express.Multer.File,
     labId: number,
+    userUuid: string,
   ): Promise<{ logoPath: string }> {
     this.validateFile(file);
 
@@ -55,6 +60,22 @@ export class ManageLogoLabService {
         `Logo actualizado sin cambios en DB para laboratorio ID: ${labId}`,
       );
     }
+    // Registrar la acción en el historial de auditoría
+    await this.auditService.logAction(labId, userUuid, {
+      action: 'update',
+      details: 'Subió un nuevo logo para el laboratorio',
+      entity: 'Lab',
+      recordEntityId: labId.toString(),
+      operationData: {
+        after: {
+          originalFileName: file.originalname,
+          filename: newFilename,
+          logoPath: newLogoPath,
+          mimeType: file.mimetype,
+          size: file.size,
+        },
+      },
+    });
 
     return { logoPath: newLogoPath };
   }

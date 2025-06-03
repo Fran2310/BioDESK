@@ -89,9 +89,10 @@ export class LabController {
   async uploadLabLogo(
     @Headers('x-lab-id') labIdHeader: string,
     @UploadedFile() logo: Express.Multer.File,
+    @Request() req,
   ) {
     const labId = Number(labIdHeader);
 
-    return this.manageLogoLabService.saveLabLogo(logo, labId);
+    return this.manageLogoLabService.saveLabLogo(logo, labId, req.user.sub);
   }
 }

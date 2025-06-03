@@ -7,7 +7,7 @@ export class LoginDto {
   @IsEmail({}, { message: 'Debe ser un email válido' })
   email: string;
 
-  @ApiProperty({ example: 'securePass123' })
+  @ApiProperty({ example: 'securePass123!' })
   @IsNotEmpty({ message: 'La contraseña no puede estar vacía' })
   @IsString({ message: 'La contraseña debe ser una cadena de texto' })
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })

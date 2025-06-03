@@ -39,6 +39,10 @@ model ActionHistory {
   action    String  // Técnico del sistema
   details   String  // Texto para el usuario
 
+  entity         String   // Nombre de la entidad: Patient, MedicHistory, etc.
+  recordEntityId String   // ID del registro afectado (como string)
+  operationData  Json     // Snapshot del cambio (antes/después o solo input)
+  
   madeAt    DateTime @default(now())
 
   labUserId Int
@@ -77,7 +81,7 @@ model RequestMedicTest {
   completedAt     DateTime? 
   state           State      @default(PENDING)
   priority        Priority   @default(MEDIUM)
-
+  resultProperties Json?
   observation     String?
 
   medicHistoryId  Int

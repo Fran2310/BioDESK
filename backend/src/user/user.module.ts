@@ -3,11 +3,13 @@ import { UserService } from './user.service';
 import { SystemPrismaModule } from 'src/system-prisma/system-prisma.module';
 import { LabPrismaModule } from 'src/lab-prisma/lab-prisma.module';
 import { LabModule } from 'src/lab/lab.module';
+import { AuditModule } from 'src/audit/audit.module';
 
 @Module({
   imports: [
-    SystemPrismaModule, 
+    SystemPrismaModule,
     LabPrismaModule,
+    AuditModule,
     forwardRef(() => LabModule),
   ],
   providers: [UserService],
