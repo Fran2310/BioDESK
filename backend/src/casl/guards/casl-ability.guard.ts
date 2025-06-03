@@ -13,7 +13,7 @@ import {
 import { IS_PUBLIC_KEY } from 'src/auth/decorators/public.decorator';
 import { AbilityFactory } from '../ability.factory';
 import { LabService } from 'src/lab/services/lab.service';
-import { Actions, Subjects } from '../app-ability.type';
+import { Actions, Subjects } from '../ability.type';
 
 @Injectable()
 export class CaslAbilityGuard implements CanActivate {
