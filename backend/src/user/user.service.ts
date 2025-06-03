@@ -64,7 +64,6 @@ export class UserService {
     return { labRecord, dbName };
   }
 
-  // DEPRECATED
   private async seedLabAdminUser(dbName: string, userUuid: string) {
     /**
      * Inserta un usuario administrador en la base de datos dinámica del laboratorio.
@@ -130,64 +129,6 @@ export class UserService {
     return {
       uuid: systemUser.uuid,
       email: systemUser.email,
-    };
-  }
-
-  // DEPRECATED
-  async createSystemUserAndLab(dto: RegisterDto) {
-    /**
-     * Crea un usuario del sistema y un laboratorio asociado.
-     * @param dto Datos del usuario y laboratorio a crear.
-     * @returns Información del usuario creado y el laboratorio asociado.
-     */
-    const { email, ci, password, name, lastName, lab } = dto;
-
-    // 1. Verifica si el usuario ya existe por email o CI
-    const existingUser = await this.systemPrisma.systemUser.findFirst({
-      where: {
-        OR: [{ email }, { ci }],
-      },
-    });
-    if (existingUser) {
-      throw new ConflictException('Ya existe un usuario con este email o CI.');
-    }
-
-    // 2. Normaliza el nombre de la base de datos y valida campos únicos (rif, dbName) y Crea el laboratorio en la base central
-    const { labRecord, dbName } = await this.createLabRecord(lab);
-
-    // 3. Crea la base de datos y ejecuta la migración
-    await this.labMigrationService.createDatabase(dbName);
-    await this.labMigrationService.migrateDatabase(dbName);
-
-    // 4. Hashea la contraseña
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // 5. Crea el usuario del sistema y lo asocia al laboratorio
-    const systemUser = await this.systemPrisma.systemUser.create({
-      data: {
-        ci,
-        name,
-        lastName,
-        email,
-        password: hashedPassword,
-        salt,
-        labs: {
-          connect: [{ id: labRecord.id }],
-        },
-      },
-    });
-
-    // 6.Inserta usuario admin en base de datos dinámica del laboratorio
-    await this.seedLabAdminUser(dbName, systemUser.uuid);
-
-    this.logger.log(
-      `🧪 Usuario registrado: ${systemUser.email} → Lab: ${labRecord.name}`,
-    );
-
-    return {
-      uuid: systemUser.uuid,
-      labs: [labRecord],
     };
   }
 

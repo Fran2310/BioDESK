@@ -47,7 +47,7 @@ export class CaslAbilityGuard implements CanActivate {
       throw new ForbiddenException('Permisos no encontrados');
     }
 
-    const role = cachedData.permissions;
+    const role = cachedData.role;
 
     const ability = this.abilityFactory.createAbility(role.permissions);
 

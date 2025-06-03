@@ -13,15 +13,10 @@ export class SharedCacheService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
   // Esta función cachea el labId y los permisos asociados a un usuario(uuid)
-  async setUser(
-    uuid: string,
-    labId: number,
-    permissions: object,
-    ttl?: number,
-  ) {
+  async setUser(uuid: string, labId: number, role: object, ttl?: number) {
     const dataToCache = {
       labId,
-      permissions,
+      role,
     };
     await this.cacheManager.set(uuid, dataToCache, ttl);
     this.logger.log(`Datos cacheados para el usuario: ${uuid}`);
@@ -31,7 +26,7 @@ export class SharedCacheService {
     const userData = await this.cacheManager.get<UserCache>(uuid);
     if (userData) {
       this.logger.log(
-        `Datos obtenidos desde caché para:\n      Usuario: ${uuid}\n      LabId: ${userData.labId}\n      Permisos: ${JSON.stringify(userData.permissions.permissions)}`,
+        `Datos obtenidos desde caché para:\n      Usuario: ${uuid}\n      LabId: ${userData.labId}\n      Permisos: ${JSON.stringify(userData.role.permissions)}`,
       );
     }
     return userData;

@@ -1,7 +1,7 @@
 // /src/user/dto/create-lab.dto.ts
 export interface UserCache {
   labId: number;
-  permissions: {
+  role: {
     id: number;
     role: string;
     description: string;
