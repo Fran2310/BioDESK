@@ -11,8 +11,8 @@ import { generateLabDbUrl } from '../../common/utils/generate-lab-db-url';
  * Utiliza conexiones PostgreSQL y registra eventos relevantes mediante el logger interno.
  */
 @Injectable()
-export class LabMigrationService {
-  private readonly logger = new Logger(LabMigrationService.name);
+export class LabDbManageService {
+  private readonly logger = new Logger(LabDbManageService.name);
 
   /**
    * Genera la URL de conexión a la base de datos PostgreSQL para el laboratorio.

@@ -1,13 +1,13 @@
 // src/lab-prisma/lab-prisma.module.ts
 import { Module } from '@nestjs/common';
 import { LabPrismaFactory } from './lab-prisma.factory';
-import { LabMigrationService } from './services/lab-migration.service';
+import { LabDbManageService } from './services/lab-db-manage.service';
 import { LabPrismaController } from './lab-prisma.controller';
 import { RoleDto } from 'src/role/dto/role.dto';
 
 @Module({
-  providers: [LabPrismaFactory, LabMigrationService, RoleDto],
-  exports: [LabPrismaFactory, LabMigrationService],
+  providers: [LabPrismaFactory, LabDbManageService, RoleDto],
+  exports: [LabPrismaFactory, LabDbManageService],
   controllers: [LabPrismaController],
 })
 export class LabPrismaModule {}

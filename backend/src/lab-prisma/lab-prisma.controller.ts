@@ -2,7 +2,7 @@
 import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { InitDatabaseDto } from './dto/init-db.dto';
 import { LabPrismaFactory } from './lab-prisma.factory';
-import { LabMigrationService } from './services/lab-migration.service';
+import { LabDbManageService } from './services/lab-db-manage.service';
 import { normalizeDbName } from '../common/utils/normalize-db-name';
 import {
   ApiBearerAuth,
@@ -16,7 +16,7 @@ import {
 export class LabPrismaController {
   constructor(
     private readonly labPrismaFactory: LabPrismaFactory,
-    private readonly labMigrationService: LabMigrationService,
+    private readonly labDbManageService: LabDbManageService,
   ) {}
 
   //obtiene todos los usuarios (LabUser) de esa base dinámica.
@@ -49,9 +49,9 @@ export class LabPrismaController {
   })
   async initDatabase(@Body() dto: InitDatabaseDto) {
     const { dbName } = dto;
-    const wasCreated = await this.labMigrationService.createDatabase(dbName);
+    const wasCreated = await this.labDbManageService.createDatabase(dbName);
     const normalizedDbName = normalizeDbName(dbName);
-    await this.labMigrationService.migrateDatabase(normalizedDbName);
+    await this.labDbManageService.migrateDatabase(normalizedDbName);
 
     return {
       message: wasCreated

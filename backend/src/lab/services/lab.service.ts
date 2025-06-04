@@ -9,7 +9,7 @@ import {
 import { LabPrismaFactory } from 'src/lab-prisma/lab-prisma.factory';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
 import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
-import { LabMigrationService } from 'src/lab-prisma/services/lab-migration.service';
+import { LabDbManageService } from 'src/lab-prisma/services/lab-db-manage.service';
 import { Lab } from '@prisma/client-system';
 
 import { UserCache } from 'src/shared-cache/dto/user-cache.interface';
@@ -22,7 +22,7 @@ export class LabService {
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemPrisma: SystemPrismaService,
     private readonly sharedCacheService: SharedCacheService,
-    private readonly labMigrationService: LabMigrationService,
+    private readonly labDbManageService: LabDbManageService,
   ) {}
 
   /**
@@ -147,8 +147,8 @@ export class LabService {
     });
 
     // 🔧 Migración de DB específica del laboratorio
-    await this.labMigrationService.createDatabase(dbName);
-    await this.labMigrationService.migrateDatabase(dbName);
+    await this.labDbManageService.createDatabase(dbName);
+    await this.labDbManageService.migrateDatabase(dbName);
 
     return lab;
   }
