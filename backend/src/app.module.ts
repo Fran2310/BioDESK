@@ -16,6 +16,7 @@ import { LabModule } from './lab/lab.module';
 import { CaslModule } from './casl/casl.module';
 import { AuditModule } from './audit/audit.module';
 import { RoleModule } from './role/role.module';
+import { LabUserModule } from './lab-user/lab-user.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RoleModule } from './role/role.module';
     CaslModule,
     AuditModule,
     RoleModule,
+    LabUserModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,6 +1,7 @@
 // /src/lab/services/lab.service.ts
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
@@ -8,8 +9,12 @@ import {
 import { LabPrismaFactory } from 'src/lab-prisma/lab-prisma.factory';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
 import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
+import { LabMigrationService } from 'src/lab-prisma/services/lab-migration.service';
+import { Lab } from '@prisma/client-system';
 
 import { UserCache } from 'src/shared-cache/dto/user-cache.interface';
+import { CreateLabDto } from 'src/user/dto/create-lab.dto';
+import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 
 @Injectable()
 export class LabService {
@@ -17,7 +22,51 @@ export class LabService {
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemPrisma: SystemPrismaService,
     private readonly sharedCacheService: SharedCacheService,
+    private readonly labMigrationService: LabMigrationService,
   ) {}
+
+  /**
+   * Valida que los campos únicos del laboratorio (RIF y nombre) no existan en la base de datos.
+   * @param dto Datos del laboratorio a validar.
+   * @returns El nombre de la base de datos normalizado.
+   * @throws ConflictException si ya existe un laboratorio con el mismo RIF o nombre de base de datos.
+   */
+  private async validateUniqueLab(dto: CreateLabDto): Promise<string> {
+    const { rif, name } = dto;
+    const dbName = normalizeDbName(name);
+
+    const existing = await this.systemPrisma.lab.findFirst({
+      where: {
+        OR: [{ rif }, { dbName }],
+      },
+    });
+
+    if (existing) {
+      if (existing.rif === rif) {
+        throw new ConflictException(
+          `Ya existe un laboratorio con el RIF ${rif}.`,
+        );
+      }
+      if (existing.dbName === dbName) {
+        throw new ConflictException(
+          `Ya existe una base de datos para el nombre ${name}.`,
+        );
+      }
+    }
+
+    return dbName;
+  }
+
+  /**
+   * Obtiene los datos de un usuario desde la caché.
+   * Si el usuario no está en caché, devuelve null.
+   *
+   * @param uuid UUID del usuario.
+   * @returns UserCache | null
+   */
+  async getUserCached(uuid: string): Promise<UserCache | null> {
+    return await this.sharedCacheService.getUser(uuid);
+  }
 
   /**
    * Se consume para cachear datos de un usuario en un laboratorio para un usuario dado su UUID y el ID del laboratorio.
@@ -72,13 +121,35 @@ export class LabService {
   }
 
   /**
-   * Obtiene los datos de un usuario desde la caché.
-   * Si el usuario no está en caché, devuelve null.
+   * Crea un laboratorio en la base de datos del sistema,
+   * luego crea y migra la base de datos específica del laboratorio (tenant).
    *
-   * @param uuid UUID del usuario.
-   * @returns UserCache | null
+   * @param dto Datos del laboratorio
+   * @param userId Usuario opcional para asociar el lab
+   * @returns El laboratorio creado (modelo completo)
    */
-  async getUserCached(uuid: string): Promise<UserCache | null> {
-    return await this.sharedCacheService.getUser(uuid);
+  async createLab(dto: CreateLabDto, userId?: number): Promise<Lab> {
+    const dbName = await this.validateUniqueLab(dto);
+
+    const lab = await this.systemPrisma.lab.create({
+      data: {
+        name: dto.name,
+        rif: dto.rif,
+        dbName: dbName,
+        dir: dto.dir,
+        phoneNums: dto.phoneNums,
+        ...(userId && {
+          users: {
+            connect: [{ id: userId }],
+          },
+        }),
+      },
+    });
+
+    // 🔧 Migración de DB específica del laboratorio
+    await this.labMigrationService.createDatabase(dbName);
+    await this.labMigrationService.migrateDatabase(dbName);
+
+    return lab;
   }
 }

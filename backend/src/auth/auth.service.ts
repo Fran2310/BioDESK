@@ -51,7 +51,10 @@ export class AuthService {
    * @returns El usuario si las credenciales son correctas, o un mensaje de error si no lo son.
    */
   async validateUser(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.getSystemUser({
+      email: email,
+      includeLabs: true, // Incluye los laboratorios asociados al usuario
+    });
     if (!user) return 'not_found';
 
     const isMatch = await bcrypt.compare(password, user.password);

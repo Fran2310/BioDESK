@@ -45,6 +45,11 @@ export class SystemPrismaService
     );
   }
 
+  /**
+   * Inicializa el módulo intentando conectar a la base de datos.
+   * Registra mensajes de éxito o error en el proceso de conexión.
+   * Si ocurre un error, lo relanza para que NestJS lo maneje.
+   */
   async onModuleInit() {
     this.logger.log('Connecting to System Database...');
     try {
@@ -56,12 +61,22 @@ export class SystemPrismaService
     }
   }
 
+  /**
+   * Maneja la desconexión del cliente de base de datos al destruir el módulo.
+   * Registra mensajes antes y después de la desconexión.
+   */
   async onModuleDestroy() {
     this.logger.log('Disconnecting from System Database...');
     await this.$disconnect();
     this.logger.log('Disconnected from System Database.');
   }
 
+  /**
+   * Obtiene el nombre de la base de datos asociada a un laboratorio por su ID.
+   * @param labId ID del laboratorio.
+   * @returns Nombre de la base de datos del laboratorio.
+   * @throws ConflictException si el laboratorio no existe.
+   */
   async getLabDbName(labId: number): Promise<string> {
     /**
      * Obtiene el nombre de la base de datos asociada a un laboratorio por su ID.

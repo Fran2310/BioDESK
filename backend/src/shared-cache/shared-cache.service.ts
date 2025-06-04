@@ -12,7 +12,14 @@ export class SharedCacheService {
     // Inyectamos el gestor de caché base de NestJS
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
-  // Esta función cachea el labId y los permisos asociados a un usuario(uuid)
+
+  /**
+   * cachea el labId y los permisos asociados a un usuario(uuid)
+   * @param uuid UUID del usuario.
+   * @param labId ID del laboratorio asociado al usuario.
+   * @param role Objeto con los permisos del usuario.
+   * @param ttl Tiempo de vida en segundos para el cacheo (opcional).
+   */
   async setUser(uuid: string, labId: number, role: object, ttl?: number) {
     const dataToCache = {
       labId,
@@ -21,7 +28,14 @@ export class SharedCacheService {
     await this.cacheManager.set(uuid, dataToCache, ttl);
     this.logger.log(`Datos cacheados para el usuario: ${uuid}`);
   }
-  // Esta función devuelve el labId y los permisos asociados a un usuario(uuid)
+
+  /**
+   * Obtiene los datos de un usuario (labId y rol asociado) desde la caché.
+   * Si el usuario no está en caché, devuelve null.
+   *
+   * @param uuid UUID del usuario.
+   * @returns UserCache | null
+   */
   async getUser(uuid: string): Promise<UserCache | null> {
     const userData = await this.cacheManager.get<UserCache>(uuid);
     if (userData) {

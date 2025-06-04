@@ -39,6 +39,7 @@ export class LabPrismaService extends PrismaClient {
    * Inicializa el módulo intentando conectar a la base de datos.
    * Registra mensajes de éxito o error en el proceso de conexión.
    * Si ocurre un error, lo relanza para que NestJS lo maneje.
+   * @async
    */
   async onModuleInit() {
     this.logger.log(`Connecting to Database ${this.dbName}...`);

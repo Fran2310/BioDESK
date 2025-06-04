@@ -4,8 +4,8 @@ import { RoleController } from './role.controller';
 import { RoleDto } from './dto/role.dto';
 
 @Module({
-  providers: [RoleService, RoleDto],
+  providers: [RoleService],
   controllers: [RoleController],
-  exports: [RoleDto],
+  exports: [RoleService],
 })
 export class RoleModule {}
