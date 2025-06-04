@@ -3,6 +3,7 @@ import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
 import { LabUserService } from 'src/lab-user/lab-user.service';
 import { LabService } from 'src/lab/services/lab.service';
+import { LabDbManageService } from 'src/lab-prisma/services/lab-db-manage.service';
 import { AuditService } from 'src/audit/audit.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
@@ -20,6 +21,7 @@ export class UserService {
     private readonly labService: LabService,
     private readonly labUserService: LabUserService,
     private readonly auditService: AuditService,
+    private readonly labDbManageService: LabDbManageService,
   ) {}
 
   /**
@@ -171,32 +173,57 @@ export class UserService {
    * Crea un nuevo laboratorio y un usuario del sistema asociado a él como administrador.
    * @param dto Datos del registro que incluye el laboratorio y el usuario.
    * @returns Información del usuario creado(uuid) y el laboratorio registrado.
+   * @throws ConflictException si ocurre un error al crear el laboratorio o el usuario.
+   * Si ocurre un error al crear el usuario, se realiza un rollback eliminando el laboratorio creado.
    */
   async createUserAdminAndLab(dto: RegisterDto) {
     const { lab, ...userDto } = dto;
 
-    // 1. Crea el laboratorio (validando RIF y nombre únicos)
+    // 1. Crea el laboratorio y su DB (validando RIF y nombre únicos)
     const labRecord = await this.labService.createLab(lab);
     if (!labRecord) {
       throw new ConflictException('Error al crear el laboratorio.');
     }
+
     this.logger.log(
       `🧪 Laboratorio creado: ${labRecord.name} (${labRecord.rif})`,
     );
 
-    // 3. Crea el usuario y lo asocia al laboratorio con rol admin
-    const { uuid, email } = await this.createUserAndAssignToLab(
-      labRecord.id,
-      userDto,
-      DEFAULT_ADMIN_ROLE,
-    );
+    try {
+      // 2. Crea el usuario y lo asocia al laboratorio con rol admin
+      const { uuid, email } = await this.createUserAndAssignToLab(
+        labRecord.id,
+        userDto,
+        DEFAULT_ADMIN_ROLE,
+      );
 
-    this.logger.log(`🧪 Usuario registrado: ${email} → Lab: ${labRecord.name}`);
+      this.logger.log(
+        `🧪 Usuario registrado: ${email} → Lab: ${labRecord.name}`,
+      );
 
-    return {
-      uuid,
-      labs: [labRecord],
-    };
+      return {
+        uuid,
+        labs: [labRecord],
+      };
+    } catch (error) {
+      this.logger.error(
+        `❌ Error al crear el usuario administrador para el laboratorio: ${labRecord.name}. Iniciando rollback...`,
+      );
+
+      // 3. Rollback: eliminar registro en DB del sistema
+      await this.systemPrisma.lab.delete({
+        where: { id: labRecord.id },
+      });
+
+      // 4. Rollback: eliminar base de datos física del laboratorio
+      await this.labDbManageService.dropDatabase(labRecord.dbName);
+
+      this.logger.warn(
+        `🚫 Rollback completado para el laboratorio ${labRecord.name}`,
+      );
+
+      throw error;
+    }
   }
 
   /**

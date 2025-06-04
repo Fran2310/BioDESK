@@ -4,17 +4,13 @@ import { RoleDto } from './dto/role.dto';
 
 @Injectable()
 export class RoleService {
-  async GetRoleByName(prisma: LabPrismaService, roleName: string) {
-    const role = await prisma.role.findUnique({
+  async findRoleByName(prisma: LabPrismaService, roleName: string) {
+    return prisma.role.findUnique({
       where: { role: roleName },
     });
-    if (!role) {
-      throw new Error(`Role with name ${roleName} not found`);
-    }
-    return role;
   }
   async CreateRoleIfNotExists(prisma: LabPrismaService, roleDto: RoleDto) {
-    let role = await this.GetRoleByName(prisma, roleDto.name);
+    let role = await this.findRoleByName(prisma, roleDto.name);
 
     if (!role) {
       role = await prisma.role.create({

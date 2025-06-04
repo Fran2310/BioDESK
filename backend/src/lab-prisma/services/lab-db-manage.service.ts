@@ -113,4 +113,37 @@ export class LabDbManageService {
       throw error;
     }
   }
+
+  /**
+   * Elimina una base de datos de laboratorio si existe.
+   * @param dbName Nombre de la base de datos a eliminar.
+   */
+  async dropDatabase(dbName: string): Promise<void> {
+    const client = new Client({
+      connectionString: this.getPgConnectionUrl(),
+    });
+
+    try {
+      await client.connect();
+
+      this.logger.warn(`🧨 Terminando conexiones a "${dbName}"...`);
+      await client.query(
+        `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1`,
+        [dbName],
+      );
+
+      this.logger.warn(`🗑️ Eliminando base de datos "${dbName}"...`);
+      await client.query(`DROP DATABASE IF EXISTS "${dbName}"`);
+
+      this.logger.log(`✅ Base de datos "${dbName}" eliminada correctamente.`);
+    } catch (error) {
+      this.logger.error(
+        `❌ Error al eliminar la base "${dbName}":`,
+        error.stack,
+      );
+      throw error;
+    } finally {
+      await client.end();
+    }
+  }
 }
