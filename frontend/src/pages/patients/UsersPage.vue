@@ -97,7 +97,7 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
 
 <template>
   <!-- Title of the page dinamically loaded -->
-  <h1 class="page-title">{{ t('menu.users') }}</h1>
+  <h1 class="page-title">{{ t('menu.patients') }}</h1>
 
   <VaCard>
     <VaCardContent>

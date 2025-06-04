@@ -31,25 +31,33 @@ const routes: Array<RouteRecordRaw> = [
         path: 'preferences',
         component: () => import('../pages/preferences/Preferences.vue'),
       },
+
       {
-        name: 'users',
-        path: 'users',
+        name:'users',
+        path:'/users',
+        component: () => import('../pages/users/UsersPage.vue'),
+        
+      },
+        //Root of patients data.
+      {
+        name: 'Patients data',
+        path: '/p-data',
         component: RouteViewComponent,
         children: [
         {
         name: 'patients', //Patients route
         path: '/patients',
-        component: () => import('../pages/users/UsersPage.vue'),
+        component: () => import('../pages/patients/PatientsPage.vue'),
         },
         {
         name: 'med-history', //Medical records route
         path: '/med-history',
-        component: () => import('../pages/users/UsersPage.vue'),
+        component: () => import('../pages/patients/UsersPage.vue'),
         },
         {
         name: 'test-req', //Test request route
         path: '/test-req',
-        component: () => import('../pages/users/UsersPage.vue'),
+        component: () => import('../pages/patients/UsersPage.vue'),
         },
         ],
       },

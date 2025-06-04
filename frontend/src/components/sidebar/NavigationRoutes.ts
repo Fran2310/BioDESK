@@ -18,9 +18,19 @@ export default {
         icon: 'vuestic-iconset-dashboard',
       },
     },
+
+    {
+      name:'users',
+      displayName:'menu.users',
+      meta:{
+        icon:'group',
+      },
+
+    },
+
     {
       name: 'users',
-      displayName: 'Datos de pacientes',
+      displayName: 'menu.patientsdata',
       meta: {
         icon: 'group',
       },
