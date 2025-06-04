@@ -15,6 +15,7 @@ import { SharedCacheModule } from './shared-cache/shared-cache.module';
 import { LabModule } from './lab/lab.module';
 import { CaslModule } from './casl/casl.module';
 import { AuditModule } from './audit/audit.module';
+import { RoleModule } from './role/role.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuditModule } from './audit/audit.module';
     LabModule,
     CaslModule,
     AuditModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [

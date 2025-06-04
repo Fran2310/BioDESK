@@ -15,6 +15,12 @@ import { getMetadataFlags } from 'src/common/utils/get-metadata-decorators.util'
 
 @Injectable()
 export class LabHeaderGuard implements CanActivate {
+  /**
+   * Guard de NestJS que valida la presencia y validez del header 'x-lab-id' en las solicitudes.
+   * Permite el acceso a endpoints públicos o que omiten la verificación mediante metadatos.
+   * Verifica que el usuario esté autenticado y que el laboratorio sea válido y accesible para el usuario.
+   * Lanza excepciones específicas en caso de errores de autenticación, autorización o formato del header.
+   */
   constructor(
     private readonly reflector: Reflector,
     private readonly labService: LabService,
@@ -51,9 +57,9 @@ export class LabHeaderGuard implements CanActivate {
     // Validación o selección de laboratorio
     const cached = await this.labService.getUserCached(user.sub);
     if (cached && cached.labId !== labIdNumber) {
-      await this.labService.selectedLab(user.sub, labIdNumber);
+      await this.labService.cachSelectedLab(user.sub, labIdNumber);
     } else if (!cached) {
-      await this.labService.selectedLab(user.sub, labIdNumber);
+      await this.labService.cachSelectedLab(user.sub, labIdNumber);
     }
 
     return true;

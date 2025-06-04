@@ -10,3 +10,6 @@ export interface AbilityMetadata {
 export const CHECK_ABILITY_KEY = 'check_ability';
 export const CheckAbility = (...abilities: AbilityMetadata[]) =>
   SetMetadata(CHECK_ABILITY_KEY, abilities);
+// Usage example:
+// @CheckAbility({ actions: 'read, write', subject: 'SystemUser' })
+// consultar types para definir los tipos de actions y subject (admite varias acciones separadas por coma)

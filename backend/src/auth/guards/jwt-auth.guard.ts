@@ -12,6 +12,14 @@ import { getMetadataFlags } from 'src/common/utils/get-metadata-decorators.util'
 @Injectable()
 // registra la estrategia jwt.strategy.ts
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  /**
+   * Guard de autenticación JWT para NestJS que verifica si una ruta es pública mediante metadatos.
+   * Si la ruta tiene el flag @Public, permite el acceso sin autenticación.
+   * En caso contrario, valida el token JWT y lanza UnauthorizedException si el usuario no es válido.
+   *
+   * @param context Contexto de ejecución de la petición.
+   * @returns true si la ruta es pública, si la autenticación es exitosa retorna user; de lo contrario, * * lanza una excepción.
+   */
   constructor(private reflector: Reflector) {
     super();
   }

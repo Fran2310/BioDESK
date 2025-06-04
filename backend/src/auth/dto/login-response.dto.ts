@@ -19,13 +19,13 @@ export class LoginResponseDto {
         id: 1,
         name: 'Laboratorio pruebas',
         status: 'active',
-        rif: 'J-12345678-9',
+        rif: 'j123456789',
       },
       {
         id: 9,
         name: 'Laboratorio pruebas 2',
         status: 'active',
-        rif: 'J-45678901-9',
+        rif: 'j456789019',
       },
     ],
   })

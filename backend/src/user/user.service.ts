@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { RoleDto } from 'src/lab-prisma/dto/create-lab-user.dto';
+import { RoleDto } from 'src/role/dto/role.dto';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -20,25 +20,6 @@ export class UserService {
     private readonly labSeedingService: LabSeedingService,
     private readonly auditService: AuditService,
   ) {}
-
-  private async getDbNameByLabId(labId: number): Promise<string> {
-    /**
-     * Obtiene el nombre de la base de datos asociada a un laboratorio por su ID.
-     * @param labId ID del laboratorio.
-     * @returns Nombre de la base de datos del laboratorio.
-     * @throws ConflictException si el laboratorio no existe.
-     */
-    const lab = await this.systemPrisma.lab.findUnique({
-      where: { id: labId },
-      select: { dbName: true },
-    });
-
-    if (!lab) {
-      throw new ConflictException(`Laboratorio con id=${labId} no encontrado.`);
-    }
-
-    return lab.dbName;
-  }
 
   private async createLabRecord(dto: CreateLabDto, userId?: number) {
     /**
@@ -121,7 +102,7 @@ export class UserService {
     });
 
     // 4. Obtener dbName dinámicamente
-    const dbName = await this.getDbNameByLabId(labId);
+    const dbName = await this.systemPrisma.getLabDbName(labId);
 
     // 4. Insertar en la base de datos del laboratorio
     await this.labSeedingService.seedLabUser(dbName, {

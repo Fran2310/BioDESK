@@ -12,6 +12,9 @@ import { LabService } from 'src/lab/services/lab.service';
 import { AbilityFactory } from 'src/casl/ability.factory';
 import { ApiBearerAuth, ApiHeaders, ApiTags } from '@nestjs/swagger';
 
+/**
+ * Controlador para pruebas de autorización con CASL.
+ */
 @ApiTags('[Testing] CASL')
 @Controller('casl')
 export class CaslController {

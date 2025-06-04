@@ -14,7 +14,7 @@ import { ManageLogoLabService } from './services/manage-logo-lab.service';
     LabPrismaModule,
     SharedCacheModule,
     AuditModule,
-    forwardRef(() => UserModule),
+    forwardRef(() => UserModule), // UserModule se importa de forma diferida para evitar dependencias circulares
   ],
   providers: [LabService, ManageLogoLabService],
   controllers: [LabController],

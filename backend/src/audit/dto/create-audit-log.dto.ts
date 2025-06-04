@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateAuditLogDto {
-  @ApiProperty({ example: 'UPDATE_PATIENT' })
+  @ApiProperty({ example: 'update' })
   @IsString()
   @IsNotEmpty()
   action: string;

@@ -22,6 +22,14 @@ export class ManageLogoLabService {
     this.createUploadDirectory();
   }
 
+  /**
+   * Guarda el logo del laboratorio en el sistema de archivos y actualiza la base de datos.
+   * @param file Archivo subido por el usuario
+   * @param labId ID del laboratorio al que pertenece el logo
+   * @param userUuid UUID del usuario que realiza la acción
+   * @returns Objeto con la ruta del logo guardado
+   * @throws BadRequestException si el archivo no es válido o supera los límites establecidos
+   */
   async saveLabLogo(
     file: Express.Multer.File,
     labId: number,
@@ -82,6 +90,10 @@ export class ManageLogoLabService {
 
   /**
    * Verifica si existe un logo con diferente extensión para el mismo laboratorio
+   * @param labId ID del laboratorio
+   * @param newFilename Nombre del nuevo archivo
+   * @returns true si hay un logo existente con diferente extensión, false en caso contrario
+   * @throws Error si hay un problema al leer el directorio
    */
   private async checkForDifferentExtension(
     labId: number,
@@ -95,6 +107,11 @@ export class ManageLogoLabService {
 
   /**
    * Determina si es necesario actualizar la base de datos
+   * @param labId ID del laboratorio
+   * @param newLogoPath Nuevo path del logo
+   * @param hasDifferentExtension Indica si hay un cambio de extensión
+   * @returns true si es necesario actualizar, false en caso contrario
+   * @throws Error si hay un problema al consultar la base de datos
    */
   private async needsDbUpdate(
     labId: number,
@@ -115,6 +132,9 @@ export class ManageLogoLabService {
 
   /**
    * Obtiene todos los nombres de archivo de logos existentes para un laboratorio
+   * @param labId ID del laboratorio
+   * @returns Lista de nombres de archivo que coinciden con el patrón
+   * @throws Error si hay un problema al leer el directorio
    */
   private async getExistingLogos(labId: number): Promise<string[]> {
     try {
@@ -132,6 +152,9 @@ export class ManageLogoLabService {
 
   /**
    * Elimina todos los logos existentes para un laboratorio
+   * @param labId ID del laboratorio
+   * @throws Error si hay un problema al eliminar los archivos
+   * @return void
    */
   private async deleteExistingLogos(labId: number): Promise<void> {
     try {
@@ -159,6 +182,9 @@ export class ManageLogoLabService {
 
   /**
    * Obtiene el path actual del logo desde la base de datos
+   * @param labId ID del laboratorio
+   * @returns Path del logo o null si no existe
+   * @throws Error si hay un problema al consultar la base de datos
    */
   private async getCurrentLogoPathFromDb(
     labId: number,
@@ -180,6 +206,10 @@ export class ManageLogoLabService {
 
   /**
    * Actualiza el path del logo en la base de datos
+   * @param labId ID del laboratorio
+   * @param logoPath Nuevo path del logo
+   * @throws BadRequestException si el laboratorio no existe o hay un error al actualizar
+   * @returns void
    */
   private async updateLabLogoInDatabase(labId: number, logoPath: string) {
     try {
@@ -210,6 +240,11 @@ export class ManageLogoLabService {
     }
   }
 
+  /**
+   * Valida el archivo subido
+   * @param file Archivo a validar
+   * @throws BadRequestException si el archivo no es válido
+   */
   private validateFile(file: Express.Multer.File): void {
     if (!file || !file.buffer) {
       throw new BadRequestException('No se ha subido ningún archivo');
@@ -224,6 +259,11 @@ export class ManageLogoLabService {
     }
   }
 
+  /**
+   * Valida las dimensiones de un archivo PNG
+   * @param file Archivo a validar
+   * @throws BadRequestException si las dimensiones son mayores a 512x512 px
+   */
   private async validatePngDimensions(
     file: Express.Multer.File,
   ): Promise<void> {
@@ -236,12 +276,23 @@ export class ManageLogoLabService {
     }
   }
 
+  /**
+   * Crea el directorio de subida de logos si no existe
+   * @returns void
+   * @throws Error si hay un problema al crear el directorio
+   */
   private createUploadDirectory(): void {
     if (!existsSync(this.uploadDir)) {
       mkdirSync(this.uploadDir, { recursive: true });
     }
   }
 
+  /**
+   * Genera un nombre de archivo único para el logo del laboratorio
+   * @param labId ID del laboratorio
+   * @param originalName Nombre original del archivo
+   * @returns Nombre de archivo generado
+   */
   private generateFilename(labId: number, originalName: string): string {
     // Obtener solo la extensión del archivo original
     const extension = extname(originalName) || '.png';

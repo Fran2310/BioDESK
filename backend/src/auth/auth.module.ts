@@ -11,6 +11,12 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { LabModule } from 'src/lab/lab.module';
 
+/**
+ * Módulo de autenticación que configura los servicios, controladores y estrategias necesarias
+ * para el registro, inicio de sesión y validación de usuarios mediante JWT y Passport.
+ * Importa los módulos de usuario y laboratorio, y registra el módulo JWT de forma asíncrona
+ * utilizando la configuración de entorno.
+ */
 @Module({
   imports: [
     LabModule,

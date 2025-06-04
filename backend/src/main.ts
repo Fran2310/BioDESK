@@ -17,6 +17,12 @@ async function bootstrap() {
     .setVersion('1.0')
     .addServer('/api')
     .addBearerAuth()
+    .addTag('[Testing] App') // Establecer orden de las etiquetas
+    .addTag('[Testing] SystemPrisma')
+    .addTag('[Testing] LabPrisma')
+    .addTag('[Testing] CASL')
+    .addTag('Auth', 'Autenticación')
+    .addTag('Lab', 'Gestión de laboratorios')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

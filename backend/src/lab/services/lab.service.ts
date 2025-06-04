@@ -19,7 +19,18 @@ export class LabService {
     private readonly sharedCacheService: SharedCacheService,
   ) {}
 
-  async selectedLab(uuid: string, labId: number) {
+  /**
+   * Se consume para cachear datos de un usuario en un laboratorio para un usuario dado su UUID y el ID del laboratorio.
+   * Verifica si el usuario tiene acceso al laboratorio y guarda el rol asociado en caché.
+   *
+   * Lanza una excepción si el ID del laboratorio no está definido o si el usuario no tiene acceso.
+   *
+   * @param uuid UUID del usuario.
+   * @param labId ID del laboratorio.
+   * @throws {BadRequestException} Si el ID del laboratorio no está definido.
+   * @throws {ForbiddenException} Si el usuario no tiene acceso al laboratorio.
+   */
+  async cachSelectedLab(uuid: string, labId: number) {
     if (!labId) {
       throw new BadRequestException(
         'El id del laboratorio debe estar definido',
@@ -38,7 +49,6 @@ export class LabService {
       },
     });
 
-    console.log(`Laboratorio: ${typeof lab}`);
     if (lab) {
       const labPrisma = await this.labPrismaFactory.createInstanceDB(
         lab.dbName,
@@ -60,6 +70,14 @@ export class LabService {
       );
     }
   }
+
+  /**
+   * Obtiene los datos de un usuario desde la caché.
+   * Si el usuario no está en caché, devuelve null.
+   *
+   * @param uuid UUID del usuario.
+   * @returns UserCache | null
+   */
   async getUserCached(uuid: string): Promise<UserCache | null> {
     return await this.sharedCacheService.getUser(uuid);
   }

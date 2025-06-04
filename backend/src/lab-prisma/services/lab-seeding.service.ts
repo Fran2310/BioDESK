@@ -4,6 +4,16 @@ import { LabPrismaFactory } from '../lab-prisma.factory';
 import { CreateLabUserDto } from '../dto/create-lab-user.dto';
 import { LabPrismaService } from './lab-prisma.service';
 
+/**
+ * Servicio encargado de sembrar usuarios de laboratorio en la base de datos correspondiente.
+ * Utiliza LabPrismaFactory para crear una instancia de conexión dinámica y asegura la existencia del rol y del usuario.
+ * Si el rol no existe, lo crea; luego crea el usuario de laboratorio si no está presente.
+ * Registra logs de éxito o error durante el proceso y gestiona la conexión a la base de datos.
+ *
+ * @param dbName Nombre de la base de datos de laboratorio.
+ * @param input Datos del usuario de laboratorio a crear.
+ * @throws Relanza cualquier error ocurrido durante la operación de siembra.
+ */
 @Injectable()
 export class LabSeedingService {
   private readonly logger = new Logger(LabSeedingService.name);

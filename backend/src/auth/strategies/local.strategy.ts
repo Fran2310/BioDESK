@@ -2,7 +2,6 @@
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
 import { validate } from 'class-validator';
-import { Request } from 'express';
 import { LoginDto } from '../dto/login.dto';
 import {
   Injectable,
@@ -11,6 +10,12 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 
+/**
+ * Estrategia local de autenticación para validar email y contraseña usando Passport.
+ * Utiliza class-validator para validar los datos de entrada y AuthService para verificar credenciales.
+ * Lanza excepciones personalizadas en caso de datos inválidos, usuario no encontrado o contraseña incorrecta.
+ * Devuelve el usuario autenticado si la validación es exitosa.
+ */
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   /*

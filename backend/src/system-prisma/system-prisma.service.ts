@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   OnModuleDestroy,
   Logger,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client-system';
 
@@ -59,5 +60,24 @@ export class SystemPrismaService
     this.logger.log('Disconnecting from System Database...');
     await this.$disconnect();
     this.logger.log('Disconnected from System Database.');
+  }
+
+  async getLabDbName(labId: number): Promise<string> {
+    /**
+     * Obtiene el nombre de la base de datos asociada a un laboratorio por su ID.
+     * @param labId ID del laboratorio.
+     * @returns Nombre de la base de datos del laboratorio.
+     * @throws ConflictException si el laboratorio no existe.
+     */
+    const lab = await this.lab.findUnique({
+      where: { id: labId },
+      select: { dbName: true },
+    });
+
+    if (!lab) {
+      throw new ConflictException(`Laboratorio con id=${labId} no encontrado.`);
+    }
+
+    return lab.dbName;
   }
 }

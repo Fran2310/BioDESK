@@ -11,10 +11,20 @@ import {
   AbilityMetadata,
 } from '../decorators/check-ability.decorator';
 import { IS_PUBLIC_KEY } from 'src/auth/decorators/public.decorator';
+import { getMetadataFlags } from 'src/common/utils/get-metadata-decorators.util';
 import { AbilityFactory } from '../ability.factory';
 import { LabService } from 'src/lab/services/lab.service';
 import { Actions, Subjects } from '../ability.type';
 
+/**
+ * Guard de autorización basado en CASL que valida si el usuario autenticado tiene los permisos necesarios
+ * para ejecutar la acción solicitada según las habilidades requeridas en los metadatos del handler.
+ * Permite acceso público si el endpoint está marcado como público y lanza ForbiddenException si el usuario
+ * no está autenticado o no tiene permisos suficientes. Soporta validación dinámica de estados para acciones específicas.
+ *
+ * @param context Contexto de ejecución de la petición HTTP.
+ * @returns Promise<boolean> Indica si el acceso está permitido.
+ */
 @Injectable()
 export class CaslAbilityGuard implements CanActivate {
   constructor(
@@ -24,11 +34,11 @@ export class CaslAbilityGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) return true;
+    const metadataKeys = [IS_PUBLIC_KEY];
+
+    //Obtener todos los flags
+    const flags = getMetadataFlags(this.reflector, context, metadataKeys);
+    if (flags.isPublic) return true;
 
     const requiredAbilities = this.reflector.get<AbilityMetadata[]>(
       CHECK_ABILITY_KEY,

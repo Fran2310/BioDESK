@@ -2,7 +2,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LabResponseDto {
-  @ApiProperty({ example: 8, description: 'ID único del laboratorio' })
+  @ApiProperty({ example: 1, description: 'ID único del laboratorio' })
   id: number;
 
   @ApiProperty({
@@ -19,9 +19,9 @@ export class LabResponseDto {
   status: string;
 
   @ApiProperty({
-    example: 'J-12345678-9',
-    description: 'RIF del laboratorio en formato J-XXXXXXXX-X',
-    pattern: '^J-\\d{8}-\\d$',
+    example: 'j123456789',
+    description: 'RIF del laboratorio en formato jXXXXXXXXX',
+    pattern: '^j\\d{9}$',
   })
   rif: string;
 }
