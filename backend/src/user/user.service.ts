@@ -98,6 +98,39 @@ export class UserService {
   }
 
   /**
+   * Crea un nuevo usuario del sistema con los datos proporcionados y lo asocia opcionalmente a un laboratorio.
+   * Valida que el correo y la cédula sean únicos, encripta la contraseña y guarda el usuario en la base de datos.
+   *
+   * @param dto Datos del usuario a crear.
+   * @param labId (Opcional) ID del laboratorio al que se asociará el usuario.
+   * @returns Promesa que resuelve con el usuario creado.
+   */
+  async createSystemUser(dto: CreateUserDto, labId?: number) {
+    const { ci, name, lastName, email, password } = dto;
+
+    await this.validateUniqueUser({ email, ci });
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    return this.systemPrisma.systemUser.create({
+      data: {
+        ci,
+        name,
+        lastName,
+        email,
+        password: hashedPassword,
+        salt,
+        ...(labId && {
+          labs: {
+            connect: [{ id: labId }],
+          },
+        }),
+      },
+    });
+  }
+
+  /**
    * Crea un usuario del sistema y lo asigna a un laboratorio con un rol específico.
    * @param labId ID del laboratorio al que se asignará el usuario.
    * @param systemUserDto Datos del usuario a crear.
@@ -109,60 +142,36 @@ export class UserService {
     labId: number,
     systemUserDto: CreateUserDto,
     role: RoleDto,
-    performedByUserUuid?: string,
+    performedByUserUuid: string,
   ) {
-    const { ci, name, lastName, email, password } = systemUserDto;
+    const systemUser = await this.createSystemUser(systemUserDto, labId);
 
-    // 1. Validar duplicado en DB del sistema
-    await this.validateUniqueUser({ email, ci });
-
-    // 2. Hashear la contraseña
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // 3. Crear usuario en la DB del sistema
-    const systemUser = await this.systemPrisma.systemUser.create({
-      data: {
-        ci,
-        name,
-        lastName,
-        email,
-        password: hashedPassword,
-        salt,
-        labs: {
-          connect: [{ id: labId }],
-        },
+    const labUser = await this.labUserService.createLabUser(
+      labId,
+      {
+        systemUserUuid: systemUser.uuid,
+        role,
       },
-    });
+      performedByUserUuid,
+    );
 
-    // 4. Obtener dbName dinámicamente
-    const dbName = await this.systemPrisma.getLabDbName(labId);
-
-    // 4. Insertar en la base de datos del laboratorio
-    await this.labUserService.createLabUser(dbName, {
-      systemUserUuid: systemUser.uuid,
-      role,
-    });
-
-    // 5. Registrar auditoría si se especifica un usuario que realizó la acción
-    if (performedByUserUuid) {
+    if (labUser) {
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'create',
-        details: `Creó al usuario ${name} ${lastName} con rol ${role.name}`,
+        details: `Creó al usuario ${systemUser.name} ${systemUser.lastName} con rol ${role.name}`,
         entity: 'LabUser',
-        recordEntityId: systemUser.uuid,
+        recordEntityId: labUser.id.toString(),
         operationData: {
           after: {
-            ciField: ci,
-            nameField: name,
-            lastNameField: lastName,
-            emailField: email,
+            ciField: systemUser.ci,
+            nameField: systemUser.name,
+            lastNameField: systemUser.lastName,
+            emailField: systemUser.email,
             role: role.name,
           },
         },
       });
     }
-
     return {
       uuid: systemUser.uuid,
       email: systemUser.email,
@@ -179,7 +188,6 @@ export class UserService {
   async createUserAdminAndLab(dto: RegisterDto) {
     const { lab, ...userDto } = dto;
 
-    // 1. Crea el laboratorio y su DB (validando RIF y nombre únicos)
     const labRecord = await this.labService.createLab(lab);
     if (!labRecord) {
       throw new ConflictException('Error al crear el laboratorio.');
@@ -190,19 +198,43 @@ export class UserService {
     );
 
     try {
-      // 2. Crea el usuario y lo asocia al laboratorio con rol admin
-      const { uuid, email } = await this.createUserAndAssignToLab(
+      // ✅ Primero creas el usuario y ya tienes el UUID
+      const user = await this.createSystemUser(userDto, labRecord.id);
+
+      // ✅ Luego lo insertas en la base de datos del laboratorio
+      const labUser = await this.labUserService.createLabUser(
         labRecord.id,
-        userDto,
-        DEFAULT_ADMIN_ROLE,
+        {
+          systemUserUuid: user.uuid,
+          role: DEFAULT_ADMIN_ROLE,
+        },
+        user.uuid, // Ahora sí existe el uuid del propio usuario
       );
 
+      // 🗒️ Auditar creación de LabUser como administrador inicial
+      if (labUser) {
+        await this.auditService.logAction(labRecord.id, user.uuid, {
+          action: 'create',
+          details: `Creó al usuario administrador ${user.name} ${user.lastName}`,
+          entity: 'LabUser',
+          recordEntityId: labUser.id.toString(),
+          operationData: {
+            after: {
+              ciField: user.ci,
+              nameField: user.name,
+              lastNameField: user.lastName,
+              emailField: user.email,
+              role: DEFAULT_ADMIN_ROLE.name,
+            },
+          },
+        });
+      }
       this.logger.log(
-        `🧪 Usuario registrado: ${email} → Lab: ${labRecord.name}`,
+        `🧪 Usuario registrado: ${user.email} → Lab: ${labRecord.name}`,
       );
 
       return {
-        uuid,
+        uuid: user.uuid,
         labs: [labRecord],
       };
     } catch (error) {
@@ -210,18 +242,12 @@ export class UserService {
         `❌ Error al crear el usuario administrador para el laboratorio: ${labRecord.name}. Iniciando rollback...`,
       );
 
-      // 3. Rollback: eliminar registro en DB del sistema
-      await this.systemPrisma.lab.delete({
-        where: { id: labRecord.id },
-      });
-
-      // 4. Rollback: eliminar base de datos física del laboratorio
+      await this.systemPrisma.lab.delete({ where: { id: labRecord.id } });
       await this.labDbManageService.dropDatabase(labRecord.dbName);
 
       this.logger.warn(
         `🚫 Rollback completado para el laboratorio ${labRecord.name}`,
       );
-
       throw error;
     }
   }
@@ -245,10 +271,36 @@ export class UserService {
       `🧪 Laboratorio creado: ${labRecord.name} (${labRecord.rif})`,
     );
     // Inserta en la DB dinámica el usuario como admin del nuevo lab
-    await this.labUserService.createLabUser(labRecord.dbName, {
-      systemUserUuid: user.uuid,
-      role: DEFAULT_ADMIN_ROLE,
-    });
+    const labUser = await this.labUserService.createLabUser(
+      labRecord.id,
+      {
+        systemUserUuid: user.uuid,
+        role: DEFAULT_ADMIN_ROLE,
+      },
+      userUuid,
+    );
+
+    // 🗒️ Auditar creación de LabUser como administrador inicial
+    if (labUser) {
+      await this.auditService.logAction(labRecord.id, user.uuid, {
+        action: 'create',
+        details: `Creó al usuario administrador ${user.name} ${user.lastName}`,
+        entity: 'LabUser',
+        recordEntityId: labUser.id.toString(),
+        operationData: {
+          after: {
+            ciField: user.ci,
+            nameField: user.name,
+            lastNameField: user.lastName,
+            emailField: user.email,
+            role: DEFAULT_ADMIN_ROLE.name,
+          },
+        },
+      });
+    }
+    this.logger.log(
+      `🧪 Usuario registrado: ${user.email} → Lab: ${labRecord.name}`,
+    );
 
     return {
       id: labRecord.id,

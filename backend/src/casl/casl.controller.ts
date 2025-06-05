@@ -11,7 +11,7 @@ import { TestStateDto } from './dto/test-state.dto';
 import { LabService } from 'src/lab/services/lab.service';
 import { AbilityFactory } from 'src/casl/ability.factory';
 import { ApiBearerAuth, ApiHeaders, ApiTags } from '@nestjs/swagger';
-
+import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 /**
  * Controlador para pruebas de autorización con CASL.
  */
@@ -34,15 +34,7 @@ export class CaslController {
   )
   @CheckAbility({ actions: 'manage', subject: 'all' })
   @Post('authorization')
-  @ApiHeaders([
-    {
-      name: 'x-lab-id',
-      required: true,
-      description:
-        'ID del laboratorio al que refiere la peticion, esto debe mantenerse en cache desde el momento que el usuario selecciona un laboratorio',
-      schema: { type: 'integer', example: 1 },
-    },
-  ])
+  @ApiHeaders([X_LAB_ID_HEADER])
   async testStatePermission(@Body() dto: TestStateDto, @Req() req) {
     const uuid = req.user.sub;
     const cached = await this.labService.getUserCached(uuid);

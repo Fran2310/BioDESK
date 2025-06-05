@@ -1,3 +1,4 @@
+// /src/lab/lab.controller.ts
 import {
   Body,
   Controller,
@@ -21,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
+import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 
 @Controller('lab')
 export class LabController {
@@ -52,15 +54,7 @@ export class LabController {
   @UseInterceptors(FileInterceptor('logo'))
   @ApiOperation({ summary: 'Subir logo para un laboratorio' })
   @ApiConsumes('multipart/form-data')
-  @ApiHeaders([
-    {
-      name: 'x-lab-id',
-      required: true,
-      description:
-        'ID del laboratorio al que se le sube el logo, esto debe mantenerse en cache desde el momento que el usuario selecciona un laboratorio',
-      schema: { type: 'integer', example: 1 },
-    },
-  ])
+  @ApiHeaders([X_LAB_ID_HEADER])
   @ApiBody({
     description: 'Archivo de logo del laboratorio',
     schema: {

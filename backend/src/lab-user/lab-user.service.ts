@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LabPrismaFactory } from '../lab-prisma/lab-prisma.factory';
 import { CreateLabUserDto } from './dto/create-lab-user.dto';
 import { RoleService } from '../role/role.service';
+import { SystemPrismaService } from '../system-prisma/system-prisma.service';
+import { LabUser } from '@prisma/client-lab';
 
 /**
  * Servicio para la gestión de usuarios de laboratorio.
@@ -17,16 +19,24 @@ export class LabUserService {
   constructor(
     private readonly roleService: RoleService,
     private readonly labPrismaFactory: LabPrismaFactory,
+    private readonly systemPrisma: SystemPrismaService,
   ) {}
 
   /**
    * Crea un usuario de laboratorio en la base de datos especificada.
-   * @param dbName Nombre de la base de datos de laboratorio.
+   * @param labId ID del laboratorio (se usa para resolver dbName).
    * @param input Datos del usuario de laboratorio a crear.
-   * @throws Relanza cualquier error ocurrido durante la operación de siembra.
+   * @param performedByUserUuid UUID del usuario que realiza la operación (para auditoría).
+   * @returns El registro creado de LabUser.
    */
-  async createLabUser(dbName: string, input: CreateLabUserDto) {
+  async createLabUser(
+    labId: number,
+    input: CreateLabUserDto,
+    performedByUserUuid: string,
+  ): Promise<LabUser | null> {
+    const dbName = await this.systemPrisma.getLabDbName(labId);
     const prisma = this.labPrismaFactory.createInstanceDB(dbName);
+
     try {
       this.logger.log(`🔗 Conectando a la base de datos ${dbName}...`);
       await prisma.$connect();
@@ -34,9 +44,11 @@ export class LabUserService {
       const { systemUserUuid, role } = input;
 
       // 1. Rol
-      const roleRecord = await this.roleService.CreateRoleIfNotExists(
+      const roleRecord = await this.roleService.createRoleIfNotExists(
         prisma,
         role,
+        labId,
+        performedByUserUuid,
       );
 
       // 2. Verificar existencia del usuario
@@ -44,10 +56,15 @@ export class LabUserService {
         where: { systemUserUuid },
       });
 
-      if (existingLabUser) return;
+      if (existingLabUser) {
+        this.logger.warn(
+          `El usuario ya existe en la base del lab: ${systemUserUuid}`,
+        );
+        return null; // ya estaba creado
+      }
 
       // 3. Crear LabUser
-      await prisma.labUser.create({
+      const createdLabUser = await prisma.labUser.create({
         data: {
           systemUserUuid,
           roleId: roleRecord.id,
@@ -55,6 +72,7 @@ export class LabUserService {
       });
 
       this.logger.log(`✅ LabUser creado con rol '${role.name}' en ${dbName}`);
+      return createdLabUser;
     } catch (error) {
       this.logger.error(`❌ Error al insertar usuario en ${dbName}`, error);
       throw error;

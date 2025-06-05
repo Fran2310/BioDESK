@@ -8,29 +8,59 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PermissionDto {
+  @ApiProperty({
+    description: 'Acciones permitidas separadas por coma',
+    example: 'read,update',
+  })
   @IsNotEmpty()
   @IsString()
-  actions: string; // Ej: "update" o "read,update"
+  actions: string;
 
+  @ApiProperty({
+    description: 'Entidad (subject) sobre la cual se aplican las acciones',
+    example: 'RequestMedicTest',
+  })
   @IsNotEmpty()
   @IsString()
-  subject: string; // Ej: "RequestMedicTest"
+  subject: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Campos específicos afectados por la acción (opcional). Puede ser "*" para indicar todos o una lista separada por coma para campos específicos (revisar esquemas DBs para más detalles)',
+    example: 'status,results',
+    required: false,
+  })
   @IsOptional()
   @IsString()
-  fields?: string; // Opcional, puede ser "*" o lista "campo1,campo2"
+  fields?: string;
 }
+
 export class RoleDto {
+  @ApiProperty({
+    description: 'Nombre único del rol',
+    example: 'Personal de laboratorio',
+  })
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @IsOptional()
+  @ApiProperty({
+    description: 'Descripción del rol',
+    example:
+      'Personal del laboratorio con permisos de lectura y actualizacion para gestionar RequestMedicTest',
+  })
+  @IsNotEmpty()
   @IsString()
   description: string;
 
+  @ApiProperty({
+    description:
+      'Listado de permisos asociados al rol, mayor información sobre cuales enviar consultar los esquemas de las DBs o el archivo backend/src/casl/ability.type.ts',
+    type: [PermissionDto],
+  })
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true }) // Valida cada objeto en el array
