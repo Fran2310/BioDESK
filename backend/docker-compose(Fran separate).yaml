@@ -1,0 +1,17 @@
+# docker-compose.yml
+services:
+  db:
+    image: postgres:16-alpine # O la versión que prefieras
+    ports:
+      - '5432:5432' # Mapeo opcional si quieres acceder desde fuera del contenedor
+    environment:
+      POSTGRES_USER: biodesk
+      POSTGRES_PASSWORD: biodesk123
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: system_db # Opcional: una base de datos inicial para la gestión de usuarios/laboratorios
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persistir los datos de la DB
+
+volumes:
+  db_data: # Define el volumen
