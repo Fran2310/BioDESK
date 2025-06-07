@@ -6,6 +6,7 @@ import { useToast, useModal } from 'vuestic-ui'
 import { useI18n } from 'vue-i18n'
 import PatientsForm from './widgets/PatientsForm.vue'
 import UsersTable from './widgets/UsersTable.vue'
+import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 import { User } from './types'
 
 const { t } = useI18n()
@@ -101,7 +102,7 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
           <VaButton @click="showAddUserModal">Add Patient</VaButton>
         </div>
 
-        <UsersTable
+        <CustomPatientsTable
           v-model:sort-by="sorting.sortBy"
           v-model:sorting-order="sorting.sortingOrder"
           :users="users"
