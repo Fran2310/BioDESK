@@ -28,6 +28,7 @@ import {
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { CreateUserWithRoleIdDto } from './dto/create-user-with-role-id.dto';
 import { UpdateSystemUserDto } from './dto/update-system-user.dto';
+import { SystemUserDto } from './dto/system-user.dto';
 
 @ApiBearerAuth()
 @ApiTags('User')
@@ -81,6 +82,52 @@ export class UserController {
       offset,
       limit,
     );
+  }
+
+  @Get('global-user')
+  @CheckAbility({ actions: 'read', subject: 'SystemUser' })
+  @ApiOperation({
+    summary: 'consultar usuario registrado en el sistema central',
+    description:
+      'Devuelve un usuario que coincida con el dato de busqueda, uuid, email o ci (solamente uno de ellos)',
+  })
+  @ApiQuery({
+    name: 'uuid',
+    required: false,
+    type: String,
+    example: '4c13de10-a4d5-4e....',
+    description: 'uuid del usuario a consultar',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    type: String,
+    example: 'example@example.com',
+    description: 'email del usuario a consultar',
+  })
+  @ApiQuery({
+    name: 'ci',
+    required: false,
+    type: String,
+    example: 'v12345678',
+    description: 'ci (identificacion) del usuario a consultar',
+  })
+  async getSystemUser(
+    @Query('uuid') uuid?: string,
+    @Query('email') email?: string,
+    @Query('ci') ci?: string,
+  ): Promise<SystemUserDto> {
+    const user = await this.userService.getSystemUser({
+      uuid,
+      email,
+      ci,
+      includeLabs: false, // Siempre false para este endpoint
+    });
+
+    // Eliminamos campos sensibles explícitamente
+    const { password, salt, lastAccess, isActive, ...safeUser } = user;
+
+    return safeUser as SystemUserDto;
   }
 
   @Post('create-with-role')

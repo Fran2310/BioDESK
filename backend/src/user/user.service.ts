@@ -4,6 +4,7 @@ import {
   ConflictException,
   Logger,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
 import { LabUserService } from 'src/lab-user/lab-user.service';
@@ -15,7 +16,6 @@ import { RegisterDto } from 'src/auth/dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { RoleDto } from 'src/role/dto/role.dto';
-import { SystemUser } from '@prisma/client-system';
 import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
 import { UpdateSystemUserDto } from './dto/update-system-user.dto';
 
@@ -98,9 +98,8 @@ export class UserService {
     });
 
     if (!user) {
-      throw new ConflictException('Usuario no encontrado.');
+      throw new NotFoundException('Usuario no encontrado.');
     }
-
     return user;
   }
 
@@ -696,7 +695,7 @@ export class UserService {
     });
 
     return {
-      message: `Usuario ${deleted.name} eliminado completamente del sistema.`,
+      message: `Usuario ${deleted.name} ${deleted.lastName} eliminado completamente del sistema.`,
     };
   }
 }
