@@ -698,4 +698,27 @@ export class UserService {
       message: `Usuario ${deleted.name} ${deleted.lastName} eliminado completamente del sistema.`,
     };
   }
+
+  async changePasswordByEmail(email: string, newPassword: string) {
+    // 1. Verificar que el usuario existe
+  const user = await this.getSystemUser({ email });
+  if (!user) {
+    throw new ConflictException(`Usuario con email ${email} no encontrado.`);
+  }
+
+  // 2. Generar nuevo salt y hash para la contraseña
+  const salt = await bcrypt.genSalt();
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  // 3. Actualizar usuario en la base de datos
+  await this.systemPrisma.systemUser.update({
+    where: { uuid: user.uuid },
+    data: { 
+      password: hashedPassword,
+      salt,
+    }
+  });
+
+  this.logger.log(`Contraseña actualizada para el email: ${email}`);
+  }
 }

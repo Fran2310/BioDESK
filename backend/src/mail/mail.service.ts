@@ -40,11 +40,16 @@ export class MailService {
       }
     )
 
-    await this.mailerService.sendMail({
-      to: email,
-      subject: '¡Bienvenido a BioDESK!',
-      html: html,
-    });
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: '¡Bienvenido a BioDESK!',
+        html: html,
+      });
+    }
+    catch (error) {
+      this.logger.log(error)
+    }
 
     this.logger.log(`Correo de bienvenida enviado a ${email}`);
   }
@@ -59,11 +64,17 @@ export class MailService {
       }
     )
 
-    await this.mailerService.sendMail({
-      to: email,
-      subject: 'Token temporal para cambiar su contraseña',
-      html: html,
-    });
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Código temporal para cambiar su contraseña',
+        html: html,
+      });
+    }
+    catch (error) {
+      this.logger.log(error)
+    }
+    
 
     this.sharedCacheService.setEmailToken(email, token)
     this.logger.log(`Correo de cambio de contraseña enviado a ${email}`);

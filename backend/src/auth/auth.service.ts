@@ -4,6 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
+import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 /**
  * Servicio de autenticación que gestiona el registro, validación y login de usuarios.
@@ -17,6 +19,8 @@ export class AuthService {
   constructor(
     private readonly usersService: UserService,
     private readonly jwtService: JwtService,
+    private readonly sharedCacheService: SharedCacheService,
+
   ) {}
 
   /**
@@ -90,5 +94,20 @@ export class AuthService {
         rif: lab.rif,
       })),
     };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    // 1. Validar que el token recibido coincide con el almacenado
+    const storedToken = await this.sharedCacheService.getEmailToken(dto.email);
+    
+    if (!storedToken || dto.token !== storedToken) {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
+  
+    // 2. Cambiar la contraseña
+    await this.usersService.changePasswordByEmail(dto.email, dto.newPassword);
+  
+    // 3. Invalidar el token después de usarlo (importante para seguridad)
+    await this.sharedCacheService.delEmailToken(dto.email);
   }
 }

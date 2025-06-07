@@ -46,13 +46,18 @@ export class SharedCacheService {
     return userData;
   }
 
-  async setEmailToken(email: string, token: string, ttl?: number) {
-    await this.cacheManager.set(email, token, ttl);
-    this.logger.log(`Token de email cacheado para el correo ${email}`);
+  async setEmailToken(email: string, token: string) {
+    await this.cacheManager.set(email, token, 3600*1000); // 3600 segundos = 1 hora
+    this.logger.log(`Token de email cacheado para ${email}`);
+  }
+
+  async getEmailToken(email: string) {
+    this.logger.log(`Token obtenido de email para ${email}`);
+    return await this.cacheManager.get(email);
   }
 
   async delEmailToken(email:string) {
     await this.cacheManager.del(email);
-    this.logger.log(`Token de email borrado del cache para el correo ${email}`);
+    this.logger.log(`Token de email borrado del cache para ${email}`);
   }
 }
