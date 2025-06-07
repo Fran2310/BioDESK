@@ -8,6 +8,9 @@ import {
   ParseIntPipe,
   Get,
   ParseBoolPipe,
+  Patch,
+  ParseUUIDPipe,
+  Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -24,6 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { CreateUserWithRoleIdDto } from './dto/create-user-with-role-id.dto';
+import { UpdateSystemUserDto } from './dto/update-system-user.dto';
 
 @ApiBearerAuth()
 @ApiTags('User')
@@ -138,6 +142,88 @@ export class UserController {
       labId,
       dto,
       dto.roleId,
+      req.user.sub,
+    );
+  }
+
+  @Patch('update')
+  @CheckAbility({
+    actions: 'update',
+    subject: 'SystemUser',
+    fields: 'name,lastName,email',
+  })
+  @ApiOperation({ summary: 'Actualizar datos de un usuario del sistema' })
+  @ApiQuery({
+    name: 'uuid',
+    required: true,
+    type: String,
+    description: 'UUID del usuario a actualizar',
+  })
+  @ApiBody({ type: UpdateSystemUserDto })
+  async updateUser(
+    @Query('uuid', ParseUUIDPipe) userUuid: string,
+    @Body() dto: UpdateSystemUserDto,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    const performedBy = req.user.sub;
+
+    return this.userService.updateSystemUserData(
+      userUuid,
+      dto,
+      labId,
+      performedBy,
+    );
+  }
+
+  @Delete('soft-delete')
+  @CheckAbility({ actions: 'delete', subject: 'LabUser' })
+  @ApiOperation({
+    summary: 'Eliminar la asignación de un usuario a un laboratorio',
+    description: `Esta operación elimina al usuario del laboratorio y su asignacion DB central, pero sin eliminar sus datos del sistema.`,
+  })
+  @ApiQuery({
+    name: 'userUuid',
+    type: String,
+    required: true,
+    description: 'UUID del usuario que se desea desvincular del laboratorio.',
+    example: 'c5caef0a-95b3-4c6...',
+  })
+  async deleteUserAssignment(
+    @Query('userUuid', ParseUUIDPipe) userUuid: string,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.userService.deleteAssignedUserToLab(
+      labId,
+      userUuid,
+      req.user.sub,
+    );
+  }
+
+  // src/user/user.controller.ts
+
+  @Delete('hard-delete')
+  @CheckAbility({ actions: 'delete', subject: 'SystemUser' })
+  @ApiOperation({
+    summary: 'Eliminar completamente un usuario del sistema',
+    description:
+      'Este endpoint elimina por completo a un usuario, siempre que no esté asignado a ningún laboratorio.',
+  })
+  @ApiQuery({
+    name: 'userUuid',
+    type: String,
+    required: true,
+    description: 'UUID del usuario a eliminar del sistema',
+  })
+  async deleteSystemUser(
+    @Query('userUuid', ParseUUIDPipe) userUuid: string,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.userService.deleteTotalSystemUser(
+      labId,
+      userUuid,
       req.user.sub,
     );
   }

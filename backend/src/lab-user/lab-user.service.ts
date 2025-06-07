@@ -416,4 +416,20 @@ export class LabUserService {
       await prisma.$disconnect();
     }
   }
+
+  /**
+   * Elimina un usuario de laboratorio específico utilizando el ID del laboratorio y el UUID del usuario.
+   *
+   * @param labId - Identificador del laboratorio.
+   * @param userUuid - UUID del usuario a eliminar.
+   * @returns Una promesa que se resuelve cuando el usuario ha sido eliminado.
+   */
+  async deleteLabUser(labId: number, userUuid: string): Promise<void> {
+    const dbName = await this.systemPrisma.getLabDbName(labId);
+    const prisma = this.labPrismaFactory.createInstanceDB(dbName);
+
+    await prisma.labUser.delete({
+      where: { systemUserUuid: userUuid },
+    });
+  }
 }

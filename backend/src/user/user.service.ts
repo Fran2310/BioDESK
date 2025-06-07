@@ -1,5 +1,10 @@
 // backend/src/user/user.service.ts
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
 import { LabUserService } from 'src/lab-user/lab-user.service';
 import { LabService } from 'src/lab/services/lab.service';
@@ -12,6 +17,7 @@ import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { RoleDto } from 'src/role/dto/role.dto';
 import { SystemUser } from '@prisma/client-system';
 import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
+import { UpdateSystemUserDto } from './dto/update-system-user.dto';
 
 @Injectable()
 export class UserService {
@@ -71,7 +77,7 @@ export class UserService {
     email?: string;
     ci?: string;
     includeLabs?: boolean;
-  }): Promise<SystemUser> {
+  }): Promise<any> {
     const { uuid, email, ci, includeLabs = false } = params;
 
     if (!uuid && !email && !ci) {
@@ -463,6 +469,234 @@ export class UserService {
       rif: labRecord.rif,
       status: labRecord.status,
       createdAt: labRecord.createdAt,
+    };
+  }
+
+  /**
+   * Actualiza los datos básicos de un usuario del sistema (System DB).
+   * Solo permite modificar: name, lastName, email.
+   *
+   * @param userUuid UUID del usuario a actualizar.
+   * @param dto Datos a actualizar.
+   * @param labId ID del laboratorio en donde se realizo la accion.
+   * @param performedByUserUuid UUID de quien realiza el cambio (para auditoría).
+   * @throws BadRequestException si no hay campos a actualizar.
+   * @throws ConflictException si el nuevo email ya está en uso por otro usuario.
+   */
+  async updateSystemUserData(
+    userUuid: string,
+    dto: UpdateSystemUserDto,
+    labId: number,
+    performedByUserUuid: string,
+  ) {
+    const { name, lastName, email } = dto;
+
+    if (!name && !lastName && !email) {
+      throw new BadRequestException(
+        'Debes enviar al menos un campo a actualizar',
+      );
+    }
+
+    const user = await this.getSystemUser({
+      uuid: userUuid,
+      includeLabs: true,
+    });
+
+    // Verificar si el nuevo email está en uso
+    if (email && email !== user.email) {
+      const existingEmail = await this.systemPrisma.systemUser.findFirst({
+        where: { email },
+      });
+
+      if (existingEmail) {
+        throw new ConflictException(`El email ${email} ya está en uso.`);
+      }
+    }
+
+    // 1. Verificar si el usuario está asignado al laboratorio
+    if (user.labs) {
+      const isAssignedToLab = user.labs.some((lab) => lab.id === labId);
+      if (!isAssignedToLab) {
+        throw new ConflictException(
+          `El usuario no está asignado al laboratorio, no tiene permisos para editar`,
+        );
+      }
+    } else {
+      throw new ConflictException(
+        'El usuario no está asignado a ningún laboratorio.',
+      );
+    }
+
+    // 2. Guardar el estado previo para auditoría
+    const before = {
+      name: user.name,
+      lastName: user.lastName,
+      email: user.email,
+    };
+
+    const updated = await this.systemPrisma.systemUser.update({
+      where: { uuid: userUuid },
+      data: {
+        ...(name && { name }),
+        ...(lastName && { lastName }),
+        ...(email && { email }),
+      },
+    });
+
+    // Auditar
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'update',
+      details: `Actualizó datos de usuario ${userUuid}`,
+      entity: 'SystemUser',
+      recordEntityId: user.id.toString(),
+      operationData: {
+        before,
+        after: {
+          name: updated.name,
+          lastName: updated.lastName,
+          email: updated.email,
+        },
+      },
+    });
+
+    return {
+      message: 'Usuario actualizado correctamente',
+      updated: {
+        uuid: updated.uuid,
+        name: updated.name,
+        lastName: updated.lastName,
+        email: updated.email,
+      },
+    };
+  }
+
+  /**
+   * Elimina la asignación de un usuario del sistema (solamente de la db central) a un laboratorio específico.
+   *
+   * @param labId ID del laboratorio del que se desea desvincular al usuario.
+   * @param userUuid UUID del usuario del sistema.
+   * @throws ConflictException Si el usuario no está asignado al laboratorio indicado.
+   * @returns Promise<void>
+   */
+  async deleteAssignedSystemUser(
+    labId: number,
+    userUuid: string,
+  ): Promise<void> {
+    const user = await this.getSystemUser({
+      uuid: userUuid,
+      includeLabs: true,
+    });
+
+    const isAssigned = user.labs.some((lab) => lab.id === labId);
+    if (!isAssigned) {
+      throw new ConflictException(
+        `El usuario no está asignado al laboratorio con ID ${labId}`,
+      );
+    }
+
+    await this.systemPrisma.systemUser.update({
+      where: { uuid: userUuid },
+      data: {
+        labs: {
+          disconnect: [{ id: labId }],
+        },
+      },
+    });
+  }
+
+  /**
+   * Elimina la asignación de un usuario a un laboratorio, removiendo la relación tanto en la base de datos del laboratorio como en la central.
+   * Registra la acción en el sistema de auditoría.
+   *
+   * @param labId - ID del laboratorio del que se elimina el usuario.
+   * @param userUuid - UUID del usuario a eliminar.
+   * @param performedByUserUuid - UUID del usuario que realiza la acción.
+   * @returns Un mensaje indicando que el usuario fue eliminado exitosamente del laboratorio.
+   */
+  async deleteAssignedUserToLab(
+    labId: number,
+    userUuid: string,
+    performedByUserUuid: string,
+  ): Promise<{ message: string }> {
+    const user = await this.getSystemUser({ uuid: userUuid });
+
+    // 1. Eliminar relación en DB del laboratorio
+    await this.labUserService.deleteLabUser(labId, userUuid);
+
+    // 2. Eliminar relación en DB central
+    await this.deleteAssignedSystemUser(labId, userUuid);
+
+    // 3. Auditar acción
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'delete',
+      details: `Se eliminó la asignación del usuario ${user.name} ${user.lastName} del laboratorio`,
+      entity: 'LabUser',
+      recordEntityId: user.uuid,
+      operationData: {
+        before: {
+          userUuid,
+          labId,
+        },
+      },
+    });
+
+    return {
+      message: `Usuario ${user.email} eliminado del laboratorio exitosamente.`,
+    };
+  }
+
+  /**
+   * Elimina completamente un usuario del sistema, asegurando que no esté asignado a ningún laboratorio.
+   * Registra la acción en el sistema de auditoría.
+   *
+   * @param labId ID del laboratorio desde el cual se realiza la acción.
+   * @param userUuid UUID del usuario a eliminar.
+   * @param performedByUserUuid UUID del usuario que realiza la eliminación.
+   * @throws ConflictException Si el usuario está asignado a uno o más laboratorios.
+   * @returns Mensaje de confirmación de eliminación.
+   */
+  async deleteTotalSystemUser(
+    labId: number,
+    userUuid: string,
+    performedByUserUuid: string,
+  ) {
+    // 1. Buscar el usuario incluyendo sus laboratorios
+    const user = await this.getSystemUser({
+      uuid: userUuid,
+      includeLabs: true,
+    });
+
+    // 2. Validar que no esté asignado a ningún laboratorio
+    if (user.labs.length > 0) {
+      throw new ConflictException(
+        `El usuario no puede eliminarse porque está asignado a ${user.labs.length} laboratorio(s).`,
+      );
+    }
+
+    // 3. Eliminar el usuario del sistema
+    const deleted = await this.systemPrisma.systemUser.delete({
+      where: { uuid: userUuid },
+    });
+
+    // 4. Auditar eliminación
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'delete',
+      entity: 'SystemUser',
+      recordEntityId: deleted.id.toString(),
+      details: `Se eliminó completamente al usuario ${deleted.name} ${deleted.lastName} del sistema`,
+      operationData: {
+        before: {
+          ci: deleted.ci,
+          name: deleted.name,
+          lastName: deleted.lastName,
+          email: deleted.email,
+        },
+        after: null,
+      },
+    });
+
+    return {
+      message: `Usuario ${deleted.name} eliminado completamente del sistema.`,
     };
   }
 }
