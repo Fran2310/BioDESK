@@ -17,6 +17,7 @@ import { CaslModule } from './casl/casl.module';
 import { AuditModule } from './audit/audit.module';
 import { RoleModule } from './role/role.module';
 import { LabUserModule } from './lab-user/lab-user.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { LabUserModule } from './lab-user/lab-user.module';
     AuditModule,
     RoleModule,
     LabUserModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

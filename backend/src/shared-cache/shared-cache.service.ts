@@ -45,4 +45,14 @@ export class SharedCacheService {
     }
     return userData;
   }
+
+  async setEmailToken(email: string, token: string, ttl?: number) {
+    await this.cacheManager.set(email, token, ttl);
+    this.logger.log(`Token de email cacheado para el correo ${email}`);
+  }
+
+  async delEmailToken(email:string) {
+    await this.cacheManager.del(email);
+    this.logger.log(`Token de email borrado del cache para el correo ${email}`);
+  }
 }

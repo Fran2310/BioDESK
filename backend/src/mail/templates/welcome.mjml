@@ -1,0 +1,37 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Roboto" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" />
+    <mj-attributes>
+      <mj-text font-family="Roboto, Helvetica, Arial, sans-serif" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body>
+    <!-- Banner con logo -->
+    <mj-section background-color="#f8f9fa" padding="0">
+      <mj-column>
+        <mj-image src="https://www.ebersbanden.nl/wp-content/uploads/2019/10/email-banner-300x101.jpg" alt="Logo App" width="500%" />
+      </mj-column>
+    </mj-section>
+
+    <!-- Contenido principal -->
+    <mj-section padding="20px 0">
+      <mj-column>
+        <mj-text font-size="24px" color="#333" font-weight="700" padding="10px 0">
+          ¡Bienvenido {{name}}!
+        </mj-text>
+        <mj-text font-size="16px" color="#555" line-height="1.6" padding="10px 0">
+          Gracias por registrarte en nuestro servicio.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f8f9fa" padding="20px 0">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#999">
+          © {{year}} BioDESK. Todos los derechos reservados.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

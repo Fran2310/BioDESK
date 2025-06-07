@@ -16,20 +16,20 @@ content-type: application/json
 --------------------------------------------------
 
 POST http://localhost:3000/api/auth/register
-content-type: multipart/form-data
+content-type: application/json
 
 {
   "ci": "29910820",
   "name": "Joshua",
   "lastName": "Carrera",
-  "email": "joshualab2@example.com",
+  "email": "joshuacarreraramos@gmail.com",
   "password": "securePass123",
   "lab": {
     "name": "Laboratorio Extranjero",
-    "rif": "J-12345678-6",
+    "rif": "J-12345678-7",
     "dir": "Av. Principal, calle 123, caracas",
     "phoneNums": ["0212-1234567", "0414-7654321"]
-  },
+  }
 }
 
 --------------------------------------------------
@@ -38,8 +38,8 @@ POST http://localhost:3000/api/auth/login
 content-type: application/json
 
 {
-  "email": "fra@example.com",
-  "password": "securePass123"
+  "email": "joshuacarreraramos@gmail.com",
+  "password": "Password123!"
 }
 
 -------------------------------------------------
