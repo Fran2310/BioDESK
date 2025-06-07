@@ -12,6 +12,7 @@ import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { RoleDto } from 'src/role/dto/role.dto';
 import { SystemUser } from '@prisma/client-system';
 import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
+
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -98,6 +99,117 @@ export class UserService {
   }
 
   /**
+   * Recupera todos los usuarios del sistema asociados a un laboratorio específico.
+   *
+   * @param labId - ID del laboratorio.
+   * @param offset - Desplazamiento para la paginación (por defecto 0).
+   * @param limit - Límite de usuarios a retornar (por defecto 20).
+   * @returns Un objeto con el total de usuarios y un diccionario de datos de usuario indexado por UUID.
+   */
+  async getAllSystemUsersByLabId(
+    labId: number,
+    offset = 0,
+    limit = 20,
+  ): Promise<{
+    total: number;
+    data: Record<
+      string,
+      { ci: string; name: string; lastName: string; email: string }
+    >;
+  }> {
+    const [users, total] = await Promise.all([
+      this.systemPrisma.systemUser.findMany({
+        where: {
+          labs: {
+            some: {
+              id: labId,
+            },
+          },
+        },
+        skip: offset,
+        take: limit,
+        select: {
+          uuid: true,
+          ci: true,
+          name: true,
+          lastName: true,
+          email: true,
+        },
+      }),
+      this.systemPrisma.systemUser.count({
+        where: {
+          labs: {
+            some: {
+              id: labId,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const data = users.reduce(
+      (acc, user) => {
+        acc[user.uuid] = user;
+        return acc;
+      },
+      {} as Record<string, (typeof users)[number]>,
+    );
+
+    return { total, data };
+  }
+
+  /**
+   * Obtiene los usuarios de un laboratorio específico, con opción de incluir permisos, paginación y enriquecimiento de datos con información del usuario del sistema.
+   *
+   * @param labId ID del laboratorio.
+   * @param includePermissions Si es true, incluye los permisos de los usuarios. Valor por defecto: false.
+   * @param offset Desplazamiento para la paginación. Valor por defecto: 0.
+   * @param limit Límite de usuarios a retornar. Valor por defecto: 20.
+   * @returns Un objeto con los usuarios del laboratorio y sus datos enriquecidos.
+   */
+  async getDataLabUsers(
+    labId: number,
+    includePermissions = false,
+    offset = 0,
+    limit = 20,
+  ) {
+    const labUsers = await this.labUserService.getLabUsers(
+      labId,
+      includePermissions,
+      offset,
+      limit,
+    );
+
+    const systemUsersMap = await this.getAllSystemUsersByLabId(
+      labId,
+      offset,
+      limit,
+    );
+
+    // Enriquecer datos
+    const enrichedData = labUsers.data.map((item) => {
+      const user = systemUsersMap.data[item.systemUserUuid];
+
+      return {
+        userData: user
+          ? {
+              ci: user.ci,
+              name: user.name,
+              lastName: user.lastName,
+              email: user.email,
+            }
+          : undefined,
+        ...item,
+      };
+    });
+
+    return {
+      ...labUsers,
+      data: enrichedData,
+    };
+  }
+
+  /**
    * Crea un nuevo usuario del sistema con los datos proporcionados y lo asocia opcionalmente a un laboratorio.
    * Valida que el correo y la cédula sean únicos, encripta la contraseña y guarda el usuario en la base de datos.
    *
@@ -131,14 +243,14 @@ export class UserService {
   }
 
   /**
-   * Crea un usuario del sistema y lo asigna a un laboratorio con un rol específico.
-   * @param labId ID del laboratorio al que se asignará el usuario.
+   * Crea un usuario y rol para asignarlo a un laboratorio.
+   * @param labId ID del laboratorio al que se asignará el usuario y rol.
    * @param systemUserDto Datos del usuario a crear.
-   * @param role Rol que se asignará al usuario en el laboratorio.
+   * @param role datos del rol a crear que se asignará al usuario.
    * @param performedByUserUuid UUID del usuario que realiza la acción (opcional, para auditoría).
    * @returns Información del usuario creado.
    */
-  async createUserAndAssignToLab(
+  async createUserWithRoleToLab(
     labId: number,
     systemUserDto: CreateUserDto,
     role: RoleDto,
@@ -146,7 +258,7 @@ export class UserService {
   ) {
     const systemUser = await this.createSystemUser(systemUserDto, labId);
 
-    const labUser = await this.labUserService.createLabUser(
+    const labUser = await this.labUserService.createLabUserWithRole(
       labId,
       {
         systemUserUuid: systemUser.uuid,
@@ -178,6 +290,49 @@ export class UserService {
     };
   }
 
+  async createUserWithExistingRole(
+    labId: number,
+    userDto: CreateUserDto,
+    roleId: number,
+    performedByUserUuid: string,
+  ): Promise<{ uuid: string; email: string }> {
+    // 1. Verificar que el rol exista
+    await this.labUserService.validateRoleExists(labId, roleId);
+
+    // 2. Crear usuario en el sistema
+    const systemUser = await this.createSystemUser(userDto, labId);
+
+    // 3. Asociar al laboratorio con rol existente
+    const labUser = await this.labUserService.createLabUser(
+      labId,
+      systemUser.uuid,
+      performedByUserUuid,
+      roleId,
+    );
+
+    // 4. Auditar creación
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'create',
+      details: `Creó al usuario ${systemUser.name} ${systemUser.lastName} con rol ID ${roleId}`,
+      entity: 'LabUser',
+      recordEntityId: labUser.id.toString(),
+      operationData: {
+        after: {
+          ciField: systemUser.ci,
+          nameField: systemUser.name,
+          lastNameField: systemUser.lastName,
+          emailField: systemUser.email,
+          roleId,
+        },
+      },
+    });
+
+    return {
+      uuid: systemUser.uuid,
+      email: systemUser.email,
+    };
+  }
+
   /**
    * Crea un nuevo laboratorio y un usuario del sistema asociado a él como administrador.
    * @param dto Datos del registro que incluye el laboratorio y el usuario.
@@ -202,7 +357,7 @@ export class UserService {
       const user = await this.createSystemUser(userDto, labRecord.id);
 
       // ✅ Luego lo insertas en la base de datos del laboratorio
-      const labUser = await this.labUserService.createLabUser(
+      const labUser = await this.labUserService.createLabUserWithRole(
         labRecord.id,
         {
           systemUserUuid: user.uuid,
@@ -271,7 +426,7 @@ export class UserService {
       `🧪 Laboratorio creado: ${labRecord.name} (${labRecord.rif})`,
     );
     // Inserta en la DB dinámica el usuario como admin del nuevo lab
-    const labUser = await this.labUserService.createLabUser(
+    const labUser = await this.labUserService.createLabUserWithRole(
       labRecord.id,
       {
         systemUserUuid: user.uuid,

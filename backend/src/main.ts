@@ -23,6 +23,9 @@ async function bootstrap() {
     .addTag('[Testing] CASL')
     .addTag('Auth', 'Autenticación')
     .addTag('Lab', 'Gestión de laboratorios')
+    .addTag('User', 'Gestión de usuarios completa')
+    .addTag('LabUser', 'Gestion de usuarios a nivel de laboratorio')
+    .addTag('Role', 'Gestión de roles')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -35,7 +38,16 @@ async function bootstrap() {
   });
 
   // Configuraciones existentes
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true, // Habilita la transformación automática
+      transformOptions: {
+        enableImplicitConversion: true, // Convierte tipos automáticamente
+      },
+    }),
+  );
   app.setGlobalPrefix('api');
 
   await app.listen(process.env.PORT ?? 3000);

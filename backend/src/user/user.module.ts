@@ -8,6 +8,7 @@ import { LabModule } from 'src/lab/lab.module';
 import { AuditModule } from 'src/audit/audit.module';
 import { RoleDto } from 'src/role/dto/role.dto';
 import { RoleModule } from 'src/role/role.module';
+import { UserController } from './user.controller';
 
 @Module({
   imports: [
@@ -21,5 +22,6 @@ import { RoleModule } from 'src/role/role.module';
   ],
   providers: [UserService],
   exports: [UserService],
+  controllers: [UserController],
 })
 export class UserModule {}
