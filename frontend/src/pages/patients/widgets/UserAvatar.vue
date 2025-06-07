@@ -1,14 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { type PropType } from 'vue'
 import { type User } from '../types'
 
-const avatarColor = (userName: string) => {
-  const colors = ['primary', '#FFD43A', '#ADFF00', '#262824', 'danger']
-  const index = userName.charCodeAt(0) % colors.length
-  return colors[index]
-}
-
-defineProps({
+const props = defineProps({
   user: {
     type: Object as PropType<User>,
     required: true,
@@ -19,18 +14,39 @@ defineProps({
   },
 })
 
-const isUrl = (avatar: string) => {
-  if (!avatar) return false
+// Compute fullname
+const fullname = computed(() => {
+  return `${props.user.name} ${props.user.lastName}`.trim()
+})
 
-  return avatar.startsWith('http') || avatar.startsWith('blob:')
+// Check if avatar is valid
+const hasAvatar = computed(() => {
+  return !!props.user.avatar
+})
+
+// Avatar color logic
+const avatarColor = (userName: string | undefined): string => {
+  if (!userName || typeof userName !== 'string' || userName.trim() === '') {
+    return 'primary' // default color
+  }
+
+  const colors = ['primary', '#FFD43A', '#ADFF00', '#262824', 'danger']
+  const safeName = userName.trim()
+  const index = safeName.charCodeAt(0) % colors.length
+  return colors[index]
 }
 
-const fallback = (fullname: string) => {
-  try {
-    const [firstName, lastName] = fullname.split(' ')
-    return `${firstName[0]}${lastName[0]}`
-  } catch {
-    return fullname[0]
+// Fallback text logic
+const fallback = (fullname: string | undefined): string => {
+  if (!fullname || typeof fullname !== 'string' || fullname.trim() === '') {
+    return '?'
+  }
+
+  const parts = fullname.trim().split(/\s+/)
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`
+  } else {
+    return parts[0][0]
   }
 }
 </script>
@@ -38,8 +54,8 @@ const fallback = (fullname: string) => {
 <template>
   <VaAvatar
     :size="size"
-    :src="isUrl(user.avatar) ? user.avatar : ''"
-    :fallback-text="fallback(user.fullname)"
-    :color="avatarColor(user.fullname)"
+    :src="hasAvatar.value && isUrl(props.user.avatar) ? props.user.avatar : ''"
+    :fallback-text="fallback(fullname.value)"
+    :color="avatarColor(fullname.value)"
   />
 </template>

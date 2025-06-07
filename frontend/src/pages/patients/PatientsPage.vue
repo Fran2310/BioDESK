@@ -9,9 +9,67 @@ import UsersTable from './widgets/UsersTable.vue'
 import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 import { User } from './types'
 
+//DEBUG MOCK ARRAY OF PATIENTS HERE
+
+const mockPatients = ref<User[]>([
+  {
+    id: '1',
+    ci: '12345678',
+    name: 'John',
+    lastName: 'Doe',
+    secondName: '',
+    secondLastName: '',
+    email: 'john@example.com',
+    phoneNums: ['+123456789'],
+    dir: 'Main St.',
+    birthDate: '1990-01-01',
+    active: true,
+    avatar: '',
+    notes: '',
+    role: 'user',
+  },
+  {
+    id: '2',
+    ci: '87654321',
+    name: 'Jane',
+    lastName: 'Smith',
+    secondName: 'Marie',
+    secondLastName: 'Johnson',
+    email: 'jane.smith@example.com',
+    phoneNums: ['+987654321', '+555555555'],
+    dir: 'Elm Street',
+    birthDate: '1985-05-10',
+    active: false,
+    avatar: '',
+    notes: 'Allergic to penicillin',
+    role: 'admin',
+  },
+])
+
+const localSortBy = ref('name')
+const localSortingOrder = ref<'asc' | 'desc'>('asc')
+
+const localPagination = ref({
+  page: 1,
+  perPage: 10,
+  total: mockPatients.value.length,
+})
+
+function handleEdit(user: User) {
+  alert(`Editing user: ${user.name} ${user.lastName}`)
+}
+
+function handleDelete(user: User) {
+  alert(`Deleting user: ${user.name} ${user.lastName}`)
+}
+
+console.log("Mock Patients: ", mockPatients.value)
+
+
+
 const { t } = useI18n()
 const { users, isLoading, filters, sorting, pagination, error, ...usersApi } = useUsers()
-const { projects } = useProjects()
+/* const { projects } = useProjects() */
 
 const doShowEditUserModal = ref(false)
 const userToEdit = ref<User | null>(null)
@@ -79,6 +137,8 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
 <template>
   <div> <!-- Single root wrapper -->
     <h1 class="page-title">{{ t('menu.patients') }}</h1>
+    
+   <pre>{{ mockPatients.value }}</pre>
 
     <VaCard>
       <VaCardContent>
@@ -102,16 +162,28 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
           <VaButton @click="showAddUserModal">Add Patient</VaButton>
         </div>
 
-        <CustomPatientsTable
+           
+<h1>Hola</h1> <pre>{{ mockPatients }}</pre>
+        <!-- <CustomPatientsTable
           v-model:sort-by="sorting.sortBy"
           v-model:sorting-order="sorting.sortingOrder"
           :users="users"
-          :projects="projects"
           :loading="isLoading"
           :pagination="pagination"
           @editUser="showEditUserModal"
           @deleteUser="onUserDelete"
+        /> -->
+        
+        <CustomPatientsTable
+        v-model:sort-by="localSortBy"
+        v-model:sorting-order="localSortingOrder"
+        :users="mockPatients"
+        :loading="false"
+        :pagination="localPagination"
+        @edit-user="handleEdit"
+        @delete-user="handleDelete"
         />
+
       </VaCardContent>
     </VaCard>
 
