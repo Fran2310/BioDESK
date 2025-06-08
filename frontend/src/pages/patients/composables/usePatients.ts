@@ -1,37 +1,40 @@
 import { Ref, ref, unref, watch, computed } from 'vue'
 import { v4 as uuid } from 'uuid'
-import type { Filters, Pagination, Sorting } from '../../../data/pages/users'
-import { User } from '../types'
-import { useUsersStore } from '../../../stores/users'
+import type { Filters, Pagination, Sorting } from '../../../data/pages/patients'
+import { Patient } from '../patient.types'
+import { addPatient, updatePatient, removePatient, uploadAvatar } from '../../../data/pages/patients'
+import { usePatientsStore } from '../../../stores/patientsStore'
 
 const makePaginationRef = () => ref<Pagination>({ page: 1, perPage: 10, total: 0 })
 const makeSortingRef = () => ref<Sorting>({ sortBy: 'fullname', sortingOrder: null })
 const makeFiltersRef = () => ref<Partial<Filters>>({ isActive: true, search: '' })
 
-export const useUsers = (options?: {
+export const usePatients = (options?: {
   pagination?: Ref<Pagination>
   sorting?: Ref<Sorting>
   filters?: Ref<Partial<Filters>>
 }) => {
   const isLoading = ref(false)
   const error = ref()
-  const usersStore = useUsersStore()
+  const patientStore = usePatientsStore()
 
   const { filters = makeFiltersRef(), sorting = makeSortingRef(), pagination = makePaginationRef() } = options || {}
 
-  const fetch = async () => {
-    isLoading.value = true
-    try {
-      await usersStore.getAll({
-        filters: unref(filters),
-        sorting: unref(sorting),
-        pagination: unref(pagination),
-      })
-      pagination.value = usersStore.pagination
-    } finally {
-      isLoading.value = false
-    }
+ const fetch = async () => {
+  isLoading.value = true
+  try {
+    const response = await patientStore.getAll({
+      filters: unref(filters),
+      sorting: unref(sorting),
+      pagination: unref(pagination),
+    })
+
+    patients.value = response.data
+    pagination.value = response.pagination
+  } finally {
+    isLoading.value = false
   }
+}
 
   watch(
     filters,
@@ -45,7 +48,7 @@ export const useUsers = (options?: {
 
   fetch()
 
-  const users = computed(() => {
+  const patients = computed(() => {
     const getSortItem = (obj: any, sortBy: string) => {
       if (sortBy === 'projects') {
         return obj.projects.map((project: any) => project).join(', ')
@@ -54,7 +57,7 @@ export const useUsers = (options?: {
       return obj[sortBy]
     }
 
-    const paginated = usersStore.items.slice(
+    const paginated = patientStore.items.slice(
       (pagination.value.page - 1) * pagination.value.perPage,
       pagination.value.page * pagination.value.perPage,
     )
@@ -82,14 +85,14 @@ export const useUsers = (options?: {
     sorting,
     pagination,
 
-    users,
+    patients,
 
     fetch,
 
-    async add(user: User) {
+    async add(patient: Patient) {
       isLoading.value = true
       try {
-        return await usersStore.add(user)
+        return await patientStore.add(patient)
       } catch (e) {
         error.value = e
       } finally {
@@ -97,10 +100,10 @@ export const useUsers = (options?: {
       }
     },
 
-    async update(user: User) {
+    async update(patient: Patient) {
       isLoading.value = true
       try {
-        return await usersStore.update(user)
+        return await patientStore.update(patient)
       } catch (e) {
         error.value = e
       } finally {
@@ -108,23 +111,26 @@ export const useUsers = (options?: {
       }
     },
 
-    async remove(user: User) {
-      isLoading.value = true
-      try {
-        return await usersStore.remove(user)
-      } catch (e) {
-        error.value = e
-      } finally {
-        isLoading.value = false
-      }
-    },
+    async remove(patient: Patient) {
+  isLoading.value = true
+  try {
+    await patientStore.remove(patient)
+
+    // ✅ Get updated list from store
+    await fetch()
+  } catch (e) {
+    error.value = e
+  } finally {
+    isLoading.value = false
+  }
+},
 
     async uploadAvatar(avatar: Blob) {
       const formData = new FormData()
       formData.append('avatar', avatar)
       formData.append('id', uuid())
 
-      return usersStore.uploadAvatar(formData)
+      return patientStore.uploadAvatar(formData)
     },
   }
 }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { defineVaDataTableColumns, useModal } from 'vuestic-ui'
-import { User, UserRole } from '../types'
+import { Patient } from '../patient.types'
 import UserAvatar from './UserAvatar.vue'
 import { PropType, computed, toRef } from 'vue'
-import { Pagination, Sorting } from '../../../data/pages/users'
+import { Pagination, Sorting } from '../../../data/pages/patients'
 import { useVModel } from '@vueuse/core'
-import { Project } from '../../projects/types'
+
 
 const columns = defineVaDataTableColumns([
   { label: 'Name', key: 'name', sortable: true },
@@ -21,8 +21,8 @@ const columns = defineVaDataTableColumns([
 ])
 
 const props = defineProps({
-  users: {
-    type: Array as PropType<User[]>,
+  patients: {
+    type: Array as PropType<Patient[]>,
     required: true,
   },
   
@@ -33,30 +33,25 @@ const props = defineProps({
 })
 
 const emit = defineEmits<{
-  (event: 'edit-user', user: User): void
-  (event: 'delete-user', user: User): void
+  (event: 'edit-patient', patient: Patient): void
+  (event: 'delete-patient', patient: Patient): void
   (event: 'update:sortBy', sortBy: Sorting['sortBy']): void
   (event: 'update:sortingOrder', sortingOrder: Sorting['sortingOrder']): void
 }>()
 
-const users = toRef(props, 'users')
+const patients = toRef(props, 'patients')
 const sortByVModel = useVModel(props, 'sortBy', emit)
 const sortingOrderVModel = useVModel(props, 'sortingOrder', emit)
 
-const roleColors: Record<UserRole, string> = {
-  admin: 'danger',
-  user: 'background-element',
-  owner: 'warning',
-}
 
 const totalPages = computed(() => Math.ceil(props.pagination.total / props.pagination.perPage))
 
 const { confirm } = useModal()
 
-const onUserDelete = async (user: User) => {
+const onPatientDelete = async (patient: Patient) => {
   const agreed = await confirm({
     title: 'Delete user',
-    message: `Are you sure you want to delete ${user.fullname}?`,
+    message: `Are you sure you want to delete ${patient.name} ${patient.lastName}?`,
     okText: 'Delete',
     cancelText: 'Cancel',
     size: 'small',
@@ -64,35 +59,24 @@ const onUserDelete = async (user: User) => {
   })
 
   if (agreed) {
-    emit('delete-user', user)
+    emit('delete-patient', patient)
   }
 }
 
-const formatProjectNames = (projects: Project['id'][]) => {
-  const names = projects.reduce((acc, p) => {
-    const project = props.projects?.find(({ id }) => p === id)
+//HELPER FUNCTION FOR PHONE NUMBERS
 
-    if (project) {
-      acc.push(project.project_name)
-    }
-
-    return acc
-  }, [] as string[])
-  if (names.length === 0) return 'No projects'
-  if (names.length <= 2) {
-    return names.map((name) => name).join(', ')
-  }
-
-  return (
-    names
-      .slice(0, 2)
-      .map((name) => name)
-      .join(', ') +
-    ' + ' +
-    (names.length - 2) +
-    ' more'
-  )
+const displayPhones = (phones: string[]) => {
+  return phones.filter(Boolean).join(', ')
 }
+
+//HELPER FUNCTION FOR DATES
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString()
+}
+
+
 </script>
 
 <template>
@@ -100,12 +84,12 @@ const formatProjectNames = (projects: Project['id'][]) => {
     v-model:sort-by="sortByVModel"
     v-model:sorting-order="sortingOrderVModel"
     :columns="columns"
-    :items="users"
+    :items="patients"
     :loading="$props.loading"
   >
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis">
-        <UserAvatar :user="rowData as User" size="small" />
+        <UserAvatar :user="rowData as Patient" size="small" />
         {{ rowData.name }}
       </div>
     </template>
@@ -134,6 +118,12 @@ const formatProjectNames = (projects: Project['id'][]) => {
       </div>
     </template>
 
+    <template #cell(birthDate)="{ rowData }">
+      <div class="ellipsis max-w-[230px]">
+        {{ formatDate(rowData.birthDate) }}
+      </div>
+    </template>
+
     <template #cell(dir)="{ rowData }">
       <div class="ellipsis max-w-[230px]">
         {{ rowData.dir }}
@@ -142,7 +132,7 @@ const formatProjectNames = (projects: Project['id'][]) => {
 
     <template #cell(phoneNums)="{ rowData }">
       <div class="ellipsis max-w-[230px]">
-        {{ rowData.phoneNums }}
+        {{ displayPhones(rowData.phoneNums) }}
       </div>
     </template>
 
@@ -152,16 +142,16 @@ const formatProjectNames = (projects: Project['id'][]) => {
           preset="primary"
           size="small"
           icon="mso-edit"
-          aria-label="Edit user"
-          @click="$emit('edit-user', rowData as User)"
+          aria-label="Edit patient"
+          @click="$emit('edit-patient', rowData as Patient)"
         />
         <VaButton
           preset="primary"
           size="small"
           icon="mso-delete"
           color="danger"
-          aria-label="Delete user"
-          @click="onUserDelete(rowData as User)"
+          aria-label="Delete patient"
+          @click="onPatientDelete(rowData as Patient)"
         />
       </div>
     </template>

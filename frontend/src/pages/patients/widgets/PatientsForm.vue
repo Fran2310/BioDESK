@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { PropType, computed, ref, watch } from 'vue'
 import { useForm } from 'vuestic-ui'
-import { User, UserRole } from '../types'
+
 import UserAvatar from './UserAvatar.vue'
-import { useProjects } from '../../projects/composables/useProjects'
+import { Patient } from './patients.types'
 import { validators } from '../../../services/utils'
 
 const props = defineProps({
-  user: {
-    type: Object as PropType<User | null>,
+  patient: {
+    type: Object as PropType<Patient | null>,
     default: null,
   },
   saveButtonLabel: {
@@ -18,68 +18,59 @@ const props = defineProps({
 })
 
 // New default user with patient fields
-const defaultNewUser = {
-  avatar: '',
-  fullname: '',
-  role: 'user',
-  username: '',
-  notes: '',
+const defaultNewPatient = {
+  id: '', // will be filled later
+  ci: '',
+  name: '',
+  lastName: '',
+  secondName: '',
+  secondLastName: '',
   email: '',
-  active: true,
-  projects: [],
-  ci: '', // NEW
-  name: '', // NEW
-  lastName: '', // NEW
-  secondName: '', // NEW
-  secondLastName: '', // NEW
-  phoneNums: [''], // NEW
-  dir: '', // NEW
-  birthDate: null, // NEW
+  phoneNums: [''],
+  dir: '',
+  birthDate: '',
+  avatar: '',
+  notes: '',
+  active: true
 }
 
-const newUser = ref<User>({ ...defaultNewUser } as User)
+const newUser = ref<Patient>({ ...defaultNewPatient } as Patient)
 
 const isFormHasUnsavedChanges = computed(() => {
-  return Object.keys(newUser.value).some((key) => {
-    if (key === 'avatar' || key === 'projects') {
-      return false
-    }
-    return (
-      newUser.value[key as keyof typeof defaultNewUser] !==
-      (props.user ? props.user[key as keyof typeof defaultNewUser] : defaultNewUser[key as keyof typeof defaultNewUser])
-    )
-  })
+  return (
+    newUser.value.name !== (props.patient?.name || '') ||
+    newUser.value.lastName !== (props.patient?.lastName || '') ||
+    newUser.value.ci !== (props.patient?.ci || '') ||
+    newUser.value.dir !== (props.patient?.dir || '')
+    // Add more comparisons if needed
+  )
 })
 
 defineExpose({
   isFormHasUnsavedChanges,
 })
 
-const { projects } = useProjects({ pagination: ref({ page: 1, perPage: 9999, total: 10 }) })
+
 
 watch(
-  [() => props.user, projects],
+  [() => props.patient],
   () => {
-    if (!props.user) {
-      // When no user is being edited, reset to default.
-      newUser.value = { ...defaultNewUser } as User
+    if (!props.patient) {
+      newUser.value = { ...defaultNewPatient } as Patient
       return
     }
 
-    // Properly update newUser with existing user values, including new fields.
     newUser.value = {
-      ...defaultNewUser, // Apply default values to new fields.
-      ...props.user, // Apply prop user, so everyting is as before.
-      projects: props.user.projects.filter((projectId) => projects.value.find(({ id }) => id === projectId)),
-      avatar: props.user.avatar || '',
-      // Keep the phone number
-      phoneNums: Array.isArray(props.user.phoneNums) && props.user.phoneNums.length > 0 ? props.user.phoneNums : [''],
-    } as User
+      ...defaultNewPatient,
+      ...props.patient,
+      phoneNums: props.patient?.phoneNums?.length ? [...props.patient.phoneNums] : ['']
+    } as Patient
   },
-  { immediate: true },
+  { immediate: true }
 )
 
-const avatar = ref<File>()
+//AVATAR CODE, USELESS FOR NOW
+/* const avatar = ref<File>()
 
 const makeAvatarBlobUrl = (avatar: File) => {
   return URL.createObjectURL(avatar)
@@ -87,9 +78,9 @@ const makeAvatarBlobUrl = (avatar: File) => {
 
 watch(avatar, (newAvatar) => {
   newUser.value.avatar = newAvatar ? makeAvatarBlobUrl(newAvatar) : ''
-})
+}) */
 
-const form = useForm('add-user-form')
+const form = useForm('add-patient-form')
 
 const emit = defineEmits(['close', 'save'])
 
@@ -99,11 +90,7 @@ const onSave = () => {
   }
 }
 
-const roleSelectOptions: { text: Capitalize<Lowercase<UserRole>>; value: UserRole }[] = [
-  { text: 'Admin', value: 'admin' },
-  { text: 'User', value: 'user' },
-  { text: 'Owner', value: 'owner' },
-]
+
 const addPhone = () => {
   newUser.value.phoneNums.push('')
 }
@@ -117,8 +104,11 @@ const removePhone = (index: number) => {
 
 <template>
   <div>
-    <VaForm v-slot="{ isValid }" ref="add-user-form" class="flex-col justify-start items-start gap-4 inline-flex w-full">
-      <VaFileUpload
+    <VaForm v-slot="{ isValid }" ref="add-patient-form" class="flex-col justify-start items-start gap-4 inline-flex w-full">
+      
+      
+      
+      <!-- <VaFileUpload
         v-model="avatar"
         type="single"
         hide-file-list
@@ -136,7 +126,7 @@ const removePhone = (index: number) => {
           @click.stop="avatar = undefined"
         />
       </VaFileUpload>
-
+ -->
       <div class="self-stretch flex-col justify-start items-start gap-4 flex">
 
         <div class="flex gap-4 flex-col sm:flex-row w-full">
