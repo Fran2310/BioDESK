@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useUsers } from './composables/useUsers'
-import { useProjects } from '../projects/composables/useProjects'
+import { usePatients } from './composables/usePatients'
+
 import { useToast, useModal } from 'vuestic-ui'
 import { useI18n } from 'vue-i18n'
 import PatientsForm from './widgets/PatientsForm.vue'
-import UsersTable from './widgets/UsersTable.vue'
+
 import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
-import { User } from './types'
+import { Patient } from './patients.types'
 
 //DEBUG MOCK ARRAY OF PATIENTS HERE
 
-const mockPatients = ref<User[]>([
+/* const mockPatients = ref<User[]>([
   {
     id: '1',
     ci: '12345678',
@@ -44,44 +44,37 @@ const mockPatients = ref<User[]>([
     notes: 'Allergic to penicillin',
     role: 'admin',
   },
-])
+]) */
 
-const localSortBy = ref('name')
-const localSortingOrder = ref<'asc' | 'desc'>('asc')
+//HANDLERS, NOT USED ANYMORE
 
-const localPagination = ref({
-  page: 1,
-  perPage: 10,
-  total: mockPatients.value.length,
-})
-
-function handleEdit(user: User) {
-  alert(`Editing user: ${user.name} ${user.lastName}`)
+/* function handleEdit(patient: Patient) {
+  alert(`Editing patient: ${patient.name} ${patient.lastName}`)
 }
 
-function handleDelete(user: User) {
-  alert(`Deleting user: ${user.name} ${user.lastName}`)
+function handleDelete(patient: Patient) {
+  alert(`Deleting patient: ${patient.name} ${patient.lastName}`)
 }
-
-console.log("Mock Patients: ", mockPatients.value)
+ */
+/* console.log("Mock Patients: ", mockPatients.value) */
 
 
 
 const { t } = useI18n()
-const { users, isLoading, filters, sorting, pagination, error, ...usersApi } = useUsers()
+const { patients, isLoading, filters, sorting, pagination, error, ...usersApi } = usePatients()
 /* const { projects } = useProjects() */
 
-const doShowEditUserModal = ref(false)
-const userToEdit = ref<User | null>(null)
+const doShowEditPatientModal = ref(false)
+const patientToEdit = ref<Patient | null>(null)
 
-const showEditUserModal = (user: User) => {
-  userToEdit.value = user
-  doShowEditUserModal.value = true
+const showEditPatientModal = (patient: Patient) => {
+  patientToEdit.value = patient
+  doShowEditPatientModal.value = true
 }
 
-const showAddUserModal = () => {
-  userToEdit.value = null
-  doShowEditUserModal.value = true
+const showAddPatientModal = () => {
+  patientToEdit.value = null
+  doShowEditPatientModal.value = true
 }
 
 const { init: notify } = useToast()
@@ -93,25 +86,28 @@ if (error.value) {
   })
 }
 
-const onUserSaved = async (user: User) => {
-  if (user.avatar.startsWith('blob:')) {
+const onPatientSaved = async (patient: Patient) => {
+
+//AVATAR, USELESS FOR NOW
+
+  /*  if (user.avatar.startsWith('blob:')) {
     const blob = await fetch(user.avatar).then((r) => r.blob())
     const { publicUrl } = await usersApi.uploadAvatar(blob)
     user.avatar = publicUrl
-  }
+  } */
 
-  if (userToEdit.value) {
-    await usersApi.update(user)
-    notify({ message: `${user.name} has been updated`, color: 'success' })
+  if (patientToEdit.value) {
+    await usersApi.update(patient)
+    notify({ message: `${patient.name} has been updated`, color: 'success' })
   } else {
-    await usersApi.add(user)
-    notify({ message: `${user.name} has been created`, color: 'success' })
+    await usersApi.add(patient)
+    notify({ message: `${patient.name} has been created`, color: 'success' })
   }
 }
 
-const onUserDelete = async (user: User) => {
-  await usersApi.remove(user)
-  notify({ message: `${user.name} has been deleted`, color: 'success' })
+const onPatientDelete = async (patient: Patient) => {
+  await usersApi.remove(patient)
+  notify({ message: `${patient.name} has been deleted`, color: 'success' })
 }
 
 const { confirm } = useModal()
@@ -138,7 +134,6 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
   <div> <!-- Single root wrapper -->
     <h1 class="page-title">{{ t('menu.patients') }}</h1>
     
-   <pre>{{ mockPatients.value }}</pre>
 
     <VaCard>
       <VaCardContent>
@@ -159,36 +154,26 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
               </template>
             </VaInput>
           </div>
-          <VaButton @click="showAddUserModal">Add Patient</VaButton>
+          <VaButton @click="showAddPatientModal">Add Patient</VaButton>
         </div>
 
-           
-<h1>Hola</h1> <pre>{{ mockPatients }}</pre>
-        <!-- <CustomPatientsTable
-          v-model:sort-by="sorting.sortBy"
-          v-model:sorting-order="sorting.sortingOrder"
-          :users="users"
-          :loading="isLoading"
-          :pagination="pagination"
-          @editUser="showEditUserModal"
-          @deleteUser="onUserDelete"
-        /> -->
-        
+        <h1>Hola</h1> <pre>{{ patients }}</pre> <div>Pagination: {{ pagination }}</div>
+<div>Patients passed: {{ patients.length }}</div>
         <CustomPatientsTable
-        v-model:sort-by="localSortBy"
-        v-model:sorting-order="localSortingOrder"
-        :users="mockPatients"
-        :loading="false"
-        :pagination="localPagination"
-        @edit-user="handleEdit"
-        @delete-user="handleDelete"
+        v-model:sort-by="sorting.sortBy"
+        v-model:sorting-order="sorting.sortingOrder"
+        :patients="patients"
+        :loading="isLoading"
+        :pagination="pagination"
+        @edit-patient="showEditPatientModal"
+        @delete-patient="onPatientDelete"
         />
 
       </VaCardContent>
     </VaCard>
 
     <VaModal
-      v-model="doShowEditUserModal"
+      v-model="doShowEditPatientModal"
       size="small"
       mobile-fullscreen
       close-button
@@ -196,13 +181,13 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
       :before-cancel="beforeEditFormModalClose"
       v-slot="{ cancel, ok }"
     >
-      <h1 class="va-h5">{{ userToEdit ? t('form.editPatient') : t('form.addPatient') }}</h1>
+      <h1 class="va-h5">{{ patientToEdit ? t('form.editPatient') : t('form.addPatient') }}</h1>
       <PatientsForm
         ref="editFormRef"
-        :user="userToEdit"
-        :save-button-label="userToEdit ? t('form.save') : t('form.add')"
+        :patient="patientToEdit"
+        :save-button-label="patientToEdit ? t('form.save') : t('form.add')"
         @close="cancel"
-        @save="(user) => { onUserSaved(user); ok() }"
+        @save="(patient) => { onPatientSaved(patient); ok() }"
       />
     </VaModal>
   </div>
