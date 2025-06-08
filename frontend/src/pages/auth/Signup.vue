@@ -1,62 +1,26 @@
 <template>
-  <VaForm ref="form" @submit.prevent="submit">
-    <h1 class="font-semibold text-4xl mb-4">Sign up</h1>
-    <p class="text-base mb-4 leading-5">
-      Have an account?
-      <RouterLink :to="{ name: 'login' }" class="font-semibold text-primary">Login</RouterLink>
-    </p>
-    <VaInput
-      v-model="formData.email"
-      :rules="[(v) => !!v || 'Email field is required', (v) => /.+@.+\..+/.test(v) || 'Email should be valid']"
-      class="mb-4"
-      label="Email"
-      type="email"
-    />
-    <VaValue v-slot="isPasswordVisible" :default-value="false">
-      <VaInput
-        ref="password1"
-        v-model="formData.password"
-        :rules="passwordRules"
-        :type="isPasswordVisible.value ? 'text' : 'password'"
-        class="mb-4"
-        label="Password"
-        messages="Password should be 8+ characters: letters, numbers, and special characters."
-        @clickAppendInner.stop="isPasswordVisible.value = !isPasswordVisible.value"
-      >
-        <template #appendInner>
-          <VaIcon
-            :name="isPasswordVisible.value ? 'mso-visibility_off' : 'mso-visibility'"
-            class="cursor-pointer"
-            color="secondary"
-          />
-        </template>
-      </VaInput>
-      <VaInput
-        ref="password2"
-        v-model="formData.repeatPassword"
-        :rules="[
-          (v) => !!v || 'Repeat Password field is required',
-          (v) => v === formData.password || 'Passwords don\'t match',
-        ]"
-        :type="isPasswordVisible.value ? 'text' : 'password'"
-        class="mb-4"
-        label="Repeat Password"
-        @clickAppendInner.stop="isPasswordVisible.value = !isPasswordVisible.value"
-      >
-        <template #appendInner>
-          <VaIcon
-            :name="isPasswordVisible.value ? 'mso-visibility_off' : 'mso-visibility'"
-            class="cursor-pointer"
-            color="secondary"
-          />
-        </template>
-      </VaInput>
-    </VaValue>
+  <div class="register-lab-form">
+    <h1 class="font-semibold text-4xl mb-4"> Registrar laboratorio </h1>
 
-    <div class="flex justify-center mt-4">
-      <VaButton class="w-full" @click="submit"> Create account</VaButton>
-    </div>
-  </VaForm>
+    <form ref="form" @submit.prevent="submit" class="register-lab">
+      <label> Nombre del laboratorio: </label>
+      <input type="text" required v-model="formData.name" placeholder="Nombre">
+
+      <label> RIF del laboratorio: </label>
+      <input type="text" required v-model="formData.rif" placeholder="J-XXXXXXXXXX">
+
+      <label> Número de teléfono del laboratorio: </label>
+      <input type="text" required v-model="formData.phoneNums1" placeholder="0410-1010101">
+
+      <label> Otro número de teléfono (opcional): </label>
+      <input type="text" v-model="formData.phoneNums2" placeholder="0410-1010101">
+
+      <div>
+        <button type="button" class="go-back"> <RouterLink :to="{ name: 'dashboard' }"> Atras </RouterLink> </button>
+        <button type="submit" class="next" @click="submit"> Siguiente </button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -68,10 +32,12 @@ const { validate } = useForm('form')
 const { push } = useRouter()
 const { init } = useToast()
 
+// Storage for registered data
 const formData = reactive({
-  email: '',
-  password: '',
-  repeatPassword: '',
+  name: '',
+  rif: '',
+  phoneNums1: '',
+  phoneNums2: ''
 })
 
 const submit = () => {
@@ -83,12 +49,72 @@ const submit = () => {
     push({ name: 'dashboard' })
   }
 }
-
-const passwordRules: ((v: string) => boolean | string)[] = [
-  (v) => !!v || 'Password field is required',
-  (v) => (v && v.length >= 8) || 'Password must be at least 8 characters long',
-  (v) => (v && /[A-Za-z]/.test(v)) || 'Password must contain at least one letter',
-  (v) => (v && /\d/.test(v)) || 'Password must contain at least one number',
-  (v) => (v && /[!@#$%^&*(),.?":{}|<>]/.test(v)) || 'Password must contain at least one special character',
-]
 </script>
+
+<style>
+
+  /* Page properties */
+  .register-lab-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* space between elements */
+  }
+
+  /* Form properties */
+  .register-lab-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #91bb8d;
+    border-radius: 8px;
+  }
+
+  /* All labels properties */
+  label {
+    display: block;
+    font-weight: bold;
+    font-size: medium;
+    margin-bottom: 3px;
+  }
+
+  /* All input spaces properties */
+  input[type="text"] {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 8px;
+    border: 2px solid #000000;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  /* Go back button properties */
+  .go-back {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    margin-left: 0px;
+    background-color: #3d4e3b;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  /* Next button properties */
+  .next {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    margin-left: 56%;
+    background-color: #3d4e3b;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  /* Button changes color when cursor is over it */
+  button:hover {
+    background-color: #576e55;
+  }
+</style>

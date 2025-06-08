@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@gtm-support/vue-gtm": "^2.0.0",
+    "@stepperize/vue": "^2.0.6",
     "@vuestic/compiler": "latest",
     "@vuestic/tailwind": "^0.1.3",
     "@vueuse/core": "^10.6.1",
