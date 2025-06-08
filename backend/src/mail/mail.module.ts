@@ -6,10 +6,12 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 
 import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
     SharedCacheModule,
+    UserModule,
     MailerModule.forRoot({
       transport: {
         service: 'gmail',

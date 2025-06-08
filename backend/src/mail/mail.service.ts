@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as Handlebars from 'handlebars';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
+import { UserService } from 'src/user/user.service';
 
 
 @Injectable()
@@ -12,7 +13,8 @@ export class MailService {
 
   constructor(
     private readonly mailerService: MailerService,
-    private readonly sharedCacheService: SharedCacheService
+    private readonly sharedCacheService: SharedCacheService,
+    private readonly userService: UserService,
   ) {}
 
   private async templateToHTML(templateName: string, dataJSON: object): Promise<string> {
@@ -32,56 +34,64 @@ export class MailService {
   }
 
   async sendWelcomeEmail(email: string) {
-    const html = await this.templateToHTML(
-      'welcome.mjml',
-      {
-        name: email, // Cambiar esto por el nombre real 
-        year: new Date().getFullYear()
+    const user = await this.userService.getSystemUser({email})
+
+    if (user) {
+      const html = await this.templateToHTML(
+        'welcome.mjml',
+        {
+          name: `${user.name} + ${user.lastName}`,
+          year: new Date().getFullYear()
+        }
+      )
+  
+      try {
+        await this.mailerService.sendMail({
+          to: email,
+          subject: '¡Bienvenido a BioDESK!',
+          html: html,
+        });
       }
-    )
-
-    try {
-      await this.mailerService.sendMail({
-        to: email,
-        subject: '¡Bienvenido a BioDESK!',
-        html: html,
-      });
+      catch (error) {
+        this.logger.log(error)
+      }
+  
+      this.logger.log(`Correo de bienvenida enviado a ${email}`);
     }
-    catch (error) {
-      this.logger.log(error)
-    }
-
-    this.logger.log(`Correo de bienvenida enviado a ${email}`);
   }
 
   async sendChangePasswordEmail(email: string) {
-    const token = this.generateEmailToken()
-    const html = await this.templateToHTML(
-      'change_password.mjml',
-      {
-        emailToken: token,
-        year: new Date().getFullYear()
+    const user = await this.userService.getSystemUser({email})
+
+    if (user) {
+      const token = this.generateEmailToken()
+      const html = await this.templateToHTML(
+        'change_password.mjml',
+        {
+          emailToken: token,
+          year: new Date().getFullYear()
+        }
+      )
+  
+      try {
+        await this.mailerService.sendMail({
+          to: email,
+          subject: 'Código temporal para cambiar su contraseña',
+          html: html,
+        });
       }
-    )
-
-    try {
-      await this.mailerService.sendMail({
-        to: email,
-        subject: 'Código temporal para cambiar su contraseña',
-        html: html,
-      });
+      catch (error) {
+        this.logger.log(error)
+      }
+      
+  
+      this.sharedCacheService.setEmailToken(email, token)
+      this.logger.log(`Correo de cambio de contraseña enviado a ${email}`);
     }
-    catch (error) {
-      this.logger.log(error)
-    }
-    
-
-    this.sharedCacheService.setEmailToken(email, token)
-    this.logger.log(`Correo de cambio de contraseña enviado a ${email}`);
   }
 
-   // Genera un token alfanumérico de 6 caracteres (mayúsculas + números)
-   private generateEmailToken(): string {
+  // Genera un token alfanumérico de 6 caracteres (mayúsculas + números)
+  private generateEmailToken(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let token = '';
     for (let i = 0; i < 6; i++) {
