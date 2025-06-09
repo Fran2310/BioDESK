@@ -1,5 +1,5 @@
 export type Patient = {
-  id: UUID
+  id: number
   ci: string
   name: string
   lastName: string
@@ -9,7 +9,7 @@ export type Patient = {
   phoneNums: string[]
   dir: string
   birthDate: string
-  avatar: string
-  notes: string
-  active: boolean // Optional, but useful for soft-deletion or status filtering
+  notes?: string
+  active?: boolean // Optional, but useful for soft-deletion or status filtering
+  medicHistory?: string|null
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { defineVaDataTableColumns, useModal } from 'vuestic-ui'
 import { Patient } from '../patient.types'
-import UserAvatar from './UserAvatar.vue'
+
 import { PropType, computed, toRef } from 'vue'
 import { Pagination, Sorting } from '../../../data/pages/patients'
 import { useVModel } from '@vueuse/core'
@@ -89,7 +89,7 @@ const formatDate = (dateStr: string) => {
   >
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis">
-        <UserAvatar :user="rowData as Patient" size="small" />
+        <!-- <UserAvatar :user="rowData as Patient" size="small" /> -->
         {{ rowData.name }}
       </div>
     </template>

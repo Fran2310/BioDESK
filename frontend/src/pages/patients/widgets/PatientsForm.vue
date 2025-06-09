@@ -2,7 +2,7 @@
 import { PropType, computed, ref, watch } from 'vue'
 import { useForm } from 'vuestic-ui'
 
-import UserAvatar from './UserAvatar.vue'
+
 import { Patient } from './patients.types'
 import { validators } from '../../../services/utils'
 
@@ -19,7 +19,7 @@ const props = defineProps({
 
 // New default user with patient fields
 const defaultNewPatient = {
-  id: '', // will be filled later
+  id: 0, // will be filled later
   ci: '',
   name: '',
   lastName: '',
@@ -28,10 +28,10 @@ const defaultNewPatient = {
   email: '',
   phoneNums: [''],
   dir: '',
-  birthDate: '',
-  avatar: '',
+  birthDate: null,
   notes: '',
-  active: true
+  active: true,
+  medicHistory: null,
 }
 
 const newUser = ref<Patient>({ ...defaultNewPatient } as Patient)
