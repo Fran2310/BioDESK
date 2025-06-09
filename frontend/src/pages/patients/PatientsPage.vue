@@ -9,55 +9,6 @@ import PatientsForm from './widgets/PatientsForm.vue'
 import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 import { Patient } from './patients.types'
 
-//DEBUG MOCK ARRAY OF PATIENTS HERE
-
-/* const mockPatients = ref<User[]>([
-  {
-    id: '1',
-    ci: '12345678',
-    name: 'John',
-    lastName: 'Doe',
-    secondName: '',
-    secondLastName: '',
-    email: 'john@example.com',
-    phoneNums: ['+123456789'],
-    dir: 'Main St.',
-    birthDate: '1990-01-01',
-    active: true,
-    avatar: '',
-    notes: '',
-    role: 'user',
-  },
-  {
-    id: '2',
-    ci: '87654321',
-    name: 'Jane',
-    lastName: 'Smith',
-    secondName: 'Marie',
-    secondLastName: 'Johnson',
-    email: 'jane.smith@example.com',
-    phoneNums: ['+987654321', '+555555555'],
-    dir: 'Elm Street',
-    birthDate: '1985-05-10',
-    active: false,
-    avatar: '',
-    notes: 'Allergic to penicillin',
-    role: 'admin',
-  },
-]) */
-
-//HANDLERS, NOT USED ANYMORE
-
-/* function handleEdit(patient: Patient) {
-  alert(`Editing patient: ${patient.name} ${patient.lastName}`)
-}
-
-function handleDelete(patient: Patient) {
-  alert(`Deleting patient: ${patient.name} ${patient.lastName}`)
-}
- */
-/* console.log("Mock Patients: ", mockPatients.value) */
-
 
 
 const { t } = useI18n()
@@ -88,13 +39,6 @@ if (error.value) {
 
 const onPatientSaved = async (patient: Patient) => {
 
-//AVATAR, USELESS FOR NOW
-
-  /*  if (user.avatar.startsWith('blob:')) {
-    const blob = await fetch(user.avatar).then((r) => r.blob())
-    const { publicUrl } = await usersApi.uploadAvatar(blob)
-    user.avatar = publicUrl
-  } */
 
   if (patientToEdit.value) {
     await usersApi.update(patient)

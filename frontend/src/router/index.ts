@@ -52,12 +52,12 @@ const routes: Array<RouteRecordRaw> = [
         {
         name: 'med-history', //Medical records route
         path: '/med-history',
-        component: () => import('../pages/patients/UsersPage.vue'),
+        component: () => import('../pages/404.vue'),
         },
         {
         name: 'test-req', //Test request route
         path: '/test-req',
-        component: () => import('../pages/patients/UsersPage.vue'),
+        component: () => import('../pages/404.vue'),
         },
         ],
       },

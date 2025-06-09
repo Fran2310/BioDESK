@@ -14,8 +14,6 @@ export const mockPatients: Patient[] = [
     phoneNums: ['+123456789'],
     dir: 'Main St.',
     birthDate: '1990-01-01',
-    avatar: '',
-    notes: '',
     active: true,
   },
   {
@@ -29,8 +27,8 @@ export const mockPatients: Patient[] = [
     phoneNums: ['+987654321', '+555555555'],
     dir: 'Elm Street',
     birthDate: '1985-05-10',
-    avatar: '',
     notes: 'Allergic to penicillin',
     active: true,
+    medicHistory: "Some history",
   }
 ]
