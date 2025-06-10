@@ -58,6 +58,13 @@ export default {
       meta: {
         icon: 'folder_shared',
       },
+    },    
+    {
+      name: 'laboratory',
+      displayName: 'Laboratory',
+      meta: {
+        icon: 'medical_services',
+      },
     },
     {
       name: 'payments',
