@@ -12,7 +12,10 @@
           />
         </Transition>
         <RouterLink to="/" aria-label="Visit home page">
-          <VuesticLogo />
+          <!-- <VuesticLogo /> -->
+
+          <BiodeskLogo :style= "{height: '3em'}"/>
+
         </RouterLink>
       </div>
     </template>
@@ -26,7 +29,7 @@
 import { storeToRefs } from 'pinia'
 import { useGlobalStore } from '../../stores/global-store'
 import AppNavbarActions from './components/AppNavbarActions.vue'
-import VuesticLogo from '../VuesticLogo.vue'
+import BiodeskLogo from '../../components/Biodesk-logo.vue'
 
 defineProps({
   isMobile: { type: Boolean, default: false },

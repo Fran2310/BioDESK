@@ -48,11 +48,16 @@
     </VaForm>
   </div>
 </template>
+
+
 <script lang="ts" setup>
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useForm, useToast } from 'vuestic-ui'
 import { validators } from '../../services/utils'
+import { useAuthStore } from '../../stores/authStore'
+
+const authStore = useAuthStore()
 
 const { validate } = useForm('form')
 const { push } = useRouter()
@@ -64,10 +69,62 @@ const formData = reactive({
   keepLoggedIn: false,
 })
 
-const submit = () => {
-  if (validate()) {
-    init({ message: "You've successfully logged in", color: 'success' })
-    push({ name: 'dashboard' })
+const submit = async () => {
+  if (!validate()) return
+
+  try {
+    const res = await fetch('https://biodesk.onrender.com/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Invalid credentials')
+    }
+
+    const data = await res.json()
+
+ 
+
+    // GUARDAR TOKEN Y LABORATORIOS EN STORE
+    authStore.setToken(data.access_token)
+    authStore.setLabs(data.labs ? [...data.labs] : [])
+
+    init({
+      message: `Login successful! Token: ${data.access_token.substring(0, 20)}...`,
+      color: 'success',
+      timeout: 5000,
+    })
+
+    // NAVEGAR AL DASHBOARD O LABORATORIO ESPECÍFICO
+
+    if (/* data.labs.length === 1 */ 1) {
+      
+      // DASHBOARD
+
+      push({ name: 'dashboard' })
+    } else {
+     
+      // VISTA DE SELECCIÓN DE LABORATORIOS
+
+      push({ name: 'select-lab' })
+    }
+
+
+
+    init({
+      message: `Login successful! Token: ${data.access_token.substring(0, 20)}...`,
+      color: 'success',
+      timeout: 5000,
+    })
+
+  } catch (e: any) {
+    console.error(e)
+    init({ message: 'Login failed. Check your credentials.', color: 'danger' })
   }
 }
 </script>

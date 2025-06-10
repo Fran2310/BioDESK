@@ -18,10 +18,6 @@ export const usePatientsStore = defineStore('patients', {
    async getAll(options: { filters?: any; pagination?: any }) {
   let filtered = [...this.$state.items] // always start with full list
 
-  if (options.filters?.isActive !== undefined) {
-    filtered = filtered.filter(p => p.active === options.filters.isActive)
-  }
-
   if (options.filters?.search) {
     const query = options.filters.search.toLowerCase()
     filtered = filtered.filter(

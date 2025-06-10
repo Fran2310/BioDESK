@@ -209,5 +209,30 @@
     "inputField": "Campo de entrada",
     "fileTypeIncorrect": "El tipo de archivo es incorrecto",
     "select": "Seleccionar una opción"
+  },
+
+  "form":
+  {
+    "addPatient": "Añadir paciente",
+    "editPatient": "Editar paciente",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "add": "Añadir"
+  },
+
+  "patients":
+  {
+    "name": "Nombre",
+    "lastName": "Apellido",
+    "secondName": "Segundo nombre",
+    "secondLastName": "Segundo apellido",
+    "address": "Dirección",
+    "ci": "CI",
+    "birthDate": "Fecha de nacimiento",
+    "dir": "Dirección",
+    "phoneNums": "Números de teléfono",
+    "active": "Activo",
+    "actions": "Acciones"
   }
+
 }

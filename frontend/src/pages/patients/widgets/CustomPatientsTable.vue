@@ -5,19 +5,22 @@ import { Patient } from '../patient.types'
 import { PropType, computed, toRef } from 'vue'
 import { Pagination, Sorting } from '../../../data/pages/patients'
 import { useVModel } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 
 const columns = defineVaDataTableColumns([
-  { label: 'Name', key: 'name', sortable: true },
-  { label: 'Last Name', key: 'lastName', sortable: true },
-  { label: 'Second Name', key: 'secondName', sortable: true },
-  { label: 'Second Last Name', key: 'secondLastName', sortable: true },
-  { label: 'CI', key: 'ci', sortable: true },
-  { label: 'Birth Date', key: 'birthDate', sortable: true },
-  { label: 'Address', key: 'dir', sortable: true },
-  { label: 'Phone Numbers', key: 'phoneNums' },
-  { label: 'Active', key: 'active' },
-  { label: '', key: 'actions', align: 'right' },
+  { label: t('patients.name'), key: 'name', sortable: true },
+  { label: t('patients.lastName'), key: 'lastName', sortable: true },
+  { label: t('patients.secondName'), key: 'secondName', sortable: true },
+  { label: t('patients.secondLastName'), key: 'secondLastName', sortable: true },
+  { label: t('patients.ci'), key: 'ci', sortable: true },
+  { label: t('patients.birthDate'), key: 'birthDate', sortable: true },
+  { label: t('patients.address'), key: 'dir', sortable: true },
+  { label: t('patients.phoneNums'), key: 'phoneNums' },
+  /* { label: t('patients.active'), key: 'active' }, */
+  { label: t('patients.actions'), key: 'actions', align: 'right' },
 ])
 
 const props = defineProps({

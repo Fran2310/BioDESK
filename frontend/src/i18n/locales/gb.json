@@ -245,5 +245,29 @@
     "inputField": "Input field",
     "fileTypeIncorrect": "File type is incorrect",
     "select": "Select an option"
+  },
+
+  "form":
+  {
+    "addPatient": "Add patient",
+    "editPatient": "Edit patient",
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add"
+  },
+
+  "patients":
+  {
+    "name": "Name",
+    "lastName": "Last Name",
+    "secondName": "Second Name",
+    "secondLastName": "Second Last Name",
+    "address": "Address",
+    "ci": "CI",
+    "birthDate": "Birth Date",
+    "dir": "Address",
+    "phoneNums": "Phone Numbers",
+    "active": "Active",
+    "actions": "Actions"
   }
 }
