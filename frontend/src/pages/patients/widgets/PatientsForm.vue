@@ -69,16 +69,6 @@ watch(
   { immediate: true }
 )
 
-//AVATAR CODE, USELESS FOR NOW
-/* const avatar = ref<File>()
-
-const makeAvatarBlobUrl = (avatar: File) => {
-  return URL.createObjectURL(avatar)
-}
-
-watch(avatar, (newAvatar) => {
-  newUser.value.avatar = newAvatar ? makeAvatarBlobUrl(newAvatar) : ''
-}) */
 
 const form = useForm('add-patient-form')
 
