@@ -153,4 +153,17 @@ const router = createRouter({
   routes,
 })
 
+// Router guard
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  // Example: protect all routes except auth
+  if (to.path.startsWith('/auth')) {
+    next()
+  } else if (!token) {
+    next({ name: 'login' })
+  } else {
+    next()
+  }
+})
+
 export default router
