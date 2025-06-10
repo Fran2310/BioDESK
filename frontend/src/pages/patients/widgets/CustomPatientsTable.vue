@@ -201,8 +201,9 @@ const formatDate = (dateStr: string) => {
 
 
   <!-- Patient Details Modal -->
-    <VaModal v-model="isDetailsModalOpen" size="large">
+    <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large">
        <h2 class="va-h3 text-primary"> Detalles del paciente </h2>
+      
       <div class="p-4 space-y-4">
         <div class="grid grid-cols-2 gap-4">
 
@@ -257,13 +258,19 @@ const formatDate = (dateStr: string) => {
           </div>
 
         </div>
+      
+      
       </div>
 
-      <template #actions>
-        <div class="flex justify-end">
-          <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
-        </div>
+      <template #footer>
+      
+        <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
+        
       </template>
+        
+          
+        
+    
     </VaModal>
 
 
