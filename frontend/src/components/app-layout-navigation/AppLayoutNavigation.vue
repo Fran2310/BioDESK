@@ -70,7 +70,7 @@ const items = computed(() => {
       return
     }
     result.push({
-      label: t(labelKey),
+      label: t(labelKey), // <-- AQUÍ SE USA LA TRADUCCIÓN
       to: route.path,
       hasChildren: route.children && route.children.length > 0,
     })
