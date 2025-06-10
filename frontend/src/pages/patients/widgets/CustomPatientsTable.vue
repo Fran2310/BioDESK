@@ -125,7 +125,7 @@ const formatDate = (dateStr: string) => {
     :columns="columns"
     :items="patients"
     :loading="$props.loading"
-    :clickable="true"
+    :clickable="false"
     @row:click="handleRowClick"
   >
     <template #cell(name)="{ rowData }">
@@ -184,7 +184,7 @@ const formatDate = (dateStr: string) => {
           size="small"
           icon="mso-edit"
           aria-label="Edit patient"
-          @click="$emit('edit-patient', rowData as Patient)"
+          @click.stop="$emit('edit-patient', rowData as Patient)"
         />
         <VaButton
           preset="primary"
@@ -192,7 +192,7 @@ const formatDate = (dateStr: string) => {
           icon="mso-delete"
           color="danger"
           aria-label="Delete patient"
-          @click="onPatientDelete(rowData as Patient)"
+          @click.stop="onPatientDelete(rowData as Patient)"
         />
       </div>
     </template>
