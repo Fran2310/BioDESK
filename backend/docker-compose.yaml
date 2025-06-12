@@ -1,30 +1,9 @@
 # docker-compose.yml
 services:
-  nestapp:
-    image: nestapp:latest
-    command: >
-      sh -c "npm run prisma:migrate:dev:all && npm run start:dev"
-    ports:
-      - "3000:3000"
-    environment:
-      # Lo tenemos así por desarrollo
-      SYSTEM_DATABASE_URL: "postgresql://biodesk:biodesk123@db:5432/system_db"
-      LAB_DATABASE_BASE_URL: "postgresql://biodesk:biodesk123@db:5432/"
-      DYNAMIC_DATABASE_URL: "postgresql://biodesk:biodesk123@db:5432/lab"
-      # Secreto JWT
-      JWT_SECRET: "1e84de6d22a9263231d2802c59e633ff7222587857a5ce3024fc24804c7ce0ea"
-
-    volumes:
-      - .:/app # Monta el directorio actual (tu proyecto) en /app dentro del contenedor
-      - /app/node_modules # Asegura que node_modules del contenedor no sea sobrescrito por el volumen de tu host
-    tty: true
-    depends_on:
-      - db
-
   db:
     image: postgres:16-alpine # O la versión que prefieras
     ports:
-      - "5432:5432" # Mapeo opcional si quieres acceder desde fuera del contenedor
+      - '5432:5432' # Mapeo opcional si quieres acceder desde fuera del contenedor
     environment:
       POSTGRES_USER: biodesk
       POSTGRES_PASSWORD: biodesk123
