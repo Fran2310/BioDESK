@@ -12,14 +12,14 @@
       <label> Ubicación del laboratorio: </label>
       <select  class="state-select" v-model="formData.state" required>
         <option value="" disabled> Seleccione un estado </option>
-        <option v-for="state in states" :key="state.id" :value="state.name">
+        <option v-for="state in states" :key="state.id" :value="state.id">
           {{ state.name }}
         </option>
       </select>
       
       <select class="municipality-select" v-model="formData.municipality" required>
         <option value="" disabled> Seleccione un municipio </option>
-        <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.name">
+        <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
           {{ municipality.name }}
         </option>
       </select>
@@ -41,10 +41,10 @@
       <input type="text" required v-model="formData.address" placeholder="Calle Principal, edificio #123">
 -->
       <label> Número de teléfono del laboratorio: </label>
-      <input type="text" required v-model="formData.phoneNums1" placeholder="0410-1234567">
+      <input type="text" required v-model="formData.phoneNums1" placeholder="04101234567">
 
       <label> Otro número de teléfono (opcional): </label>
-      <input type="text" v-model="formData.phoneNums2" placeholder="0410-1234567">
+      <input type="text" v-model="formData.phoneNums2" placeholder="04101234567">
       <div>
         <button type="button" class="go-back"> <RouterLink :to="{ name: 'dashboard' }"> Atras </RouterLink> </button>
         <button type="submit" class="next" @click="submit"> Siguiente </button>
@@ -55,9 +55,11 @@
 
 
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from 'vue'
+//Imports
+import { reactive, ref, onMounted, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useToast } from 'vuestic-ui'
+import { createPinia } from 'pinia'
 import apiDivision from '../../../apiDivision.js'
 
 const { push } = useRouter()
@@ -89,10 +91,10 @@ const formData = reactive({
   phoneNums2: ''
 })
 
-localStorage.setItem('token', 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJVU2ZTQ2RXcUlVSndRc2Y2Q1BzeGExM1VrQXl3MkViSGxHX0haT3IzUWNjIn0.eyJleHAiOjE3NDk2MTA5NDQsImlhdCI6MTc0OTUyODE0NCwianRpIjoiMDRmOGM4ZDQtMjI1NC00N2I5LWJhNGEtODRlZjg2OTYwMTNlIiwiaXNzIjoiaHR0cHM6Ly9zYWEuYXBuLmdvYi52ZS9yZWFsbXMvQVBJU0VHRU4iLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiZDRkYmIxOTQtMWUwNy00YmE3LWE4MmMtMDg3ZDgwNTYyMzUwIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiYXBpcyIsInNpZCI6IjZmYThlODAwLTAxNGItNGMyNy05NDdlLTQzZDQ3ZDgwMDA1MCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcGlzZWdlbi5hcG4uZ29iLnZlIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWFwaXNlZ2VuIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsImFwaS1kcHQiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJuYW1lIjoiSmVzdXMgUmFtaXJleiIsInByZWZlcnJlZF91c2VybmFtZSI6Implc3VzcmhpdmFuIiwiZ2l2ZW5fbmFtZSI6Ikplc3VzIiwiZmFtaWx5X25hbWUiOiJSYW1pcmV6IiwiZW1haWwiOiJqZXN1c3JoaXZhbkBnbWFpbC5jb20ifQ.JJtfsHKlkLiPQrWTzbZAFXL2lj60ecHEFNgWw6yBN3-GMj7bGdJxragziX5dy01eesIVQF9C4n2q09ZoEikgzdNfpW0a6tZdnl96uuCY3z7zr7XXvSKwZm8OrkzEMsEK-3MVkvw-h6MWffyxyw-Rw6NLqBJhaC3y4rtnamfsXaYoTRu3_rFguDYtwYts0ippYNwEoYKh8ckbHZBmY0GBm3mhfd3G8VjXYydwDATP_T9V4uuCJaXqS9g8MWkRj7xbKLHsLN-caodLYtaQB4pCOH8cQ34IEzxmk8tgc_uAD555u04MYVYR7MzU3AT9KnIFAXuQfarfU6mpk0_JNvN2Bw');
+localStorage.setItem('token', 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJVU2ZTQ2RXcUlVSndRc2Y2Q1BzeGExM1VrQXl3MkViSGxHX0haT3IzUWNjIn0.eyJleHAiOjE3NDk2ODY2OTYsImlhdCI6MTc0OTYwMzg5NiwianRpIjoiNDg5ZTMxZjktNzdhYy00ZWVkLWJiOWEtNDVlZWI5OTljNmYyIiwiaXNzIjoiaHR0cHM6Ly9zYWEuYXBuLmdvYi52ZS9yZWFsbXMvQVBJU0VHRU4iLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiZDRkYmIxOTQtMWUwNy00YmE3LWE4MmMtMDg3ZDgwNTYyMzUwIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiYXBpcyIsInNpZCI6IjQ2MWY4NjkxLWZjYzgtNGRlOS1hMWE2LTNlMDljYzQwY2JlNCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcGlzZWdlbi5hcG4uZ29iLnZlIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWFwaXNlZ2VuIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsImFwaS1kcHQiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJuYW1lIjoiSmVzdXMgUmFtaXJleiIsInByZWZlcnJlZF91c2VybmFtZSI6Implc3VzcmhpdmFuIiwiZ2l2ZW5fbmFtZSI6Ikplc3VzIiwiZmFtaWx5X25hbWUiOiJSYW1pcmV6IiwiZW1haWwiOiJqZXN1c3JoaXZhbkBnbWFpbC5jb20ifQ.D-SVQEcArg9h9WGQJF0OLK5C1PMAPX8FWCxwqtLkQsA7JbxNJNUfBea8UoYlR4rgdfLuQf-h3P2vNR4o5mKqZecmEJWcQ7gnQDFaRvYgjXDmyFsuMZWt5OZUT_FiNhv3BjxYqMDs8T2ZLHGxevAJtM5X81Cmx023Pwgtnjghdd5FOTXPblkZMUqD7m98PncoHIOFZqxpDToJ2F1eMFnYfNeGtR73D3DKVALRi5i0LnAHH7S6wcQGAPWmZY8OLzGDbFhhsGtDGjPY06dsYmRDFkgyoOQNv4ch_ysD9XPqselP_dvpWb9UQ2tW31NbaWmzyyTTTraPeEfSrPb6YQPbHQ');
 
-// soli: string [parameter]
-// ${soli} [specify division type]
+// Intentando funciones
+// soli: string [parameter] / ${soli} [specify division type]
 /*
 async function fetchData(request: string) {
   try {
@@ -128,10 +130,26 @@ onMounted(async () => {
       name: item.entidad_ine
     }))
   } catch (e) {
-    init({ message: 'Error: cargando entidades', color: 'danger' })
+    init({ message: 'Error: No se pudieron cargar los estados', color: 'danger' })
   }
   
+  // Watch for changes in the selected state
+  watch(() => formData.state, async (newStateId) => {
+    municipalities.value = [] // Clear previous options
+    formData.municipality = '' // Reset selection
+    if (!newStateId) return
+    try {
+      const res = await apiDivision.get(`/listadoMunicipio`, { params: { cod_entidad_ine: newStateId } })
+      municipalities.value = res.data.data.map((item: MunicipioItem) => ({
+      id: item.cod_municipio_ine,
+      name: item.municipio_ine
+      }))
+    } catch (e) {
+      init({ message: 'Error: No se pudieron cargar los municipios', color: 'danger' })
+    }
+  })
   
+  /*
   try {
     const res = await apiDivision.get(`/listadoMunicipio`) // Endpoint to fetch municipalities
     municipalities.value = res.data.data.map((item: MunicipioItem) => ({
@@ -139,7 +157,7 @@ onMounted(async () => {
       name: item.municipio_ine
     }))
   } catch (e) {
-    init({ message: 'Error: cargando municipios', color: 'danger' })
+    init({ message: 'Error: No se pudieron cargar los municipios', color: 'danger' })
   }
   /*
   try {
@@ -149,7 +167,7 @@ onMounted(async () => {
       name: item.parroquia_ine
     }))
   } catch (e) {
-    init({ message: 'Error: cargando parroquias', color: 'danger' })
+    init({ message: 'Error: No se pudieron cargar las parroquias', color: 'danger' })
   }
 
   try {
@@ -159,7 +177,7 @@ onMounted(async () => {
       name: item.nombre_comunidad
     }))
   } catch (e) {
-    init({ message: 'Error: cargando comunidades', color: 'danger' })
+    init({ message: 'Error: No se pudieron cargar las comunidades', color: 'danger' })
   } */
 
   console.log('States:', states.value)
@@ -184,13 +202,13 @@ const validate = () => {
     return false
   }
 
-  if (!/^\d{4}-\d{7}$/.test(formData.phoneNums1)) {
-    init({ message: 'Número de teléfono 1 inválido. Formato esperado: 0410-1234567', color: 'warning' })
+  if (!/^\d{11}$/.test(formData.phoneNums1)) {
+    init({ message: 'Número de teléfono 1 inválido. Formato esperado: 04101234567', color: 'warning' })
     return false
   }
 
-  if (formData.phoneNums2 && !/^\d{4}-\d{7}$/.test(formData.phoneNums2)) {
-    init({ message: 'Número de teléfono 2 inválido. Formato esperado: 0410-1234567', color: 'warning' })
+  if (formData.phoneNums2 && !/^\d{11}$/.test(formData.phoneNums2)) {
+    init({ message: 'Número de teléfono 2 inválido. Formato esperado: 04101234567', color: 'warning' })
     return false
   }
   return true
