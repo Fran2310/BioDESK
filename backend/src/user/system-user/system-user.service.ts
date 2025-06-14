@@ -150,6 +150,27 @@ export class SystemUserService {
   }
 
   /**
+   * Recupera múltiples usuarios del sistema por sus UUIDs y retorna un objeto
+   * donde cada clave es el UUID y el valor contiene el CI, nombre y apellido.
+   *
+   * @param uuids - Lista de UUIDs de los usuarios a buscar.
+   * @returns Un objeto con los datos básicos de cada usuario indexados por UUID.
+   */
+  async batchFinderSystemUsers(
+    uuids: string[],
+  ): Promise<Record<string, { ci: string; name: string; lastName: string }>> {
+    const users = await this.systemPrisma.systemUser.findMany({
+      where: { uuid: { in: uuids } },
+      select: { uuid: true, ci: true, name: true, lastName: true },
+    });
+
+    return users.reduce((acc, user) => {
+      acc[user.uuid] = user;
+      return acc;
+    }, {});
+  }
+
+  /**
    * Crea un nuevo usuario del sistema con los datos proporcionados y lo asocia opcionalmente a un laboratorio.
    * Valida que el correo y la cédula sean únicos, encripta la contraseña y guarda el usuario en la base de datos.
    *
