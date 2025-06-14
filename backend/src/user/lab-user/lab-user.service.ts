@@ -7,11 +7,9 @@ import {
 } from '@nestjs/common';
 import { CreateLabUserDto } from './dto/create-lab-user.dto';
 import { PaginatedLabUserListDto } from './dto/lab-user-with-role.dto';
-import { AssignExistingUserDto } from './dto/assign-existing-user.dto';
 
 import { LabDbManageService } from '../../prisma-manage/lab-prisma/services/lab-db-manage.service';
 import { RoleService } from '../../role/role.service';
-import { SystemUserService } from '../system-user/system-user.service';
 
 import { LabUser } from '@prisma/client-lab';
 
@@ -28,7 +26,6 @@ export class LabUserService {
 
   constructor(
     private readonly roleService: RoleService,
-    private readonly systemUserService: SystemUserService,
     private readonly labDbManageService: LabDbManageService,
   ) {}
 
