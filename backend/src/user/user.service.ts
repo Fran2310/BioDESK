@@ -475,7 +475,10 @@ export class UserService {
     const user = await this.systemUserService.getSystemUser({ uuid: userUuid });
 
     // 1. Eliminar relación en DB del laboratorio
-    await this.labUserService.deleteLabUser(labId, userUuid);
+    const deletedUser = await this.labUserService.deleteLabUser(
+      labId,
+      userUuid,
+    );
 
     // 2. Eliminar relación en DB central
     await this.systemUserService.deleteAssignedSystemUser(labId, userUuid);
@@ -485,12 +488,9 @@ export class UserService {
       action: 'delete',
       details: `Se eliminó la asignación del usuario ${user.name} ${user.lastName} del laboratorio`,
       entity: 'LabUser',
-      recordEntityId: user.uuid,
+      recordEntityId: deletedUser.id,
       operationData: {
-        before: {
-          userUuid,
-          labId,
-        },
+        before: deletedUser,
       },
     });
 

@@ -239,11 +239,13 @@ export class LabUserService {
    * @param userUuid - UUID del usuario a eliminar.
    * @returns Una promesa que se resuelve cuando el usuario ha sido eliminado.
    */
-  async deleteLabUser(labId: number, userUuid: string): Promise<void> {
+  async deleteLabUser(labId: number, userUuid: string): Promise<any> {
     const prisma = await this.labDbManageService.genInstanceLabDB(labId);
 
-    await prisma.labUser.delete({
+    const deletedUser = await prisma.labUser.delete({
       where: { systemUserUuid: userUuid },
     });
+
+    return deletedUser;
   }
 }
