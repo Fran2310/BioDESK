@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { SystemPrismaService } from '../../prisma-manage/system-prisma/system-prisma.service';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateSystemUserDto } from '../dto/update-system-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateSystemUserDto } from './dto/update-system-user.dto';
 
 @Injectable()
 export class SystemUserService {

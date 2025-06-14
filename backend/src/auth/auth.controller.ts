@@ -1,11 +1,19 @@
 // /src/auth/auth.controller.ts
-import { Controller, Post, Body, Request, UseGuards, BadRequestException, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Request,
+  UseGuards,
+  BadRequestException,
+  Get,
+} from '@nestjs/common';
 import { Public } from './decorators/public.decorator'; // Ruta pública, no requiere autenticación
 import { AuthService } from './auth.service';
 import { MailService } from 'src/mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { CreateUserDto } from 'src/user/system-user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -123,15 +131,15 @@ export class AuthController {
           type: 'string',
           format: 'email',
           example: 'usuario@ejemplo.com',
-          description: 'Email registrado en el sistema'
-        }
-      }
+          description: 'Email registrado en el sistema',
+        },
+      },
     },
     examples: {
       example1: {
-        value: { email: 'usuario@ejemplo.com' }
-      }
-    }
+        value: { email: 'usuario@ejemplo.com' },
+      },
+    },
   })
   async sendTokenForResetPassword(@Body('email') email: string) {
     try {
@@ -149,17 +157,17 @@ export class AuthController {
     description: `Restablece la contraseña de un usuario utilizando un token de recuperación válido.
       Requiere el email del usuario, el token enviado al correo y la nueva contraseña.`,
   })
-  @ApiBody({ 
+  @ApiBody({
     type: ResetPasswordDto,
     examples: {
       example1: {
         value: {
           email: 'usuario@ejemplo.com',
           token: 'ABC123',
-          newPassword: 'NuevaContraseñaSegura123'
-        }
-      }
-    } 
+          newPassword: 'NuevaContraseñaSegura123',
+        },
+      },
+    },
   })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     try {

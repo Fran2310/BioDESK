@@ -7,7 +7,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { CreateUserDto } from './create-user.dto';
+import { CreateUserDto } from '../system-user/dto/create-user.dto';
 import { CreateLabDto } from './create-lab.dto';
 import { Type } from 'class-transformer';
 

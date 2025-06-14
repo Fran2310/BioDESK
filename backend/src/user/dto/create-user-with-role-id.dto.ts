@@ -1,5 +1,5 @@
 // src/user/dto/create-user-with-role-id.dto.ts
-import { CreateUserDto } from './create-user.dto';
+import { CreateUserDto } from '../system-user/dto/create-user.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, Min } from 'class-validator';
 

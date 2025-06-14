@@ -13,7 +13,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from './system-user/dto/create-user.dto';
 import { RoleDto } from 'src/role/dto/role.dto';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
 import {
@@ -27,7 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { CreateUserWithRoleIdDto } from './dto/create-user-with-role-id.dto';
-import { UpdateSystemUserDto } from './dto/update-system-user.dto';
+import { UpdateSystemUserDto } from './system-user/dto/update-system-user.dto';
 import { SystemUserDto } from './dto/system-user.dto';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 
