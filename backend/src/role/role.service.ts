@@ -6,11 +6,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LabPrismaService } from 'src/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UserService } from 'src/user/user.service';
 import { AuditService } from 'src/audit/audit.service';
+import { LabDbManageService } from '../prisma-manage/lab-prisma/services/lab-db-manage.service';
 
 /**
  * Servicio encargado de gestionar roles dentro de un laboratorio, incluyendo su creación, actualización, eliminación y consulta.
@@ -23,7 +24,28 @@ export class RoleService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly auditService: AuditService,
+    private readonly labDbManageService: LabDbManageService,
   ) {}
+
+  /**
+   * Valida que un rol con el ID proporcionado exista en el laboratorio especificado.
+   *
+   * @param labId ID del laboratorio.
+   * @param roleId ID del rol a validar.
+   * @throws NotFoundException Si el rol no existe en el laboratorio.
+   */
+  async validateRoleExists(labId: number, roleId: number) {
+    const prisma = await this.labDbManageService.genInstanceLabDB(labId);
+
+    const role = await this.getRoleById(prisma, roleId);
+    if (!role) {
+      throw new NotFoundException(
+        `Rol con ID ${roleId} no encontrado en el laboratorio`,
+      );
+    } else {
+      return role;
+    }
+  }
 
   /**
    * Busca y retorna un rol único por su nombre utilizando LabPrismaService.
@@ -105,7 +127,7 @@ export class RoleService {
     // Consultar la info del usuario en la base de datos del sistema
     const users = await Promise.all(
       labUsers.map((labUser) =>
-        this.userService.getSystemUser({
+        this.userService.systemUserService.getSystemUser({
           uuid: labUser.systemUserUuid,
           includeLabs: false,
         }),

@@ -3,7 +3,7 @@ import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { InitDatabaseDto } from './dto/init-db.dto';
 import { LabPrismaFactory } from './lab-prisma.factory';
 import { LabDbManageService } from './services/lab-db-manage.service';
-import { normalizeDbName } from '../common/utils/normalize-db-name';
+import { normalizeDbName } from '../../common/utils/normalize-db-name';
 import {
   ApiBearerAuth,
   ApiOperation,

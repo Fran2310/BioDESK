@@ -1,8 +1,10 @@
 // src/lab-prisma/services/lab-migration.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { Client } from 'pg';
-import { normalizeDbName } from '../../common/utils/normalize-db-name';
-import { generateLabDbUrl } from '../../common/utils/generate-lab-db-url';
+import { normalizeDbName } from '../../../common/utils/normalize-db-name';
+import { generateLabDbUrl } from '../../../common/utils/generate-lab-db-url';
+import { SystemPrismaService } from '../../system-prisma/system-prisma.service';
+import { LabPrismaFactory } from '../lab-prisma.factory';
 
 /**
  * Servicio para gestionar la migración y creacion de bases de datos de laboratorio.
@@ -13,6 +15,23 @@ import { generateLabDbUrl } from '../../common/utils/generate-lab-db-url';
 @Injectable()
 export class LabDbManageService {
   private readonly logger = new Logger(LabDbManageService.name);
+  constructor(
+    private readonly systemPrisma: SystemPrismaService,
+    private readonly labPrismaFactory: LabPrismaFactory,
+  ) {}
+
+  /**
+   * Genera y conecta una instancia de base de datos Prisma específica para un laboratorio dado su ID.
+   *
+   * @param labId - El identificador del laboratorio.
+   * @returns Una instancia conectada de Prisma para el laboratorio correspondiente.
+   */
+  async genInstanceLabDB(labId: number) {
+    const dbName = await this.systemPrisma.getLabDbName(labId);
+    const prisma = this.labPrismaFactory.createInstanceDB(dbName);
+    await prisma.$connect();
+    return prisma;
+  }
 
   /**
    * Genera la URL de conexión a la base de datos PostgreSQL para el laboratorio.

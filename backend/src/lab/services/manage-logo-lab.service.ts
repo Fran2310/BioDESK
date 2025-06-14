@@ -4,7 +4,7 @@ import { join, extname } from 'path';
 import * as sharp from 'sharp';
 import { existsSync, mkdirSync } from 'fs';
 import { promises as fs } from 'fs';
-import { SystemPrismaService } from '../../system-prisma/system-prisma.service';
+import { SystemPrismaService } from '../../prisma-manage/system-prisma/system-prisma.service';
 import { AuditService } from 'src/audit/audit.service';
 
 @Injectable()

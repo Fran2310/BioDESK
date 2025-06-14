@@ -2,8 +2,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { RoleController } from './role.controller';
-import { LabPrismaModule } from 'src/lab-prisma/lab-prisma.module';
-import { SystemPrismaModule } from 'src/system-prisma/system-prisma.module';
+import { LabPrismaModule } from 'src/prisma-manage/lab-prisma/lab-prisma.module';
+import { SystemPrismaModule } from 'src/prisma-manage/system-prisma/system-prisma.module';
 import { UserModule } from 'src/user/user.module';
 import { AuditModule } from 'src/audit/audit.module';
 

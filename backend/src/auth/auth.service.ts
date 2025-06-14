@@ -20,7 +20,6 @@ export class AuthService {
     private readonly usersService: UserService,
     private readonly jwtService: JwtService,
     private readonly sharedCacheService: SharedCacheService,
-
   ) {}
 
   /**
@@ -55,7 +54,7 @@ export class AuthService {
    * @returns El usuario si las credenciales son correctas, o un mensaje de error si no lo son.
    */
   async validateUser(email: string, password: string) {
-    const user = await this.usersService.getSystemUser({
+    const user = await this.usersService.systemUserService.getSystemUser({
       email: email,
       includeLabs: true, // Incluye los laboratorios asociados al usuario
     });
@@ -99,14 +98,17 @@ export class AuthService {
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
     // 1. Validar que el token recibido coincide con el almacenado
     const storedToken = await this.sharedCacheService.getEmailToken(dto.email);
-    
+
     if (!storedToken || dto.token !== storedToken) {
       throw new UnauthorizedException('Token inválido o expirado');
     }
-  
+
     // 2. Cambiar la contraseña
-    await this.usersService.changePasswordByEmail(dto.email, dto.newPassword);
-  
+    await this.usersService.systemUserService.changePasswordByEmail(
+      dto.email,
+      dto.newPassword,
+    );
+
     // 3. Invalidar el token después de usarlo (importante para seguridad)
     await this.sharedCacheService.delEmailToken(dto.email);
   }

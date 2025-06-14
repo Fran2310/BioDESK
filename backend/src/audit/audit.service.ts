@@ -1,8 +1,8 @@
 // src/audit/audit.service.ts
 import { Injectable } from '@nestjs/common';
-import { LabPrismaFactory } from 'src/lab-prisma/lab-prisma.factory';
+import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
 import { CreateAuditLogDto } from './dto/create-audit-log.dto';
-import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
+import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
 
 @Injectable()
 export class AuditService {

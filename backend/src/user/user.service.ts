@@ -1,167 +1,33 @@
 // backend/src/user/user.service.ts
-import {
-  Injectable,
-  ConflictException,
-  Logger,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
-import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
-import { LabUserService } from 'src/lab-user/lab-user.service';
-import { LabService } from 'src/lab/services/lab.service';
-import { LabDbManageService } from 'src/lab-prisma/services/lab-db-manage.service';
-import { AuditService } from 'src/audit/audit.service';
-import * as bcrypt from 'bcrypt';
+import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
+
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { CreateLabDto } from 'src/user/dto/create-lab.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { RoleDto } from 'src/role/dto/role.dto';
-import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
 import { UpdateSystemUserDto } from './dto/update-system-user.dto';
+import { RoleDto } from 'src/role/dto/role.dto';
+
+import { LabService } from 'src/lab/services/lab.service';
+import { LabUserService } from 'src/user/lab-user/lab-user.service';
+import { RoleService } from '../role/role.service';
+import { SystemUserService } from './system-user/system-user.service';
+import { AuditService } from 'src/audit/audit.service';
+import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
 
   constructor(
-    private readonly systemPrisma: SystemPrismaService,
     private readonly labService: LabService,
-    private readonly labUserService: LabUserService,
+
+    readonly labUserService: LabUserService,
+    readonly systemUserService: SystemUserService,
+
+    private readonly roleService: RoleService,
     private readonly auditService: AuditService,
-    private readonly labDbManageService: LabDbManageService,
   ) {}
-
-  /**
-   * Valida que no existan usuarios duplicados por email o cédula.
-   * @param email Email del usuario a validar.
-   * @param ci Cédula del usuario a validar.
-   * @throws ConflictException si ya existe un usuario con el mismo email o cédula.
-   */
-  async validateUniqueUser({
-    email,
-    ci,
-  }: {
-    email?: string;
-    ci?: string;
-  }): Promise<void> {
-    const existingUser = await this.systemPrisma.systemUser.findFirst({
-      where: {
-        OR: [...(email ? [{ email }] : []), ...(ci ? [{ ci }] : [])],
-      },
-    });
-
-    if (!existingUser) return;
-
-    if (email && existingUser.email === email) {
-      throw new ConflictException(
-        `Ya existe un usuario con el email: ${email}`,
-      );
-    }
-
-    if (ci && existingUser.ci === ci) {
-      throw new ConflictException(`Ya existe un usuario con la cédula: ${ci}`);
-    }
-
-    throw new ConflictException('Ya existe un usuario con datos duplicados.');
-  }
-
-  /**
-   * Obtiene un usuario del sistema por UUID, email o cédula.
-   * @param params Objeto con uuid, email o ci del usuario a buscar.
-   * @param includeLabs Indica si se deben incluir los laboratorios asociados al usuario.
-   * @returns El usuario encontrado.
-   * @throws ConflictException si no se proporciona ningún parámetro o si el usuario no existe.
-   */
-  async getSystemUser(params: {
-    uuid?: string;
-    email?: string;
-    ci?: string;
-    includeLabs?: boolean;
-  }): Promise<any> {
-    const { uuid, email, ci, includeLabs = false } = params;
-
-    if (!uuid && !email && !ci) {
-      throw new ConflictException(
-        'Debes proporcionar al menos uno: uuid, email o ci.',
-      );
-    }
-
-    const where = {
-      ...(uuid && { uuid }),
-      ...(email && { email }),
-      ...(ci && { ci }),
-    };
-
-    const user = await this.systemPrisma.systemUser.findFirst({
-      where,
-      include: includeLabs ? { labs: true } : undefined,
-    });
-
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado.');
-    }
-    return user;
-  }
-
-  /**
-   * Recupera todos los usuarios del sistema asociados a un laboratorio específico.
-   *
-   * @param labId - ID del laboratorio.
-   * @param offset - Desplazamiento para la paginación (por defecto 0).
-   * @param limit - Límite de usuarios a retornar (por defecto 20).
-   * @returns Un objeto con el total de usuarios y un diccionario de datos de usuario indexado por UUID.
-   */
-  async getAllSystemUsersByLabId(
-    labId: number,
-    offset = 0,
-    limit = 20,
-  ): Promise<{
-    total: number;
-    data: Record<
-      string,
-      { ci: string; name: string; lastName: string; email: string }
-    >;
-  }> {
-    const [users, total] = await Promise.all([
-      this.systemPrisma.systemUser.findMany({
-        where: {
-          labs: {
-            some: {
-              id: labId,
-            },
-          },
-        },
-        skip: offset,
-        take: limit,
-        select: {
-          uuid: true,
-          ci: true,
-          name: true,
-          lastName: true,
-          email: true,
-        },
-      }),
-      this.systemPrisma.systemUser.count({
-        where: {
-          labs: {
-            some: {
-              id: labId,
-            },
-          },
-        },
-      }),
-    ]);
-
-    const data = users.reduce(
-      (acc, user) => {
-        acc[user.uuid] = user;
-        return acc;
-      },
-      {} as Record<string, (typeof users)[number]>,
-    );
-
-    return { total, data };
-  }
 
   /**
    * Obtiene los usuarios de un laboratorio específico, con opción de incluir permisos, paginación y enriquecimiento de datos con información del usuario del sistema.
@@ -185,11 +51,12 @@ export class UserService {
       limit,
     );
 
-    const systemUsersMap = await this.getAllSystemUsersByLabId(
-      labId,
-      offset,
-      limit,
-    );
+    const systemUsersMap =
+      await this.systemUserService.getAllSystemUsersByLabId(
+        labId,
+        offset,
+        limit,
+      );
 
     // Enriquecer datos
     const enrichedData = labUsers.data.map((item) => {
@@ -215,39 +82,6 @@ export class UserService {
   }
 
   /**
-   * Crea un nuevo usuario del sistema con los datos proporcionados y lo asocia opcionalmente a un laboratorio.
-   * Valida que el correo y la cédula sean únicos, encripta la contraseña y guarda el usuario en la base de datos.
-   *
-   * @param dto Datos del usuario a crear.
-   * @param labId (Opcional) ID del laboratorio al que se asociará el usuario.
-   * @returns Promesa que resuelve con el usuario creado.
-   */
-  async createSystemUser(dto: CreateUserDto, labId?: number) {
-    const { ci, name, lastName, email, password } = dto;
-
-    await this.validateUniqueUser({ email, ci });
-
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    return this.systemPrisma.systemUser.create({
-      data: {
-        ci,
-        name,
-        lastName,
-        email,
-        password: hashedPassword,
-        salt,
-        ...(labId && {
-          labs: {
-            connect: [{ id: labId }],
-          },
-        }),
-      },
-    });
-  }
-
-  /**
    * Crea un usuario y rol para asignarlo a un laboratorio.
    * @param labId ID del laboratorio al que se asignará el usuario y rol.
    * @param systemUserDto Datos del usuario a crear.
@@ -261,7 +95,10 @@ export class UserService {
     role: RoleDto,
     performedByUserUuid: string,
   ) {
-    const systemUser = await this.createSystemUser(systemUserDto, labId);
+    const systemUser = await this.systemUserService.createSystemUser(
+      systemUserDto,
+      labId,
+    );
 
     const labUser = await this.labUserService.createLabUserWithRole(
       labId,
@@ -302,16 +139,18 @@ export class UserService {
     performedByUserUuid: string,
   ): Promise<{ uuid: string; email: string }> {
     // 1. Verificar que el rol exista
-    await this.labUserService.validateRoleExists(labId, roleId);
+    await this.roleService.validateRoleExists(labId, roleId);
 
     // 2. Crear usuario en el sistema
-    const systemUser = await this.createSystemUser(userDto, labId);
+    const systemUser = await this.systemUserService.createSystemUser(
+      userDto,
+      labId,
+    );
 
     // 3. Asociar al laboratorio con rol existente
     const labUser = await this.labUserService.createLabUser(
       labId,
       systemUser.uuid,
-      performedByUserUuid,
       roleId,
     );
 
@@ -359,7 +198,10 @@ export class UserService {
 
     try {
       // ✅ Primero creas el usuario y ya tienes el UUID
-      const user = await this.createSystemUser(userDto, labRecord.id);
+      const user = await this.systemUserService.createSystemUser(
+        userDto,
+        labRecord.id,
+      );
 
       // ✅ Luego lo insertas en la base de datos del laboratorio
       const labUser = await this.labUserService.createLabUserWithRole(
@@ -402,8 +244,7 @@ export class UserService {
         `❌ Error al crear el usuario administrador para el laboratorio: ${labRecord.name}. Iniciando rollback...`,
       );
 
-      await this.systemPrisma.lab.delete({ where: { id: labRecord.id } });
-      await this.labDbManageService.dropDatabase(labRecord.dbName);
+      await this.labService.rollbackLabCreation(labRecord.dbName, labRecord.id);
 
       this.logger.warn(
         `🚫 Rollback completado para el laboratorio ${labRecord.name}`,
@@ -420,7 +261,7 @@ export class UserService {
    */
   async createLabForUser(userUuid: string, dto: CreateLabDto) {
     // 1. Verifica que el usuario existe
-    const user = await this.getSystemUser({ uuid: userUuid });
+    const user = await this.systemUserService.getSystemUser({ uuid: userUuid });
 
     // 2. Crea el laboratorio
     const labRecord = await this.labService.createLab(dto, user.id);
@@ -472,15 +313,72 @@ export class UserService {
   }
 
   /**
-   * Actualiza los datos básicos de un usuario del sistema (System DB).
-   * Solo permite modificar: name, lastName, email.
+   * Asigna un usuario existente a un laboratorio con un rol específico.
+   *
+   * Busca al usuario por UUID, email o cédula, valida que el rol exista en el laboratorio,
+   * y crea la relación correspondiente en LabUser. Retorna los datos del usuario y su rol asignado.
+   *
+   * @param labId ID del laboratorio.
+   * @param dto Datos del usuario y rol a asignar.
+   * @param performedByUserUuid UUID del usuario que realiza la acción.
+   * @returns Información del usuario asignado y su rol.
+   */
+  async assignExistUserToLab(
+    labId: number,
+    dto: AssignExistingUserDto,
+    performedByUserUuid: string,
+  ) {
+    // 1. Buscar usuario
+    const user = await this.systemUserService.getSystemUser({
+      uuid: dto.uuid,
+      email: dto.email,
+      ci: dto.ci,
+    });
+
+    // 2. Validar que el rol exista en el laboratorio
+    const role = await this.roleService.validateRoleExists(labId, dto.roleId);
+
+    // 3. Insertar en LabUser
+    const labUser = await this.labUserService.createLabUser(
+      labId,
+      user.uuid,
+      dto.roleId,
+    );
+
+    // 2. Asociarlo a la DB central (si no lo está)
+    await this.systemUserService.linkSystemUserToLab(user.uuid, labId);
+
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'create',
+      details: `Asignó usuario existente ${user.name} ${user.lastName} al laboratorio con rol ID ${dto.roleId}`,
+      entity: 'LabUser',
+      recordEntityId: labUser.id.toString(),
+      operationData: {
+        after: {
+          systemUserUuid: user.uuid,
+          roleId: dto.roleId,
+        },
+      },
+    });
+    return {
+      uuid: user.uuid,
+      email: user.email,
+      ci: user.ci,
+      role: {
+        id: role.id,
+        name: role.role,
+      },
+    };
+  }
+
+  /**
+   * Actualiza los datos de un usuario del sistema y registra la acción en el servicio de auditoría.
    *
    * @param userUuid UUID del usuario a actualizar.
-   * @param dto Datos a actualizar.
-   * @param labId ID del laboratorio en donde se realizo la accion.
-   * @param performedByUserUuid UUID de quien realiza el cambio (para auditoría).
-   * @throws BadRequestException si no hay campos a actualizar.
-   * @throws ConflictException si el nuevo email ya está en uso por otro usuario.
+   * @param dto Datos actualizados del usuario.
+   * @param labId ID del laboratorio asociado.
+   * @param performedByUserUuid UUID del usuario que realiza la acción.
+   * @returns Un objeto con un mensaje de éxito y los datos actualizados del usuario.
    */
   async updateSystemUserData(
     userUuid: string,
@@ -488,116 +386,52 @@ export class UserService {
     labId: number,
     performedByUserUuid: string,
   ) {
-    const { name, lastName, email } = dto;
+    const { before, updated } = await this.systemUserService.updateUserInfo(
+      userUuid,
+      dto,
+      labId,
+    );
 
-    if (!name && !lastName && !email) {
-      throw new BadRequestException(
-        'Debes enviar al menos un campo a actualizar',
-      );
-    }
-
-    const user = await this.getSystemUser({
-      uuid: userUuid,
-      includeLabs: true,
-    });
-
-    // Verificar si el nuevo email está en uso
-    if (email && email !== user.email) {
-      const existingEmail = await this.systemPrisma.systemUser.findFirst({
-        where: { email },
-      });
-
-      if (existingEmail) {
-        throw new ConflictException(`El email ${email} ya está en uso.`);
-      }
-    }
-
-    // 1. Verificar si el usuario está asignado al laboratorio
-    if (user.labs) {
-      const isAssignedToLab = user.labs.some((lab) => lab.id === labId);
-      if (!isAssignedToLab) {
-        throw new ConflictException(
-          `El usuario no está asignado al laboratorio, no tiene permisos para editar`,
-        );
-      }
-    } else {
-      throw new ConflictException(
-        'El usuario no está asignado a ningún laboratorio.',
-      );
-    }
-
-    // 2. Guardar el estado previo para auditoría
-    const before = {
-      name: user.name,
-      lastName: user.lastName,
-      email: user.email,
-    };
-
-    const updated = await this.systemPrisma.systemUser.update({
-      where: { uuid: userUuid },
-      data: {
-        ...(name && { name }),
-        ...(lastName && { lastName }),
-        ...(email && { email }),
-      },
-    });
-
-    // Auditar
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'update',
-      details: `Actualizó datos de usuario ${userUuid}`,
       entity: 'SystemUser',
-      recordEntityId: user.id.toString(),
+      recordEntityId: updated.uuid,
+      details: `Actualizó datos de usuario ${userUuid}`,
       operationData: {
         before,
-        after: {
-          name: updated.name,
-          lastName: updated.lastName,
-          email: updated.email,
-        },
+        after: updated,
       },
     });
 
     return {
       message: 'Usuario actualizado correctamente',
-      updated: {
-        uuid: updated.uuid,
-        name: updated.name,
-        lastName: updated.lastName,
-        email: updated.email,
-      },
+      updated,
     };
   }
 
-  /**
-   * Elimina la asignación de un usuario del sistema (solamente de la db central) a un laboratorio específico.
-   *
-   * @param labId ID del laboratorio del que se desea desvincular al usuario.
-   * @param userUuid UUID del usuario del sistema.
-   * @throws ConflictException Si el usuario no está asignado al laboratorio indicado.
-   * @returns Promise<void>
-   */
-  async deleteAssignedSystemUser(
+  async updateUserRole(
     labId: number,
     userUuid: string,
-  ): Promise<void> {
-    const user = await this.getSystemUser({
-      uuid: userUuid,
-      includeLabs: true,
-    });
-
-    const isAssigned = user.labs.some((lab) => lab.id === labId);
-    if (!isAssigned) {
-      throw new ConflictException(
-        `El usuario no está asignado al laboratorio con ID ${labId}`,
-      );
-    }
-
-    await this.systemPrisma.systemUser.update({
-      where: { uuid: userUuid },
-      data: {
-        labs: {
-          disconnect: [{ id: labId }],
+    roleId: number,
+    performedByUserUuid: string,
+  ) {
+    const userRole = await this.labUserService.updateLabUserRole(
+      labId,
+      userUuid,
+      roleId,
+    );
+    // Auditar con before y after
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'update',
+      details: `Actualizó el rol asignado al usuario ${userUuid} de ID role ${userRole.oldRoleId} a ID role${userRole.updated.roleId}`,
+      entity: 'LabUser',
+      recordEntityId: userRole.updated.id.toString(),
+      operationData: {
+        before: {
+          roleId: userRole.oldRoleId,
+        },
+        after: {
+          roleId: userRole.updated.roleId,
         },
       },
     });
@@ -617,13 +451,13 @@ export class UserService {
     userUuid: string,
     performedByUserUuid: string,
   ): Promise<{ message: string }> {
-    const user = await this.getSystemUser({ uuid: userUuid });
+    const user = await this.systemUserService.getSystemUser({ uuid: userUuid });
 
     // 1. Eliminar relación en DB del laboratorio
     await this.labUserService.deleteLabUser(labId, userUuid);
 
     // 2. Eliminar relación en DB central
-    await this.deleteAssignedSystemUser(labId, userUuid);
+    await this.systemUserService.deleteAssignedSystemUser(labId, userUuid);
 
     // 3. Auditar acción
     await this.auditService.logAction(labId, performedByUserUuid, {
@@ -646,13 +480,12 @@ export class UserService {
 
   /**
    * Elimina completamente un usuario del sistema, asegurando que no esté asignado a ningún laboratorio.
-   * Registra la acción en el sistema de auditoría.
    *
    * @param labId ID del laboratorio desde el cual se realiza la acción.
    * @param userUuid UUID del usuario a eliminar.
-   * @param performedByUserUuid UUID del usuario que realiza la eliminación.
-   * @throws ConflictException Si el usuario está asignado a uno o más laboratorios.
-   * @returns Mensaje de confirmación de eliminación.
+   * @param performedByUserUuid UUID del usuario que realiza la acción.
+   * @throws ConflictException Si el usuario está asignado a uno o más laboratorios o si ocurre un error al eliminarlo.
+   * @returns Un mensaje confirmando la eliminación exitosa del usuario.
    */
   async deleteTotalSystemUser(
     labId: number,
@@ -660,7 +493,7 @@ export class UserService {
     performedByUserUuid: string,
   ) {
     // 1. Buscar el usuario incluyendo sus laboratorios
-    const user = await this.getSystemUser({
+    const user = await this.systemUserService.getSystemUser({
       uuid: userUuid,
       includeLabs: true,
     });
@@ -673,9 +506,10 @@ export class UserService {
     }
 
     // 3. Eliminar el usuario del sistema
-    const deleted = await this.systemPrisma.systemUser.delete({
-      where: { uuid: userUuid },
-    });
+    const deleted = await this.systemUserService.deleteSystemUser(userUuid);
+    if (!deleted) {
+      throw new ConflictException('Error al eliminar el usuario del sistema.');
+    }
 
     // 4. Auditar eliminación
     await this.auditService.logAction(labId, performedByUserUuid, {
@@ -697,28 +531,5 @@ export class UserService {
     return {
       message: `Usuario ${deleted.name} ${deleted.lastName} eliminado completamente del sistema.`,
     };
-  }
-
-  async changePasswordByEmail(email: string, newPassword: string) {
-    // 1. Verificar que el usuario existe
-  const user = await this.getSystemUser({ email });
-  if (!user) {
-    throw new ConflictException(`Usuario con email ${email} no encontrado.`);
-  }
-
-  // 2. Generar nuevo salt y hash para la contraseña
-  const salt = await bcrypt.genSalt();
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-  // 3. Actualizar usuario en la base de datos
-  await this.systemPrisma.systemUser.update({
-    where: { uuid: user.uuid },
-    data: { 
-      password: hashedPassword,
-      salt,
-    }
-  });
-
-  this.logger.log(`Contraseña actualizada para el email: ${email}`);
   }
 }

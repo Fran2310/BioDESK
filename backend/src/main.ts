@@ -23,8 +23,7 @@ async function bootstrap() {
     .addTag('[Testing] CASL')
     .addTag('Auth', 'Autenticación')
     .addTag('Lab', 'Gestión de laboratorios')
-    .addTag('User', 'Gestión de usuarios completa')
-    .addTag('LabUser', 'Gestion de usuarios a nivel de laboratorio')
+    .addTag('User', 'Gestión de usuarios')
     .addTag('Role', 'Gestión de roles')
     .build();
 

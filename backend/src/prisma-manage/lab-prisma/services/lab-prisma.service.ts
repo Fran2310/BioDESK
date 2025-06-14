@@ -2,7 +2,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client-lab';
 
-import { generateLabDbUrl } from '../../common/utils/generate-lab-db-url';
+import { generateLabDbUrl } from '../../../common/utils/generate-lab-db-url';
 
 /**
  * Servicio Prisma multi-tenant para laboratorios.

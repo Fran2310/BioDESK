@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config'; // Importa ConfigModule para manejar variables de entorno
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SystemPrismaModule } from './system-prisma/system-prisma.module';
-import { LabPrismaModule } from './lab-prisma/lab-prisma.module';
+import { SystemPrismaModule } from './prisma-manage/system-prisma/system-prisma.module';
+import { LabPrismaModule } from './prisma-manage/lab-prisma/lab-prisma.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core'; // Importa APP_GUARD para usar guards globales
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'; // Importa el guard de autenticación JWT
@@ -16,8 +16,9 @@ import { LabModule } from './lab/lab.module';
 import { CaslModule } from './casl/casl.module';
 import { AuditModule } from './audit/audit.module';
 import { RoleModule } from './role/role.module';
-import { LabUserModule } from './lab-user/lab-user.module';
+import { LabUserModule } from './user/lab-user/lab-user.module';
 import { MailModule } from './mail/mail.module';
+import { SystemUserModule } from './user/system-user/system-user.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MailModule } from './mail/mail.module';
     RoleModule,
     LabUserModule,
     MailModule,
+    SystemUserModule,
   ],
   controllers: [AppController],
   providers: [

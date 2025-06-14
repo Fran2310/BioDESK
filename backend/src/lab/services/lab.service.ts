@@ -4,12 +4,13 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 
-import { LabPrismaFactory } from 'src/lab-prisma/lab-prisma.factory';
+import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
-import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
-import { LabDbManageService } from 'src/lab-prisma/services/lab-db-manage.service';
+import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 import { Lab } from '@prisma/client-system';
 
 import { UserCache } from 'src/shared-cache/dto/user-cache.interface';
@@ -18,6 +19,7 @@ import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 
 @Injectable()
 export class LabService {
+  private readonly logger = new Logger(LabService.name);
   constructor(
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemPrisma: SystemPrismaService,
@@ -151,5 +153,28 @@ export class LabService {
     await this.labDbManageService.migrateDatabase(dbName);
 
     return lab;
+  }
+
+  /**
+   * Revierte la creación de un laboratorio eliminando el registro correspondiente y borrando la base de datos asociada.
+   *
+   * @param dbName Nombre de la base de datos a eliminar.
+   * @param labId ID del laboratorio a eliminar.
+   * @throws BadRequestException Si ocurre un error durante el proceso de reversión.
+   * @returns Promesa que resuelve cuando la operación ha finalizado.
+   */
+  async rollbackLabCreation(dbName: string, labId: number) {
+    try {
+      return await this.systemPrisma.$transaction(async (tx) => {
+        await tx.lab.delete({ where: { id: labId } });
+        return await this.labDbManageService.dropDatabase(dbName);
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to rollback lab creation for db: ${dbName}, labId: ${labId}`,
+        error,
+      );
+      throw new BadRequestException('Failed to rollback lab creation');
+    }
   }
 }

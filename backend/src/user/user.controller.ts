@@ -29,6 +29,7 @@ import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { CreateUserWithRoleIdDto } from './dto/create-user-with-role-id.dto';
 import { UpdateSystemUserDto } from './dto/update-system-user.dto';
 import { SystemUserDto } from './dto/system-user.dto';
+import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 
 @ApiBearerAuth()
 @ApiTags('User')
@@ -117,14 +118,14 @@ export class UserController {
     @Query('email') email?: string,
     @Query('ci') ci?: string,
   ): Promise<SystemUserDto> {
-    const user = await this.userService.getSystemUser({
+    const user = await this.userService.systemUserService.getSystemUser({
       uuid,
       email,
       ci,
       includeLabs: false, // Siempre false para este endpoint
     });
 
-    // Eliminamos campos sensibles explícitamente
+    // Eliminar campos sensibles explícitamente
     const { password, salt, lastAccess, isActive, ...safeUser } = user;
 
     return safeUser as SystemUserDto;
@@ -193,6 +194,21 @@ export class UserController {
     );
   }
 
+  @Post('assign-user-to-lab')
+  @CheckAbility({ actions: 'create', subject: 'LabUser' })
+  @ApiOperation({
+    summary:
+      'Asignar un usuario existente del sistema a un laboratorio con rol existente',
+  })
+  @ApiBody({ type: AssignExistingUserDto })
+  async assignExistingUserToLab(
+    @Body() dto: AssignExistingUserDto,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.userService.assignExistUserToLab(labId, dto, req.user.sub);
+  }
+
   @Patch('update')
   @CheckAbility({
     actions: 'update',
@@ -223,6 +239,42 @@ export class UserController {
     );
   }
 
+  @Patch('assign-role')
+  @CheckAbility({
+    actions: 'update',
+    subject: 'LabUser',
+    fields: 'roleId',
+  })
+  @ApiOperation({
+    summary: 'Actualizar/asignar el rol a un usuario del laboratorio',
+    description:
+      'Permite cambiar el rol de un usuario específico dentro del laboratorio actual.',
+  })
+  @ApiQuery({
+    name: 'uuid',
+    required: true,
+    type: String,
+    description:
+      'UUID del usuario del sistema al que se le desea cambiar el rol.',
+  })
+  @ApiQuery({
+    name: 'roleId',
+    required: true,
+    type: Number,
+    example: 2,
+    description: 'ID del nuevo rol que se le asignará al usuario.',
+  })
+  async updateUserRole(
+    @Query('uuid') uuid: string,
+    @Query('roleId', ParseIntPipe) roleId: number,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    const performedBy = req.user.sub;
+
+    return this.userService.updateUserRole(labId, uuid, roleId, performedBy);
+  }
+
   @Delete('soft-delete')
   @CheckAbility({ actions: 'delete', subject: 'LabUser' })
   @ApiOperation({
@@ -247,8 +299,6 @@ export class UserController {
       req.user.sub,
     );
   }
-
-  // src/user/user.controller.ts
 
   @Delete('hard-delete')
   @CheckAbility({ actions: 'delete', subject: 'SystemUser' })
