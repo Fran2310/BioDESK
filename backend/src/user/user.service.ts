@@ -112,7 +112,7 @@ export class UserService {
     if (labUser) {
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'create',
-        details: `Creó al usuario ${systemUser.name} ${systemUser.lastName} con rol ${role.name}`,
+        details: `Creó al usuario ${systemUser.name} ${systemUser.lastName} y rol ${role.name}`,
         entity: 'LabUser',
         recordEntityId: labUser.id.toString(),
         operationData: {
@@ -139,7 +139,7 @@ export class UserService {
     performedByUserUuid: string,
   ): Promise<{ uuid: string; email: string }> {
     // 1. Verificar que el rol exista
-    await this.roleService.validateRoleExists(labId, roleId);
+    const role = await this.roleService.validateRoleExists(labId, roleId);
 
     // 2. Crear usuario en el sistema
     const systemUser = await this.systemUserService.createSystemUser(
@@ -157,7 +157,7 @@ export class UserService {
     // 4. Auditar creación
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'create',
-      details: `Creó al usuario ${systemUser.name} ${systemUser.lastName} con rol ID ${roleId}`,
+      details: `Creó al usuario ${systemUser.name} ${systemUser.lastName} con rol ${role.role}`,
       entity: 'LabUser',
       recordEntityId: labUser.id.toString(),
       operationData: {
@@ -350,7 +350,7 @@ export class UserService {
 
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'create',
-      details: `Asignó usuario existente ${user.name} ${user.lastName} al laboratorio con rol ID ${dto.roleId}`,
+      details: `Asignó usuario existente ${user.name} ${user.lastName} al laboratorio con rol ${role.role}`,
       entity: 'LabUser',
       recordEntityId: labUser.id.toString(),
       operationData: {
@@ -396,7 +396,7 @@ export class UserService {
       action: 'update',
       entity: 'SystemUser',
       recordEntityId: updated.uuid,
-      details: `Actualizó datos de usuario ${userUuid}`,
+      details: `Actualizó datos del usuario ${updated.name} ${updated.lastName}`,
       operationData: {
         before,
         after: updated,
@@ -420,10 +420,31 @@ export class UserService {
       userUuid,
       roleId,
     );
+
+    //obtener data para auditoria
+    const userdata = await this.systemUserService.getSystemUser({
+      uuid: userUuid,
+    });
+
+    let oldRoleData = { role: '' };
+    if (userRole.oldRoleId !== null) {
+      oldRoleData = await this.roleService.validateRoleExists(
+        labId,
+        userRole.oldRoleId,
+      );
+    }
+
+    let newRoleData = { role: '' };
+    if (userRole.updated.roleId !== null) {
+      newRoleData = await this.roleService.validateRoleExists(
+        labId,
+        userRole.updated.roleId,
+      );
+    }
     // Auditar con before y after
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'update',
-      details: `Actualizó el rol asignado al usuario ${userUuid} de ID role ${userRole.oldRoleId} a ID role${userRole.updated.roleId}`,
+      details: `Actualizó el rol asignado al usuario ${userdata.name} ${userdata.lastName} del rol ${oldRoleData.role ? oldRoleData.role : userRole.oldRoleId} al rol ${newRoleData.role ? newRoleData.role : userRole.updated.roleId}`,
       entity: 'LabUser',
       recordEntityId: userRole.updated.id.toString(),
       operationData: {
