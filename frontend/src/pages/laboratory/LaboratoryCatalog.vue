@@ -79,6 +79,7 @@
               label="Descripción"
               class="mb-3"
             />
+            
             <va-input
               v-model="newExam.suppliesText"
               label="Insumos (separados por coma)"
@@ -123,6 +124,34 @@
                 icon="add"
               >
                 Agregar propiedad
+              </va-button>
+            </div>
+            <div class="mb-3">
+              <label class="block mb-1 font-semibold">Insumos</label>
+              <div v-for="(insumo, idx) in insumos" :key="idx" class="flex gap-2 mb-2">
+                <va-input
+                  v-model="insumos[idx]"
+                  placeholder="Insumo"
+                  class="flex-1"
+                  size="small"
+                />
+                <va-button
+                  icon="delete"
+                  color="danger"
+                  size="small"
+                  @click="eliminarInsumo(idx)"
+                  class="self-center"
+                  aria-label="Eliminar insumo"
+                />
+              </div>
+              <va-button
+                color="primary"
+                size="small"
+                @click="agregarInsumo"
+                class="mt-1"
+                icon="add"
+              >
+                Agregar insumo
               </va-button>
             </div>
             <div class="flex gap-2 justify-end mt-4">
@@ -330,11 +359,26 @@ function viewDetails(row: MedicTestCatalog) {
   alert(`Detalles de: ${row.name}`)
 }
 
+const insumos = ref<string[]>([])
+
+const agregarInsumo = () => {
+  insumos.value.push('')
+}
+
+const eliminarInsumo = (index: number) => {
+  insumos.value.splice(index, 1)
+}
+
 onMounted(fetchExams)
 </script>
 
 <style scoped>
-.laboratory-catalog-page {
-  padding: 24px;
+.insumos-section {
+  margin-top: 20px;
+}
+.insumos-section input {
+  margin-right: 10px;
 }
 </style>
+
+
