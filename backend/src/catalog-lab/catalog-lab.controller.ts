@@ -27,6 +27,11 @@ export class CatalogLabController {
   })
   async create(@Body() dto: CreateMedicTestDto, @Request() req) {
     const labId = Number(req.headers['x-lab-id']);
-    return this.catalogLabService.createMedicTestCatalog(labId, dto);
+    const performedByUserUuid = req.user.sub;
+    return this.catalogLabService.createMedicTestCatalog(
+      labId,
+      performedByUserUuid,
+      dto,
+    );
   }
 }

@@ -1,18 +1,43 @@
 // src/medic-test/medic-test-catalog.service.ts
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateMedicTestDto } from './dto/create-medic-test.dto';
 import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { AuditService } from 'src/audit/audit.service';
 
 @Injectable()
 export class CatalogLabService {
-  constructor(private readonly labDbManageService: LabDbManageService) {}
+  constructor(
+    private readonly labDbManageService: LabDbManageService,
+    private readonly auditService: AuditService,
+  ) {}
 
-  async createMedicTestCatalog(labId: number, dto: CreateMedicTestDto) {
+  /**
+   * Crea un nuevo registro en el catálogo de pruebas médicas para un laboratorio específico.
+   *
+   * @param labId - ID del laboratorio donde se creará la prueba.
+   * @param dto - Datos de la prueba médica a registrar, incluyendo nombre, descripción, precio, insumos y propiedades.
+   * @returns El objeto de la prueba médica creada, incluyendo sus propiedades y referencias de valores.
+   */
+  async createMedicTestCatalog(
+    labId: number,
+    performedByUserUuid: string,
+    dto: CreateMedicTestDto,
+  ) {
     const prisma = await this.labDbManageService.genInstanceLabDB(labId);
-
     const { name, description, price, supplies, properties } = dto;
 
-    // Creamos un array homogéneo con objetos válidos para Prisma
+    // Verificar si ya existe un examen con el mismo nombre
+    const existing = await prisma.medicTestCatalog.findFirst({
+      where: { name },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `Ya existe un examen en el catalogo registrado con el nombre: ${name}`,
+      );
+    }
+
+    // Preparar propiedades (Crear un array homogéneo con objetos válidos para Prisma)
     const propertiesToCreate = properties.map((prop) => {
       const base: any = {
         name: prop.name,
@@ -32,6 +57,7 @@ export class CatalogLabService {
       return base;
     });
 
+    // 🧪 Crear el examen
     const createdTest = await prisma.medicTestCatalog.create({
       data: {
         name,
@@ -47,6 +73,27 @@ export class CatalogLabService {
           include: {
             valueReferences: true,
           },
+        },
+      },
+    });
+
+    // 🧾 Auditoría
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'create',
+      entity: 'MedicTestCatalog',
+      recordEntityId: createdTest.id.toString(),
+      details: `Se creó el examen "${createdTest.name}" en el catálogo del laboratorio`,
+      operationData: {
+        after: {
+          name: createdTest.name,
+          description: createdTest.description,
+          price: createdTest.price,
+          supplies: createdTest.supplies,
+          properties: createdTest.properties.map((p) => ({
+            name: p.name,
+            unit: p.unit,
+            valuesRef: p.valueReferences,
+          })),
         },
       },
     });

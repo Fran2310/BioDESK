@@ -1,8 +1,21 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Patch,
+  Headers,
+} from '@nestjs/common';
 import { PatientService } from './patient.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { ApiBearerAuth, ApiHeaders } from '@nestjs/swagger';
+import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 
+@ApiBearerAuth()
+@ApiHeaders([X_LAB_ID_HEADER])
 @Controller('patients') // Cambiado de 'labs/:labId/patients' a 'patients'
 export class PatientController {
   constructor(private readonly patientService: PatientService) {}
@@ -10,7 +23,7 @@ export class PatientController {
   @Post()
   create(
     @Headers('x-lab-id') labId: string, // Obtenemos labId del header
-    @Body() dto: CreatePatientDto
+    @Body() dto: CreatePatientDto,
   ) {
     return this.patientService.create(+labId, dto);
   }
