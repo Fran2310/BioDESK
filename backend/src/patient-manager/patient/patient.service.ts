@@ -2,18 +2,18 @@ import { Injectable, Logger, NotFoundException, InternalServerErrorException, Ba
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
+import { LabService } from 'src/lab/services/lab.service';
 
 @Injectable()
 export class PatientService {
   private readonly logger = new Logger(PatientService.name);
 
   constructor(
-    private readonly systemPrisma: SystemPrismaService,
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemUserService: SystemUserService,
+    private readonly labService: LabService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -21,7 +21,7 @@ export class PatientService {
 
   async createPatient(labId: number, dto: CreatePatientDto, performedByUserUuid) {
     try {
-      const lab = await this.validateLab(labId);
+      const lab = await this.labService.getLabById(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
@@ -57,7 +57,7 @@ export class PatientService {
 
   async getAllPatients(labId: number, limit: number, offset: number, all_data: boolean) {
     try {
-      const lab = await this.validateLab(labId);
+      const lab = await this.labService.getLabById(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
 
       const selectFieldsToOmit = {
@@ -80,7 +80,7 @@ export class PatientService {
   }
 
   async getPatient(labId: number,  patientId?: number, email?: string, ci?: string): Promise<any> {
-    const lab = await this.validateLab(labId);
+    const lab = await this.labService.getLabById(labId);
     const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
 
     if (!patientId && !email && !ci ) {
@@ -107,7 +107,7 @@ export class PatientService {
 
   async updatePatient(labId: number, patientId: number, dto: UpdatePatientDto, performedByUserUuid) {
     try {
-      const lab = await this.validateLab(labId);
+      const lab = await this.labService.getLabById(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
@@ -151,7 +151,7 @@ export class PatientService {
 
   async deletePatient(labId: number, patientId: number, performedByUserUuid) {
     try {
-      const lab = await this.validateLab(labId);
+      const lab = await this.labService.getLabById(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
@@ -185,27 +185,8 @@ export class PatientService {
 
   // ============ HELPER METHODS ============
 
-  private async validateLab(labId: number) {
-    try {
-      const lab = await this.systemPrisma.lab.findUnique({
-        where: { id: Number(labId) },
-      });
-
-      if (!lab) {
-        throw new NotFoundException(`Lab with ID ${labId} not found`);
-      }
-      return lab;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      this.logger.error(`Error al validar laboratorio: ${error.message}`);
-      throw new InternalServerErrorException('Error al validar laboratorio');
-    }
-  }
-
   private async validateUniquePatient(labId: number, ci: string | undefined, email: string | undefined) {
-    const lab = await this.validateLab(labId);
+    const lab = await this.labService.getLabById(labId);
     const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
 
     const patient = await labPrisma.patient.findFirst({
