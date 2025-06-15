@@ -1,7 +1,12 @@
 // user/dto/create-user.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMinSize, IsArray, IsDate, IsDateString, IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
+
+export enum Gender {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+  ANY = 'ANY',
+}
 
 export class CreatePatientDto {
   @ApiProperty({
@@ -26,6 +31,12 @@ export class CreatePatientDto {
   @IsNotEmpty()
   @IsString()
   secondLastName: string;
+
+  @ApiProperty({ 
+    example: 'FEMALE',
+    description: 'Género del paciente, puede ser: MALE, FEMALE o ANY'
+  })
+  gender: Gender
 
   @ApiProperty({
 	example: 'johndoe@example.com',

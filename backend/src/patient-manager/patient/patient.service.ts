@@ -1,9 +1,8 @@
 import { Injectable, Logger, NotFoundException, InternalServerErrorException, BadRequestException, ConflictException } from '@nestjs/common';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
-import { LabPrismaFactory } from 'src/lab-prisma/lab-prisma.factory';
-import { SystemPrismaService } from 'src/system-prisma/system-prisma.service';
-import { LabPrismaService } from 'src/lab-prisma/services/lab-prisma.service';
+import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
+import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
 
 @Injectable()
 export class PatientService {

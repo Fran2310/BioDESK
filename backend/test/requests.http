@@ -87,6 +87,7 @@ x-lab-id: 16
   "name": "john2",
   "lastName": "doe2",
   "secondLastName": "ripper",
+  "gender": "MALE",
   "email": "johndoe2@xample.com",
   "dir": "Av. Principal #123",
   "phoneNums": [
@@ -107,6 +108,7 @@ x-lab-id: 16
   "name": "john2",
   "lastName": "doe2",
   "secondLastName": "ripper",
+  "gender": "MALE",
   "email": "johndoe2@xample.com",
   "dir": "Av. Principal #123",
   "phoneNums": [
