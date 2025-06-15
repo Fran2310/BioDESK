@@ -5,4 +5,4 @@ Es una solución web moderna diseñada específicamente para laboratorios clíni
 ![ERD_Schema-System](https://github.com/user-attachments/assets/0ecd0c64-e095-4d31-ade2-784eaa7c90a7)
 
 #Diagrama ERD del schema prisma de las DBs tenants (Laboratorios)
-![ERD_Schema-Lab](https://github.com/user-attachments/assets/d7c2373a-defc-409e-a999-083c60cd0fe6)
+![v2 ERD_Schema-Lab](https://github.com/user-attachments/assets/fc4802e5-5448-4d4e-989e-cd44938f2cb4)
