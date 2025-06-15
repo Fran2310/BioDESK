@@ -1,19 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as Handlebars from 'handlebars';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
 import { UserService } from 'src/user/user.service';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
-  private readonly logger = new Logger(MailerService.name);
+  private readonly logger = new Logger(MailService.name);
+  private readonly ourEmail = "Admin <biodesk@resend.dev>"
 
   constructor(
-    private readonly mailerService: MailerService,
     private readonly sharedCacheService: SharedCacheService,
     private readonly userService: UserService,
+    @Optional() private readonly resend = new Resend(process.env.EMAIL_TOKEN),
   ) {}
 
   private async templateToHTML(
@@ -47,8 +48,9 @@ export class MailService {
       });
 
       try {
-        await this.mailerService.sendMail({
-          to: email,
+        await this.resend.emails.send({
+          from: this.ourEmail,
+          to: [email],
           subject: '¡Bienvenido a BioDESK!',
           html: html,
         });
@@ -73,8 +75,9 @@ export class MailService {
       });
 
       try {
-        await this.mailerService.sendMail({
-          to: email,
+        await this.resend.emails.send({
+          from: this.ourEmail,
+          to: [email],
           subject: 'Código temporal para cambiar su contraseña',
           html: html,
         });
