@@ -106,7 +106,7 @@ model MedicTestCatalog {
 model MedicTestProperty {
   id                Int                @id @default(autoincrement())
   name              String
-  unit              String
+  unit              String?
   catalogId         Int
   catalog           MedicTestCatalog   @relation(fields: [catalogId], references: [id])
   valueReferences   ValueReference[]

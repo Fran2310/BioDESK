@@ -6,7 +6,6 @@ import {
   Request,
   UseGuards,
   BadRequestException,
-  Get,
 } from '@nestjs/common';
 import { Public } from './decorators/public.decorator'; // Ruta pública, no requiere autenticación
 import { AuthService } from './auth.service';
