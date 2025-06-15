@@ -20,6 +20,7 @@ import { LabUserModule } from './user/lab-user/lab-user.module';
 import { MailModule } from './mail/mail.module';
 import { SystemUserModule } from './user/system-user/system-user.module';
 import { CatalogLabModule } from './catalog-lab/catalog-lab.module';
+import { PatientManagerModule } from './patient-manager/patient-manager.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CatalogLabModule } from './catalog-lab/catalog-lab.module';
     MailModule,
     SystemUserModule,
     CatalogLabModule,
+    PatientManagerModule,
   ],
   controllers: [AppController],
   providers: [
