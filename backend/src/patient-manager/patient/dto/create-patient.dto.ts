@@ -1,12 +1,8 @@
 // user/dto/create-user.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMinSize, IsArray, IsDate, IsDateString, IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsDateString, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
-export enum Gender {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE',
-  ANY = 'ANY',
-}
+import { Gender } from '@prisma/client-lab';
 
 export class CreatePatientDto {
   @ApiProperty({
@@ -32,11 +28,9 @@ export class CreatePatientDto {
   @IsString()
   secondLastName: string;
 
-  @ApiProperty({ 
-    example: 'FEMALE',
-    description: 'Género del paciente, puede ser: MALE, FEMALE o ANY'
-  })
-  gender: Gender
+  @ApiProperty({ example: Gender.ANY, enum: Gender })
+  @IsEnum(Gender)
+  gender: Gender;
 
   @ApiProperty({
 	example: 'johndoe@example.com',

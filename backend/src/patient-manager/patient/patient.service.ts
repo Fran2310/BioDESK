@@ -3,6 +3,8 @@ import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
 import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { SystemUserService } from 'src/user/system-user/system-user.service';
+import { AuditService } from 'src/audit/audit.service';
 
 @Injectable()
 export class PatientService {
@@ -11,14 +13,17 @@ export class PatientService {
   constructor(
     private readonly systemPrisma: SystemPrismaService,
     private readonly labPrismaFactory: LabPrismaFactory,
+    private readonly systemUserService: SystemUserService,
+    private readonly auditService: AuditService,
   ) {}
 
   // ============ CRUD OPERATIONS ============
 
-  async create(labId: number, dto: CreatePatientDto) {
+  async createPatient(labId: number, dto: CreatePatientDto, performedByUserUuid) {
     try {
       const lab = await this.validateLab(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
       await this.validateUniquePatient(labId, dto.ci, dto.email)
 
@@ -30,6 +35,18 @@ export class PatientService {
         `Paciente creado para el laboratorio ${lab.name} (${lab.rif})`,
       );
 
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'create',
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} añadió al paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci} `,
+        entity: 'Patient',
+        recordEntityId: patient.id.toString(),
+        operationData: {
+          after: {
+            patient
+          },
+        },
+      });
+
       return patient;
 
     } catch (error) {
@@ -38,46 +55,63 @@ export class PatientService {
     }
   }
 
-  async findAll(labId: number) {
+  async getAllPatients(labId: number, limit: number, offset: number, all_data: boolean) {
     try {
       const lab = await this.validateLab(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-      
-      return await labPrisma.patient.findMany();
+
+      const selectFieldsToOmit = {
+        secondName: !all_data,
+        secondLastName: !all_data,
+        phoneNums: !all_data,
+        dir: !all_data, 
+      }
+
+      return await labPrisma.patient.findMany({
+        skip: offset,
+        take: limit,
+        omit: selectFieldsToOmit, //TODO colocar include despues para el patient-history
+      })
+
     } catch (error) {
       this.logger.error(`Error al obtener pacientes: ${error.message}`);
       throw new NotFoundException(`${error.message}`);
     }
   }
 
-  async findOne(labId: number, patientId: number) {
-    try {
-      const lab = await this.validateLab(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+  async getPatient(labId: number,  patientId?: number, email?: string, ci?: string): Promise<any> {
+    const lab = await this.validateLab(labId);
+    const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
 
-      const patient = await labPrisma.patient.findUnique({
-        where: { id: Number(patientId) },
-      });
-
-      if (!patient) {
-        throw new NotFoundException(`Patient with ID ${patientId} not found`);
-      }
-      return patient;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      this.logger.error(`Error al buscar paciente: ${error.message}`);
-      throw new BadRequestException(`${error.message}`);
+    if (!patientId && !email && !ci ) {
+      throw new ConflictException(
+        'Debes proporcionar al menos uno: patientId, email, ci.',
+      );
     }
+
+    const where = {
+      ...(patientId && {id: patientId }),
+      ...(email && { email }),
+      ...(ci && { ci }),
+    };
+
+    const patient = await labPrisma.patient.findFirst({
+      where,
+    });
+
+    if (!patient) {
+      throw new NotFoundException(`Paciente con el id ${patientId} no encontrado`);
+    }
+    return patient;
   }
 
-  async update(labId: number, patientId: number, dto: UpdatePatientDto) {
+  async updatePatient(labId: number, patientId: number, dto: UpdatePatientDto, performedByUserUuid) {
     try {
       const lab = await this.validateLab(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
-      await this.findOne(labId, patientId); // Verifica si existe
+      const before = await this.getPatient(labId, patientId); // Verifica si existe
 
       if (dto.ci) {
         if (dto.email) {
@@ -85,7 +119,7 @@ export class PatientService {
         }
       }
 
-      const patient = await labPrisma.patient.update({
+      const updated = await labPrisma.patient.update({
         where: { id: Number(patientId) },
         data: dto,
       });
@@ -94,7 +128,18 @@ export class PatientService {
         `Paciente actualizado para el laboratorio ${lab.name} (${lab.rif})`,
       );
 
-      return patient
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'update',
+        entity: 'Patient',
+        recordEntityId: updated.id.toString(),
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} actualizó al paciente ${updated.name} ${updated.lastName} C.I: ${updated.ci} `,
+        operationData: {
+          before,
+          after: updated,
+        },
+      });
+
+      return updated;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -104,20 +149,31 @@ export class PatientService {
     }
   }
 
-  async remove(labId: number, patientId: number) {
+  async deletePatient(labId: number, patientId: number, performedByUserUuid) {
     try {
       const lab = await this.validateLab(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-
-      await this.findOne(labId, patientId); // Verifica si existe
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
       this.logger.log(
         `Paciente borrado para el laboratorio ${lab.name} (${lab.rif})`,
       );
 
-      return await labPrisma.patient.delete({
+      const deletedPatient = await labPrisma.patient.delete({
         where: { id: Number(patientId) },
       });
+
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'delete',
+        entity: 'Patient',
+        recordEntityId: deletedPatient.id.toString(),
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} eliminó al paciente ${deletedPatient.name} ${deletedPatient.lastName} C.I: ${deletedPatient.ci}`,
+        operationData: {
+          before: deletedPatient,
+        },
+      });
+
+      return deletedPatient; 
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -148,27 +204,27 @@ export class PatientService {
     }
   }
 
-  private async validateUniquePatient(labId: number, ci: string, email: string) {
-      const lab = await this.validateLab(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+  private async validateUniquePatient(labId: number, ci: string | undefined, email: string | undefined) {
+    const lab = await this.validateLab(labId);
+    const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
 
-      const patient = await labPrisma.patient.findFirst({
-        where: {
-          OR: [{ ci }, { email }],
-        },
-      });
+    const patient = await labPrisma.patient.findFirst({
+      where: {
+        OR: [{ ci }, { email }],
+      },
+    });
 
-      if (patient) {
-        if (patient.ci === ci) {
-          throw new ConflictException(
-            `Ya existe un paciente con esta cédula ${ci}.`,
-          );
-        }
-        if (patient.email === email) {
-          throw new ConflictException(
-            `Ya existe un paciente con este correo ${email}`,
-          );
-        }
+    if (patient) {
+      if (patient.ci === ci) {
+        throw new ConflictException(
+          `Ya existe un paciente con esta cédula ${ci}.`,
+        );
       }
+      if (patient.email === email) {
+        throw new ConflictException(
+          `Ya existe un paciente con este correo ${email}`,
+        );
+      }
+    }
   }
 }
