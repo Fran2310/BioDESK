@@ -19,6 +19,7 @@ import { RoleModule } from './role/role.module';
 import { LabUserModule } from './user/lab-user/lab-user.module';
 import { MailModule } from './mail/mail.module';
 import { SystemUserModule } from './user/system-user/system-user.module';
+import { CatalogLabModule } from './catalog-lab/catalog-lab.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { SystemUserModule } from './user/system-user/system-user.module';
     LabUserModule,
     MailModule,
     SystemUserModule,
+    CatalogLabModule,
   ],
   controllers: [AppController],
   providers: [

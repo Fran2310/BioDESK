@@ -56,6 +56,7 @@ model Patient {
   lastName       String
   secondName     String?
   secondLastName String?
+  gender         Gender
   email          String   @unique
   phoneNums      String[] @default([""])
   dir            String
@@ -92,14 +93,44 @@ model RequestMedicTest {
 }
 
 model MedicTestCatalog {
-  id              Int      @id   @default(autoincrement())
-  name            String   @unique
-  description     String?
-  properties      Json?
+  id          Int                  @id @default(autoincrement())
+  name        String               @unique
+  description String?
+  price       Float
   supplies        String[] @default([""])
-  price           Float
 
+  properties  MedicTestProperty[]
   requestMedicTests RequestMedicTest[]
+}
+
+model MedicTestProperty {
+  id                Int                @id @default(autoincrement())
+  name              String
+  unit              String
+  catalogId         Int
+  catalog           MedicTestCatalog   @relation(fields: [catalogId], references: [id])
+  valueReferences   ValueReference[]
+}
+
+model ValueReference {
+  id                Int       @id @default(autoincrement())
+  range             String    // Ej: "38–48"
+  gender            Gender    // MALE, FEMALE, ANY
+  ageGroup          AgeGroup  // ADULT, CHILD, ANY
+  medicTestProperty MedicTestProperty @relation(fields: [medicTestPropertyId], references: [id])
+  medicTestPropertyId Int
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ANY
+}
+
+enum AgeGroup {
+  ADULT
+  CHILD
+  ANY
 }
 
 enum State {
