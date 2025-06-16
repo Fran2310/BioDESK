@@ -1,13 +1,18 @@
 // src/medic-test/medic-test-catalog.service.ts
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateMedicTestDto } from './dto/create-medic-test.dto';
+import { CreateMedicTestDto } from '../dto/create-medic-test.dto';
 import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 import { AuditService } from 'src/audit/audit.service';
 import { Prisma } from '@prisma/client-lab';
+import { UpdateMedicTestDto } from '../dto/update-medic-test.dto';
+import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
+import { UpdateValueReferenceDto } from '../dto/update-value-ref.dto';
+import { ValueReferenceDto } from '../dto/value-ref.dto';
 
 @Injectable()
 export class CatalogLabService {
@@ -15,6 +20,27 @@ export class CatalogLabService {
     private readonly labDbManageService: LabDbManageService,
     private readonly auditService: AuditService,
   ) {}
+
+  async validateMedicTestCatalog(prisma, testId: number) {
+    const existingTest = await prisma.medicTestCatalog.findUnique({
+      where: { id: testId },
+      include: {
+        properties: {
+          include: {
+            valueReferences: true,
+          },
+        },
+      },
+    });
+
+    if (!existingTest) {
+      throw new NotFoundException(
+        `No se encontró el examen con ID ${testId} en el catálogo.`,
+      );
+    }
+
+    return existingTest;
+  }
 
   /**
    * Obtiene un examen del catálogo de pruebas médicas por ID o nombre para un laboratorio específico.
@@ -33,7 +59,7 @@ export class CatalogLabService {
     const { id, name, includeData = false } = options;
 
     if (!id && !name) {
-      throw new NotFoundException(
+      throw new BadRequestException(
         'Debe proporcionar un ID o nombre del examen.',
       );
     } else if (id && name) {
@@ -148,9 +174,9 @@ export class CatalogLabService {
         ...(prop.unit && { unit: prop.unit }),
       };
 
-      if (prop.valuesRef && prop.valuesRef.length > 0) {
+      if (prop.valuesReferences && prop.valuesReferences.length > 0) {
         base.valueReferences = {
-          create: prop.valuesRef.map((v) => ({
+          create: prop.valuesReferences.map((v) => ({
             range: v.range,
             gender: v.gender,
             ageGroup: v.ageGroup,
@@ -196,7 +222,7 @@ export class CatalogLabService {
           properties: createdTest.properties.map((p) => ({
             name: p.name,
             unit: p.unit,
-            valuesRef: p.valueReferences,
+            valuesReferences: p.valueReferences,
           })),
         },
       },

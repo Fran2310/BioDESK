@@ -4,23 +4,24 @@ import {
   Controller,
   Post,
   Request,
-  Headers,
   BadRequestException,
-  DefaultValuePipe,
   ParseIntPipe,
   Query,
   Get,
   ParseBoolPipe,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiHeaders,
   ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { CatalogLabService } from './catalog-lab.service';
-import { CreateMedicTestDto } from './dto/create-medic-test.dto';
+import { CatalogLabService } from '../services/catalog-lab.service';
+import { CreateMedicTestDto } from '../dto/create-medic-test.dto';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
 
@@ -59,11 +60,6 @@ export class CatalogLabController {
     @Query('includeData', ParseBoolPipe) includeData = false,
   ) {
     const labId = Number(req.headers['x-lab-id']);
-    if (!id && !name) {
-      throw new BadRequestException(
-        'Debes proporcionar al menos el ID o el nombre del examen.',
-      );
-    }
     if (id && isNaN(id)) {
       throw new BadRequestException('El ID debe ser un número válido.');
     }

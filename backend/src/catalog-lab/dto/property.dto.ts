@@ -26,5 +26,5 @@ export class MedicTestPropertyDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ValueReferenceDto)
-  valuesRef?: ValueReferenceDto[];
+  valuesReferences?: ValueReferenceDto[];
 }
