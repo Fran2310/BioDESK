@@ -155,13 +155,13 @@ export class PatientService {
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
-      this.logger.log(
-        `Paciente borrado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
-
       const deletedPatient = await labPrisma.patient.delete({
         where: { id: Number(patientId) },
       });
+
+      this.logger.log(
+        `Paciente borrado para el laboratorio ${lab.name} (${lab.rif})`,
+      );
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'delete',
