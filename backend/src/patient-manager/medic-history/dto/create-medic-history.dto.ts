@@ -2,7 +2,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class CreatePatientHistoryDto {
+export class CreateMedicHistoryDto {
   @ApiProperty({
     example: '',
     description: 'Alergias del paciente',

@@ -1,27 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreatePatientDto } from './patient/dto/create-patient.dto';
-import { CreatePatientHistoryDto } from './patient-history/dto/create-patient-history.dto';
+import { CreateMedicHistoryDto } from './medic-history/dto/create-medic-history.dto';
 import { PatientService } from './patient/patient.service';
-import { PatientHistoryService } from './patient-history/patient-history.service';
+import { MedicHistoryService } from './medic-history/medic-history.service';
 
 @Injectable()
 export class PatientManagerService {  
   constructor(
     private readonly patientService: PatientService,
-    private readonly patientHistoryService: PatientHistoryService,
+    private readonly patientHistoryService: MedicHistoryService,
   ) {}
 
   async createPatientWithHistory(
     labId: number, 
     patientDto: CreatePatientDto, 
-    historyDto: CreatePatientHistoryDto, 
+    historyDto: CreateMedicHistoryDto, 
     performedByUserUuid) {
     const newPatient = await this.patientService.createPatient(
       labId, 
       patientDto, 
       performedByUserUuid
     );
-    const patientHistory = await this.patientHistoryService.createPatientHistoryByPatient(
+    const patientHistory = await this.patientHistoryService.createMedicHistoryByPatient(
       labId,
       newPatient,
       historyDto,

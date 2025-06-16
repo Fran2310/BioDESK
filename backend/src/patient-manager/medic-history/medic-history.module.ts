@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PatientHistoryService } from './patient-history.service';
-import { PatientHistoryController } from './patient-history.controller';
+import { MedicHistoryService } from './medic-history.service';
+import { MedicHistoryController } from './medic-history.controller';
 import { LabPrismaModule } from 'src/prisma-manage/lab-prisma/lab-prisma.module';
 import { SystemUserModule } from 'src/user/system-user/system-user.module';
 import { LabModule } from 'src/lab/lab.module';
@@ -15,8 +15,8 @@ import { PatientModule } from '../patient/patient.module';
     PatientModule,
     AuditModule,
   ],
-  providers: [PatientHistoryService],
-  exports: [PatientHistoryService],
-  controllers: [PatientHistoryController],
+  providers: [MedicHistoryService],
+  exports: [MedicHistoryService],
+  controllers: [MedicHistoryController],
 })
-export class PatientHistoryModule {}
+export class MedicHistoryModule {}
