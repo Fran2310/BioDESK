@@ -1,25 +1,4 @@
 <template>
-<<<<<<< HEAD
-  <div class="register-lab-form bg-white border-4 border-solid border-indigo-600 rounded-md p-6 shadow-lg max-w-2xl mx-auto mt-8">
-    <!-- Login Form -->
-    <div v-if="!isLoggedIn" class="login-card bg-white p-6 rounded shadow mb-6">
-      <h2 class="text-2xl font-semibold mb-4 text-center">Iniciar Sesión</h2>
-=======
-<<<<<<< HEAD
-  <div class="register-lab-form">
-    <h1 class="font-semibold text-4xl mb-4"> Registrar laboratorio </h1>
->>>>>>> 538d196 (Formulario de registro.)
-
-      <VaInput v-model="loginForm.username" label="Usuario" placeholder="jesusrhivan" />
-      <VaInput v-model="loginForm.password" type="password" label="Contraseña" placeholder="Biodesk123$$" />
-
-      <div class="flex justify-center mt-4">
-        <VaButton :loading="isLoading" @click="login">Ingresar</VaButton>
-      </div>
-<<<<<<< HEAD
-=======
-    </form>
-=======
   <div class="register-lab-form bg-white border-4 border-solid border-indigo-600 rounded-md p-6 shadow-lg max-w-2xl mx-auto mt-8">
     <!-- Login Form -->
     <div v-if="!isLoggedIn" class="login-card bg-white p-6 rounded shadow mb-6">
@@ -31,7 +10,6 @@
       <div class="flex justify-center mt-4">
         <VaButton :loading="isLoading" @click="login">Ingresar</VaButton>
       </div>
->>>>>>> 538d196 (Formulario de registro.)
     </div>
 
     <!-- Registration Form -->
@@ -86,10 +64,6 @@
         <VaButton type="submit" @click="submit">Siguiente</VaButton>
       </div>
     </div>
-<<<<<<< HEAD
-=======
->>>>>>> c3126bc (Formulario de registro.)
->>>>>>> 538d196 (Formulario de registro.)
   </div>
 </template>
 
@@ -101,7 +75,6 @@ import { useToast } from 'vuestic-ui'
 const { init } = useToast()
 const router = useRouter()
 
-<<<<<<< HEAD
 // 🔐 Token state
 const token = ref<string | null>(null)
 const isLoggedIn = ref(false)
@@ -120,33 +93,6 @@ const formData = ref({
   state: '',
   municipality: '',
   address: '',
-=======
-<<<<<<< HEAD
-// Storage for registered data
-const formData = reactive({
-  name: '',
-  rif: '',
-=======
-// 🔐 Token state
-const token = ref<string | null>(null)
-const isLoggedIn = ref(false)
-const isLoading = ref(false)
-
-// 🔹 Define types
-interface DivisionItem {
-  id: string
-  name: string
-}
-
-// 🔹 Reactive form data
-const formData = ref({
-  name: '',
-  rif: '',
-  state: '',
-  municipality: '',
-  address: '',
->>>>>>> c3126bc (Formulario de registro.)
->>>>>>> 538d196 (Formulario de registro.)
   phoneNums1: '',
   phoneNums2: ''
 })
@@ -166,48 +112,6 @@ const getURL = (path: string): string => {
   const url = new URL(`https://apisegen.apn.gob.ve/api/v1/${path}`) 
   if (token.value) {
     url.searchParams.append('token', token.value)
-<<<<<<< HEAD
-=======
-  }
-  return url.toString()
-}
-
-// 🔐 Login function
-const login = async () => {
-  isLoading.value = true
-
-  try {
-    const formDataLogin = new URLSearchParams()
-    formDataLogin.append('usuario', loginForm.value.username)
-    formDataLogin.append('clave', loginForm.value.password)
-
-    const res = await fetch('https://apisegen.apn.gob.ve/api/v1/login',  {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formDataLogin.toString(),
-    })
-
-    if (!res.ok) throw new Error('Inicio de sesión fallido')
-
-    const data = await res.json()
-
-    // Extract token
-    token.value = data.token
-    localStorage.setItem('token', data.token)
-    isLoggedIn.value = true
-
-    init({ message: 'Inicio de sesión exitoso', color: 'success' })
-
-    // Load geographic lists
-    loadStates()
-  } catch (e: any) {
-    console.error('Login error:', e.message)
-    init({ message: e.message || 'No se pudo iniciar sesión', color: 'danger' })
-  } finally {
-    isLoading.value = false
->>>>>>> 538d196 (Formulario de registro.)
   }
   return url.toString()
 }
@@ -346,180 +250,6 @@ const submit = () => {
   init({ message: 'Laboratorio registrado con éxito', color: 'success' })
   router.push({ name: 'dashboard' })
 }
-<<<<<<< HEAD
-</script>
-
-<style scoped>
-
-<<<<<<< HEAD
-.login-card {
-  margin-bottom: 2rem;
-}
-</style>
-=======
-  /* Page properties */
-  .register-lab-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* space between elements */
-  }
-
-  /* Form properties */
-  .register-lab-form {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background: #91bb8d;
-    border-radius: 8px;
-  }
-
-  /* All labels properties */
-  label {
-    display: block;
-    font-weight: bold;
-    font-size: medium;
-    margin-bottom: 3px;
-  }
-
-  /* All input spaces properties */
-  input[type="text"] {
-    width: 100%;
-    margin-bottom: 20px;
-    padding: 8px;
-    border: 2px solid #000000;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-
-  /* Go back button properties */
-  .go-back {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    margin-left: 0px;
-    background-color: #3d4e3b;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  /* Next button properties */
-  .next {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    margin-left: 56%;
-    background-color: #3d4e3b;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  /* Button changes color when cursor is over it */
-  button:hover {
-    background-color: #576e55;
-  }
-</style>
-=======
-
-const loadStates = async () => {
-  try {
-    const res = await fetch(getURL('listadoEntidad'))
-    if (!res.ok) throw new Error('Error fetching states')
-    const data = await res.json()
-
-    // ✅ Create fresh plain objects
-    states.value = data.data.map((item: any) => ({
-      id: item.cod_entidad_ine,
-      name: item.entidad_ine
-    }))
-    
-    // ✅ Force reactivity update
-    states.value = [...states.value] // force Vue to see changes
-  } catch (e: any) {
-    init({ message: 'Error: No se pudieron cargar los estados', color: 'danger' })
-  }
-}
-
-const loadMunicipalities = async (stateId: string) => {
-  if (!stateId) return
-
-  try {
-    const url = getURL(`listadoMunicipio?codEntidad=${stateId}`)
-    console.log('Fetching municipalities from:', url)
-
-    const res = await fetch(url)
-    if (!res.ok) throw new Error('Error fetching municipalities')
-
-    const data = await res.json()
-
-    // ✅ Map correctly
-    municipalities.value = data.data.map((item: any) => ({
-      id: item.cod_municipio_ine,
-      name: item.municipio_ine
-    }))
-
-    console.log('Municipalities loaded:', municipalities.value)
-    
-  } catch (e: any) {
-    console.error('Municipality loading failed:', e.message)
-    init({ message: 'Error: No se pudieron cargar los municipios', color: 'danger' })
-  }
-}
-
-// 🔍 Watch for state changes
-watch(
-  () => formData.value.state,
-  (newStateId) => {
-    if (newStateId) {
-      loadMunicipalities(newStateId)
-    } else {
-      municipalities.value = []
-      formData.value.municipality = ''
-    }
-  }
-)
-
-// 🔹 Validation
-const validate = (): boolean => {
-  if (
-    !formData.value.name ||
-    !formData.value.rif ||
-    !formData.value.state ||
-    !formData.value.municipality ||
-    !formData.value.phoneNums1
-  ) {
-    init({ message: 'Por favor, complete todos los campos obligatorios', color: 'warning' })
-    return false
-  }
-
-  if (!/^[JjGg][0-9]{9}$/.test(formData.value.rif)) {
-    init({ message: 'RIF inválido. Debe comenzar con J o G seguido de 9 dígitos.', color: 'danger' })
-    return false
-  }
-
-  if (!/^\d{11}$/.test(formData.value.phoneNums1)) {
-    init({ message: 'Número de teléfono 1 inválido. Formato esperado: 04101234567', color: 'danger' })
-    return false
-  }
-
-  if (formData.value.phoneNums2 && !/^\d{11}$/.test(formData.value.phoneNums2)) {
-    init({ message: 'Número de teléfono 2 inválido. Formato esperado: 04101234567', color: 'danger' })
-    return false
-  }
-
-  return true
-}
-
-// 🧾 Submit handler
-const submit = () => {
-  if (!validate()) return
-
-  init({ message: 'Laboratorio registrado con éxito', color: 'success' })
-  router.push({ name: 'dashboard' })
-}
 </script>
 
 <style scoped>
@@ -528,5 +258,3 @@ const submit = () => {
   margin-bottom: 2rem;
 }
 </style>
->>>>>>> c3126bc (Formulario de registro.)
->>>>>>> 538d196 (Formulario de registro.)
