@@ -80,11 +80,34 @@
               class="mb-3"
             />
             
-            <va-input
-              v-model="newExam.suppliesText"
-              label="Insumos (separados por coma)"
-              class="mb-3"
-            />
+            <div class="mb-3">
+              <label class="block mb-1 font-semibold">Insumos</label>
+              <div v-for="(insumo, idx) in insumos" :key="idx" class="flex gap-2 mb-2">
+                <va-input
+                  v-model="insumos[idx]"
+                  placeholder="Insumo"
+                  class="flex-1"
+                  size="small"
+                />
+                <va-button
+                  icon="delete"
+                  color="danger"
+                  size="small"
+                  @click="eliminarInsumo(idx)"
+                  class="self-center"
+                  aria-label="Eliminar insumo"
+                />
+              </div>
+              <va-button
+                color="primary"
+                size="small"
+                @click="agregarInsumo"
+                class="mt-1"
+                icon="add"
+              >
+                Agregar insumo
+              </va-button>
+            </div>
             <va-input
               v-model.number="newExam.price"
               label="Precio"
@@ -124,34 +147,6 @@
                 icon="add"
               >
                 Agregar propiedad
-              </va-button>
-            </div>
-            <div class="mb-3">
-              <label class="block mb-1 font-semibold">Insumos</label>
-              <div v-for="(insumo, idx) in insumos" :key="idx" class="flex gap-2 mb-2">
-                <va-input
-                  v-model="insumos[idx]"
-                  placeholder="Insumo"
-                  class="flex-1"
-                  size="small"
-                />
-                <va-button
-                  icon="delete"
-                  color="danger"
-                  size="small"
-                  @click="eliminarInsumo(idx)"
-                  class="self-center"
-                  aria-label="Eliminar insumo"
-                />
-              </div>
-              <va-button
-                color="primary"
-                size="small"
-                @click="agregarInsumo"
-                class="mt-1"
-                icon="add"
-              >
-                Agregar insumo
               </va-button>
             </div>
             <div class="flex gap-2 justify-end mt-4">

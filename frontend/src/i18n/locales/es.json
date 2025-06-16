@@ -138,6 +138,9 @@
     "account": "Cuenta",
     "explore": "Explorar"
   },
+  "laboratory": {
+    "laboratory-catalog": "Catálogo de laboratorio"
+  },
   "helpAndSupport": "Ayuda y Soporte",
   "aboutVuesticAdmin": "Acerca de Vuestic Admin",
   "search": {

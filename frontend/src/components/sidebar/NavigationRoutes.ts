@@ -65,6 +65,12 @@ export default {
       meta: {
         icon: 'medical_services',
       },
+       children: [
+        {
+        name: 'laboratory-catalog', //Laboratory catalog
+        displayName:'Laboratory Catalog',
+        },
+      ],
     },
     {
       name: 'payments',
