@@ -13,7 +13,7 @@ import { UpdateMedicHistory } from './dto/update-medic-history.dto';
 export class MedicHistoryController {
   constructor(private readonly medicHistoryService: MedicHistoryService) {} 
 
-  @Post('create')
+  @Post('create-history')
   @ApiOperation({ summary: 'Crear un historial médico para un paciente' })
   @CheckAbility({ actions: 'create', subject: 'medicHistory' })
   create(
