@@ -28,10 +28,11 @@
           :virtual-scroller="true"
           class="shadow rounded min-h-[200px]"
         >
-          <template #cell(supplies)="{ value }">
-            <span v-if="Array.isArray(value)">{{ value.join(', ') }}</span>
-            <span v-else>-</span>
-          </template>
+
+        <template #cell(supplies)="{ value }">
+          <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
+        </template>
+
           <template #cell(actions)="{ row }">
             <va-button
               size="small"
@@ -48,13 +49,6 @@
             >
               Eliminar
             </va-button>
-          </template>
-          <template #bodyAppend>
-            <tr v-if="!loading && filteredExams.length === 0">
-              <td :colspan="columns.length" class="text-center text-gray-500 py-8">
-                No se encontraron exámenes.
-              </td>
-            </tr>
           </template>
         </va-data-table>
       </va-card-content>
@@ -256,7 +250,6 @@ const columns = [
   { key: 'id', label: 'ID', sortable: true },
   { key: 'name', label: 'Nombre', sortable: true },
   { key: 'description', label: 'Descripción' },
-  { key: 'supplies', label: 'Insumos' },
   { key: 'price', label: 'Precio', sortable: true },
   { key: 'actions', label: 'Acciones' },
 ]
@@ -287,6 +280,7 @@ const fetchExams = async () => {
         },
       ]
     }
+  
   } catch (e) {
     // fallback de ejemplo
     exams.value = [
@@ -360,6 +354,7 @@ function closeModal() {
   propertiesError.value = ''
   newExam.value = { name: '', description: '', suppliesText: '', price: 0, propertiesText: '' }
   propertiesPairs.value = []
+  insumos.value = [] // Limpia la lista de insumos
 }
 
 function addExam() {
@@ -369,29 +364,31 @@ function addExam() {
     id: exams.value.length ? Math.max(...exams.value.map(e => e.id)) + 1 : 1,
     name: newExam.value.name,
     description: newExam.value.description,
-    supplies: newExam.value.suppliesText
-      ? newExam.value.suppliesText.split(',').map(s => s.trim()).filter(Boolean)
-      : [],
+    supplies: [...insumos.value], // Asigna la lista de insumos correctamente
     price: newExam.value.price,
     properties,
   })
+  insumos.value = [] // Limpia la lista de insumos después de guardar
   closeModal()
 }
 
-function editExam(row: MedicTestCatalog) {
+function editExam(row: any) {
+  console.log('Editando examen:', row) // Para depuración
   isEditing.value = true
-  editingExamId.value = row.id
+  editingExamId.value = row.rowData.id // Accede al ID desde rowData
   newExam.value = {
-    name: row.name,
-    description: row.description || '',
-    suppliesText: row.supplies ? row.supplies.join(', ') : '',
-    price: row.price,
+    name: row.rowData.name,
+    description: row.rowData.description || '',
+    suppliesText: row.rowData.supplies ? row.rowData.supplies.join(', ') : '',
+    price: row.rowData.price,
     propertiesText: '',
   }
-  propertiesPairs.value = pairsFromProperties(row.properties)
+  insumos.value = [...row.rowData.supplies] // Inicializa la lista de insumos correctamente
+  propertiesPairs.value = pairsFromProperties(row.rowData.properties) // Convierte las propiedades a pares clave-valor
   propertiesError.value = ''
   showAddModal.value = true
 }
+
 
 function updateExam() {
   if (editingExamId.value === null) return
@@ -402,9 +399,7 @@ function updateExam() {
       id: editingExamId.value,
       name: newExam.value.name,
       description: newExam.value.description,
-      supplies: newExam.value.suppliesText
-        ? newExam.value.suppliesText.split(',').map(s => s.trim()).filter(Boolean)
-        : [],
+      supplies: [...insumos.value], // Actualiza la lista de insumos correctamente
       price: newExam.value.price,
       properties,
     }
@@ -412,15 +407,14 @@ function updateExam() {
   closeModal()
 }
 
-function deleteExam(row: MedicTestCatalog) {
-  exams.value = exams.value.filter(e => e.id !== row.id)
+function deleteExam(row: any) {
+  exams.value = exams.value.filter(e => e.id !== row.rowData.id)
 }
 
 function viewDetails(row: MedicTestCatalog) {
   // Aquí puedes abrir un modal o navegar a una página de detalles
   alert(`Detalles de: ${row.name}`)
 }
-
 
 //modal para agregar valores de referencia
 
