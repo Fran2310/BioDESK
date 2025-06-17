@@ -50,6 +50,8 @@
 </template>
 
 
+
+
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -75,7 +77,7 @@ const submit = async () => {
   if (!validate()) return
 
   isLoading.value=true
-  
+
   try {
     const res = await fetch('https://biodesk.onrender.com/api/auth/login', {
       method: 'POST',
@@ -92,7 +94,7 @@ const submit = async () => {
 
     const data = await res.json()
 
- 
+
 
     // GUARDAR TOKEN Y LABORATORIOS EN STORE
     authStore.setToken(data.access_token)
@@ -107,12 +109,12 @@ const submit = async () => {
     // NAVEGAR AL DASHBOARD O LABORATORIO ESPECÍFICO
 
     if (/* data.labs.length === 1 */ 1) {
-      
+
       // DASHBOARD
 
       push({ name: 'dashboard' })
     } else {
-     
+
       // VISTA DE SELECCIÓN DE LABORATORIOS
 
       push({ name: 'select-lab' })
@@ -148,6 +150,6 @@ const submit = async () => {
 ::v-deep(.va-input-wrapper__field::after) {
   border: solid 1px gray;
 
-  
+
 }
 </style>

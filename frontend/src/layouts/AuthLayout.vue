@@ -19,7 +19,6 @@
       </main>
     </template>
   </VaLayout>
-
   <VaLayout v-else class="h-screen bg-[var(--va-background-secondary)]">
     <template #content>
       <div class="p-4">
@@ -40,8 +39,13 @@
 
 <script lang="ts" setup>
 import { useBreakpoint } from 'vuestic-ui'
-import VuesticLogo from '../components/VuesticLogo.vue'
 import BiodeskLogo from '../components/Biodesk-logo.vue';
 
 const breakpoint = useBreakpoint()
 </script>
+
+<style scoped>
+  .bg-primary {
+    background-color: #91bb8d;
+  }
+</style>

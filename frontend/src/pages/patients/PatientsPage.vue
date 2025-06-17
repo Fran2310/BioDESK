@@ -77,7 +77,7 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
 <template>
   <div> <!-- Single root wrapper -->
     <h1 class="page-title">{{ t('menu.patients') }}</h1>
-    
+
 
     <VaCard>
       <VaCardContent>

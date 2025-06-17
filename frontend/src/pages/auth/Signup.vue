@@ -116,7 +116,7 @@ const loginForm = ref({
 
 // 🔁 Helper to create URL with token
 const getURL = (path: string): string => {
-  const url = new URL(`https://apisegen.apn.gob.ve/api/v1/${path}`) 
+  const url = new URL(`https://apisegen.apn.gob.ve/api/v1/${path}`)
   if (token.value) {
     url.searchParams.append('token', token.value)
   }
