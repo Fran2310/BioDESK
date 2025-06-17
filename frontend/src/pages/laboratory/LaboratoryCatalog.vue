@@ -197,6 +197,11 @@
                 Guardar
               </va-button>
             </div>
+
+            <va-button color="info" @click="printaLabId">
+            Imprimir ID del laboratorio
+            </va-button>
+            
           </form>
         </va-card-content>
       </va-card>
@@ -207,6 +212,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { VaInput, VaDataTable, VaButton, VaModal, VaCard, VaCardTitle, VaCardContent, VaSpacer, VaTextarea } from 'vuestic-ui'
+import { fetchMedicTests, addMedicTest, updateMedicTest, deleteMedicTest } from '../../services/api';
+import { useAuthStore } from '../../stores/authStore';
+
+const authStore = useAuthStore();
+
+function printaLabId() {
+  if (!labId) {
+    console.error('No se ha seleccionado un laboratorio.');
+    return;
+  }
+  console.log('ID del laboratorio actual:', labId);
+}
+
+const labId = authStore.currentLabId;
+const token = authStore.token;
 
 interface MedicTestCatalog {
   id: number
@@ -254,55 +274,6 @@ const columns = [
   { key: 'actions', label: 'Acciones' },
 ]
 
-const fetchExams = async () => {
-  loading.value = true
-  try {
-    // Cambia la URL por la de tu backend real
-    const res = await fetch('/api/medic-test-catalog')
-    if (res.ok) {
-      exams.value = await res.json()
-    } else {
-      // fallback de ejemplo
-      exams.value = [
-        {
-          id: 1,
-          name: 'Hemograma',
-          description: 'Examen de sangre completo',
-          supplies: ['Tubo EDTA', 'Aguja'],
-          price: 120,
-        },
-        {
-          id: 2,
-          name: 'Glucosa',
-          description: 'Medición de glucosa en sangre',
-          supplies: ['Tubo fluoruro', 'Aguja'],
-          price: 80,
-        },
-      ]
-    }
-  
-  } catch (e) {
-    // fallback de ejemplo
-    exams.value = [
-      {
-        id: 1,
-        name: 'Hemograma',
-        description: 'Examen de sangre completo',
-        supplies: ['Tubo EDTA', 'Aguja'],
-        price: 120,
-      },
-      {
-        id: 2,
-        name: 'Glucosa',
-        description: 'Medición de glucosa en sangre',
-        supplies: ['Tubo fluoruro', 'Aguja'],
-        price: 80,
-      },
-    ]
-  }
-  loading.value = false
-}
-
 const filteredExams = computed(() => {
   if (!search.value) return exams.value
   return exams.value.filter(e =>
@@ -347,6 +318,7 @@ function pairsFromProperties(obj: any) {
   }))
 }
 
+
 function closeModal() {
   showAddModal.value = false
   isEditing.value = false
@@ -357,59 +329,127 @@ function closeModal() {
   insumos.value = [] // Limpia la lista de insumos
 }
 
-function addExam() {
-  if (!newExam.value.name) return
-  const properties = propertiesFromPairs()
-  exams.value.push({
-    id: exams.value.length ? Math.max(...exams.value.map(e => e.id)) + 1 : 1,
-    name: newExam.value.name,
-    description: newExam.value.description,
-    supplies: [...insumos.value], // Asigna la lista de insumos correctamente
+const fetchExams = async () => {
+  if (!labId || !token) {
+    console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
+    return;
+  }
+
+  loading.value = true;
+  try {
+    exams.value = await fetchMedicTests(labId, token);
+  } catch (error) {
+    console.error(error);
+    showError('Ocurrió un error al obtener los exámenes.');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const addExam = async () => {
+  if (!labId || !token) {
+    console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
+    return;
+  }
+
+  const test = {
+    name: newExam.value.name.trim(),
+    description: newExam.value.description.trim(),
     price: newExam.value.price,
-    properties,
-  })
-  insumos.value = [] // Limpia la lista de insumos después de guardar
-  closeModal()
-}
+    supplies: insumos.value.map((insumo) => insumo.trim()),
+    properties: referenceData.value.map((ref) => ({
+      name: ref.name.trim(),
+      unit: ref.unit.trim(),
+      valuesRef: ref.variations.map((variation) => ({
+        range: variation.range.trim(),
+        gender: variation.gender.trim(),
+        ageGroup: variation.ageGroup.trim(),
+      })),
+    })),
+  };
+
+  console.log('Objeto enviado al backend:', test);
+
+  try {
+    await addMedicTest(labId, test, token); // Pasa el ID del laboratorio y el token
+    await fetchExams(); // Refresca la lista de exámenes
+    closeModal(); // Cierra el modal
+  } catch (error) {
+    console.error('Error al agregar el examen:', error);
+    showError('Ocurrió un error al agregar el examen.');
+  }
+};
+
 
 function editExam(row: any) {
-  console.log('Editando examen:', row) // Para depuración
-  isEditing.value = true
-  editingExamId.value = row.rowData.id // Accede al ID desde rowData
+  console.log('Editando examen:', row); // Para depuración
+  isEditing.value = true;
+  editingExamId.value = row.rowData.id; // Accede al ID desde rowData
   newExam.value = {
     name: row.rowData.name,
     description: row.rowData.description || '',
-    suppliesText: row.rowData.supplies ? row.rowData.supplies.join(', ') : '',
     price: row.rowData.price,
-    propertiesText: '',
+  };
+  insumos.value = [...row.rowData.supplies]; // Inicializa la lista de insumos correctamente
+  referenceData.value = row.rowData.properties.map(prop => ({
+    name: prop.name,
+    unit: prop.unit,
+    variations: prop.valuesRef.map(valueRef => ({
+      range: valueRef.range,
+      gender: valueRef.gender,
+      ageGroup: valueRef.ageGroup,
+    })),
+  }));
+  showAddModal.value = true;
+}
+
+    const updateExam = async () => {
+      if (!labId || editingExamId.value === null) {
+        console.error('No se ha seleccionado un laboratorio o no hay examen para editar.');
+        return;
+      }
+
+      const test = {
+        name: newExam.value.name,
+        description: newExam.value.description,
+        price: newExam.value.price,
+        supplies: [...insumos.value],
+        properties: referenceData.value.map(ref => ({
+          name: ref.name,
+          unit: ref.unit,
+          valuesRef: ref.variations.map(variation => ({
+            range: variation.range,
+            gender: variation.gender,
+            ageGroup: variation.ageGroup,
+          })),
+        })),
+      };
+
+      try {
+        await updateMedicTest(labId, editingExamId.value, test); // Pasa el ID del laboratorio y el examen
+        await fetchExams(); // Refresca la lista
+        closeModal();
+      } catch (error) {
+        console.error('Error al actualizar el examen:', error);
+        showError('Ocurrió un error al actualizar el examen.');
+      }
+    };
+
+
+    const deleteExam = async (row: any) => {
+  if (!labId) {
+    console.error('No se ha seleccionado un laboratorio.');
+    return;
   }
-  insumos.value = [...row.rowData.supplies] // Inicializa la lista de insumos correctamente
-  propertiesPairs.value = pairsFromProperties(row.rowData.properties) // Convierte las propiedades a pares clave-valor
-  propertiesError.value = ''
-  showAddModal.value = true
-}
 
-
-function updateExam() {
-  if (editingExamId.value === null) return
-  const properties = propertiesFromPairs()
-  const idx = exams.value.findIndex(e => e.id === editingExamId.value)
-  if (idx !== -1) {
-    exams.value[idx] = {
-      id: editingExamId.value,
-      name: newExam.value.name,
-      description: newExam.value.description,
-      supplies: [...insumos.value], // Actualiza la lista de insumos correctamente
-      price: newExam.value.price,
-      properties,
-    }
+  try {
+    await deleteMedicTest(labId, row.rowData.id); // Pasa el ID del laboratorio y el examen
+    await fetchExams(); // Refresca la lista
+  } catch (error) {
+    console.error('Error al eliminar el examen:', error);
+    showError('Ocurrió un error al eliminar el examen.');
   }
-  closeModal()
-}
-
-function deleteExam(row: any) {
-  exams.value = exams.value.filter(e => e.id !== row.rowData.id)
-}
+};
 
 function viewDetails(row: MedicTestCatalog) {
   // Aquí puedes abrir un modal o navegar a una página de detalles
@@ -431,6 +471,9 @@ const selectedVariationIndex = ref(null);
 const ageGroups = ["CHILD", "ADULT", "ANY"];
 const genderOptions = ["MALE", "FEMALE", "ANY"];
 
+const showError = (message: string) => {
+  alert(message); 
+};
 
 function removeVariation(referenceIndex, variationIndex) {
   referenceData.value[referenceIndex].variations.splice(variationIndex, 1);
@@ -486,6 +529,13 @@ function saveVariation() {
   showVariationModal.value = false;
 }
 
+function printLabId() {
+  if (!labId) {
+    console.error('No se ha seleccionado un laboratorio.');
+    return;
+  }
+  console.log('ID del laboratorio actual:', labId);
+}
 
 onMounted(fetchExams)
 </script>
