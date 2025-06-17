@@ -44,12 +44,39 @@
     v-model="formData.municipality"
     :options="municipalities"
     track-by="id"
+    value-by="id"
     text-by="name"
+    label-by="name"
     placeholder="Seleccione un municipio"
     :disabled="!formData.state"
   
   />
 </div>
+
+  <!-- Parroquia Select -->
+<div class="mt-4">
+  <label class="va-label">Parroquia</label>
+  <VaSelect
+    v-model="formData.parish"
+    :options="parishes"
+    track-by="id"
+    value-by="id"
+    text-by="name"
+    label-by="name"
+    placeholder="Seleccione una parroquia"
+    :disabled="!formData.municipality"
+  />
+</div>
+
+<pre>{{ formData }}</pre>
+<pre>{{ formData.address }}</pre>
+<!-- <pre>Address: {{ formData.value.address }}</pre>
+<pre>RIF: {{ formData.value.rif }}</pre>
+<pre>Phone 1: {{ formData.value.phoneNums1 }}</pre> -->
+
+<!-- <pre>{{ parishes }}</pre>
+<pre>Municipality ID passed: {{ formData.municipality }}</pre>
+<pre>State ID passed: {{ formData.state }}</pre> -->
 
       <!-- Address -->
       <VaInput v-model="formData.address" label="Dirección completa" placeholder="Calle Principal, edificio #123" class="mt-4" />
@@ -90,8 +117,9 @@ interface DivisionItem {
 const formData = ref({
   name: '',
   rif: '',
-  state: '',
-  municipality: '',
+  state: null,
+  municipality: null,
+  parish: null,
   address: '',
   phoneNums1: '',
   phoneNums2: ''
@@ -100,6 +128,7 @@ const formData = ref({
 // 🔹 Geographic options
 const states = ref<DivisionItem[]>([])
 const municipalities = ref<DivisionItem[]>([])
+const parishes = ref<DivisionItem[]>([])
 
 // 🔹 Login form
 const loginForm = ref({
@@ -185,7 +214,7 @@ const loadMunicipalities = async (stateId: string) => {
 
     const data = await res.json()
 
-    // ✅ Map correctly
+    //Mapping
     municipalities.value = data.data.map((item: any) => ({
       id: item.cod_municipio_ine,
       name: item.municipio_ine
@@ -212,8 +241,75 @@ watch(
   }
 )
 
+//FUNCIÓN PARA OBTENER LOS DATOS DE PARISHES
+const loadParishes = async (stateId: string, municipalityId: string) => {
+  if (!stateId || !municipalityId) return
+
+  try {
+    const url = getURL(`listadoParroquia?codEntidad=${stateId}&codMunicipio=${municipalityId}`)
+    console.log('Fetching parishes from:', url)
+
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('Error fetching parishes')
+
+    const data = await res.json()
+
+    console.log(formData.value)
+
+    // Map response properly
+    if (!data || !Array.isArray(data.data)) {
+  console.error('Invalid or missing data in parish response:', data)
+  init({ message: 'Error: No se pudieron cargar las parroquias', color: 'danger' })
+  return
+}
+
+parishes.value = data.data.map((item: any) => ({
+  id: item.cod_parroquia_ine,
+  name: item.parroquia_ine
+}))
+
+    console.log('Parishes loaded:', parishes.value)
+
+console.log('Raw parish response:', data)
+
+console.log('Valores del formdata',formData.value)
+
+
+  } catch (e: any) {
+    console.error('Parish loading failed:', e.message)
+    init({ message: 'Error: No se pudieron cargar las parroquias', color: 'danger' })
+  }
+}
+
+// Watch for municipality changes
+watch(
+  () => formData.value.municipality,
+  (newMunicipalityId) => {
+    const stateId = formData.value.state
+    if (newMunicipalityId && stateId) {
+      console.log('Watcher triggered for municipality:', newMunicipalityId)
+      loadParishes(stateId, newMunicipalityId)
+    } else {
+      parishes.value = []
+      formData.value.parish = ''
+    }
+  }
+)
 // 🔹 Validation
 const validate = (): boolean => {
+  // Log all formData properties to the console
+  console.log('Form Data:', {
+    name: formData.value.name,
+    rif: formData.value.rif,
+    state: formData.value.state,
+    municipality: formData.value.municipality,
+    parish: formData.value.parish,
+    address: formData.value.address,
+    phoneNums1: formData.value.phoneNums1,
+    phoneNums2: formData.value.phoneNums2
+  });
+
+  // Check for required fields
   if (
     !formData.value.name ||
     !formData.value.rif ||
@@ -221,34 +317,72 @@ const validate = (): boolean => {
     !formData.value.municipality ||
     !formData.value.phoneNums1
   ) {
-    init({ message: 'Por favor, complete todos los campos obligatorios', color: 'warning' })
-    return false
+    init({ message: 'Por favor, complete todos los campos obligatorios', color: 'warning' });
+    return false;
   }
 
+  // Validate RIF format
   if (!/^[JjGg][0-9]{9}$/.test(formData.value.rif)) {
-    init({ message: 'RIF inválido. Debe comenzar con J o G seguido de 9 dígitos.', color: 'danger' })
-    return false
+    init({ message: 'RIF inválido. Debe comenzar con J o G seguido de 9 dígitos.', color: 'danger' });
+    return false;
   }
 
+  // Validate phone number 1 format
   if (!/^\d{11}$/.test(formData.value.phoneNums1)) {
-    init({ message: 'Número de teléfono 1 inválido. Formato esperado: 04101234567', color: 'danger' })
-    return false
+    init({ message: 'Número de teléfono 1 inválido. Formato esperado: 04101234567', color: 'danger' });
+    return false;
   }
 
-  if (formData.value.phoneNums2 && !/^\d{11}$/.test(formData.value.phoneNums2)) {
-    init({ message: 'Número de teléfono 2 inválido. Formato esperado: 04101234567', color: 'danger' })
-    return false
+  // Validate phone number 2 format if provided
+  if (formData.phoneNums2 && !/^\d{11}$/.test(formData.value.phoneNums2)) {
+    init({ message: 'Número de teléfono 2 inválido. Formato esperado: 04101234567', color: 'danger' });
+    return false;
   }
 
-  return true
+  // If all checks pass
+  return true;
 }
 
-// 🧾 Submit handler
-const submit = () => {
+// Submit handler
+const submit = async () => {
   if (!validate()) return
 
-  init({ message: 'Laboratorio registrado con éxito', color: 'success' })
-  router.push({ name: 'dashboard' })
+  try {
+    const res = await fetch('https://biodesk.onrender.com/api/auth/register',  {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ci: formData.value.ci,
+        name: formData.value.name,
+        lastName: formData.value.lastName,
+        email: formData.value.email,
+        password: formData.password,
+        lab: {
+          name: formData.value.name,
+          rif: formData.value.rif,
+          dir: formData.value.address,
+          phoneNums: [formData.value.phoneNums1, formData.value.phoneNums2].filter(Boolean)
+        }
+      })
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      throw new Error(`Error ${res.status}: ${errorText}`)
+    }
+
+    const result = await res.json()
+    init({ message: 'Registro exitoso', color: 'success' })
+
+    setTimeout(() => {
+      router.push({ name: 'dashboard' })
+    }, 1000)
+
+  } catch (e: any) {
+    init({ message: e.message || 'No se pudo enviar el registro', color: 'danger' })
+  }
 }
 </script>
 
