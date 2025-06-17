@@ -159,7 +159,7 @@
               <!-- Modal para ingresar/editar nombre y unidad -->
               <va-modal v-model="showModal" hide-default-actions>
                 <va-card>
-                  <va-card-title>{{ isEditingReference ? "Editar Valor de Referencia" : "Agregar Valor de Referencia" }}</va-card-title>
+                  <va-card-title>{{ isEditingReference ? "Editar Propiedad" : "Agregar Propiedad" }}</va-card-title>
                   <va-card-content>
                     <div class="flex flex-col gap-3">
                       <va-input v-model="selectedReference.name" placeholder="Nombre del valor" />
@@ -176,7 +176,7 @@
               <!-- Modal para ingresar/editar combinaciones de grupo de edad, sexo y rango -->
               <va-modal v-model="showVariationModal" hide-default-actions>
                 <va-card>
-                  <va-card-title>{{ isEditingVariation ? "Editar Combinación" : "Agregar Combinación" }}</va-card-title>
+                  <va-card-title>{{ isEditingVariation ? "Editar Valor de Referencia" : "Agregar Valor de Referencia" }}</va-card-title>
                   <va-card-content>
                     <div class="flex flex-col gap-3">
                       <va-select v-model="selectedVariation.ageGroup" :options="ageGroups" placeholder="Grupo de edad" />
