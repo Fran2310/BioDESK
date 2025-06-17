@@ -108,7 +108,7 @@ model MedicTestProperty {
   name              String
   unit              String?
   catalogId         Int
-  catalog           MedicTestCatalog   @relation(fields: [catalogId], references: [id])
+  catalog           MedicTestCatalog   @relation(fields: [catalogId], references: [id], onDelete: Cascade)
   valueReferences   ValueReference[]
 }
 
@@ -117,7 +117,7 @@ model ValueReference {
   range             String    // Ej: "38–48"
   gender            Gender    // MALE, FEMALE, ANY
   ageGroup          AgeGroup  // ADULT, CHILD, ANY
-  medicTestProperty MedicTestProperty @relation(fields: [medicTestPropertyId], references: [id])
+  medicTestProperty MedicTestProperty @relation(fields: [medicTestPropertyId], references: [id], onDelete: Cascade)
   medicTestPropertyId Int
 }
 

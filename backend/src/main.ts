@@ -25,6 +25,11 @@ async function bootstrap() {
     .addTag('Lab', 'Gestión de laboratorios')
     .addTag('User', 'Gestión de usuarios')
     .addTag('Role', 'Gestión de roles')
+    .addTag('Auditoría', 'Para gestionar de acciones')
+    .addTag(
+      'Catálogo de Exámenes',
+      'Gestion de acciones generales del catálogo de exámenes',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
