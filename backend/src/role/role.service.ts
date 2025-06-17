@@ -12,6 +12,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { UserService } from 'src/user/user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { LabDbManageService } from '../prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
 
 /**
  * Servicio encargado de gestionar roles dentro de un laboratorio, incluyendo su creación, actualización, eliminación y consulta.
@@ -25,6 +26,7 @@ export class RoleService {
     private readonly userService: UserService,
     private readonly auditService: AuditService,
     private readonly labDbManageService: LabDbManageService,
+    private readonly sharedCacheService: SharedCacheService,
   ) {}
 
   /**
@@ -136,6 +138,7 @@ export class RoleService {
 
     // Mapear solo los campos necesarios
     return users.map((u) => ({
+      uuid: u.uuid,
       ci: u.ci,
       name: u.name,
       lastName: u.lastName,
@@ -239,6 +242,20 @@ export class RoleService {
         }),
       },
     });
+
+    // 4. Update cache only if there are users with this role
+    try {
+    const users = await this.getUsersByRoleId(prisma, updatedRole.id);
+    if (users.length > 0) {
+      await Promise.all(
+        users.map(user => 
+          this.sharedCacheService.setUser(user.uuid, labId, updatedRole)
+        )
+      );
+    }
+    // If no users, skip cache update silently
+    } catch (error) {
+    }
 
     // 4. Auditoria
     await this.auditService.logAction(labId, performedByUserUuid, {
