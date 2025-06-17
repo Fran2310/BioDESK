@@ -23,7 +23,7 @@ const newLabForm = ref({
   name: '',
   rif: '',
   dir: '',
-  phoneNums: ['', '']
+  phoneNums: ['', ''],
 })
 
 // Estado para mostrar carga
@@ -41,7 +41,7 @@ const closeAddLabModal = () => {
     name: '',
     rif: '',
     dir: '',
-    phoneNums: ['', '']
+    phoneNums: ['', ''],
   }
 }
 
@@ -74,13 +74,13 @@ const submitNewLab = async () => {
   isLoading.value = true
 
   try {
-    const res = await fetch('https://biodesk.onrender.com/api/lab/create',  {
+    const res = await fetch('https://biodesk.onrender.com/api/lab/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authStore.token}`
+        Authorization: `Bearer ${authStore.token}`,
       },
-      body: JSON.stringify(newLabForm.value)
+      body: JSON.stringify(newLabForm.value),
     })
 
     if (!res.ok) {
@@ -109,51 +109,6 @@ const submitNewLab = async () => {
 
   <div class="p-6">
     <!-- Welcome Modal -->
-    <VaModal v-model="showModal" title="Bienvenido" size="medium" hide-default-actions :close-on-click-outside="false">
-      <div class="p-4 max-w-xl mx-auto">
-        <h2 class="font-bold text-xl mb-4">Laboratorios Asignados</h2>
-
-        <!-- Laboratorios como cards -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <VaCard v-for="lab in authStore.labs" :key="lab.id" class="p-3 text-center">
-            <div class="font-semibold">{{ lab.name }}</div>
-            <div class="text-sm text-gray-600">RIF: {{ lab.rif }}</div>
-          </VaCard>
-
-          <!-- Card de "Agregar Laboratorio" -->
-          <VaCard
-            color="tertiary"
-            outlined
-            text-color="white"
-            class="p-3 text-center cursor-pointer flex items-center justify-center h-full"
-            @click="showAddLabModal = true"
-          >
-            <span class="text-3xl font-bold">+</span>
-            <span class="ml-2 font-medium">Agregar</span>
-          </VaCard>
-        </div>
-
-        <div class="flex justify-end mt-2">
-          <VaButton @click="closeModal">Cerrar</VaButton>
-        </div>
-      </div>
-    </VaModal>
-
-    <!-- Modal para agregar laboratorio -->
-    <VaModal v-model="showAddLabModal" title="Agregar Laboratorio" size="medium" hide-default-actions>
-      <div class="p-4 max-w-xl mx-auto">
-        <VaInput v-model="newLabForm.name" label="Nombre del laboratorio" class="mb-4" />
-        <VaInput v-model="newLabForm.rif" label="RIF del laboratorio" class="mb-4" />
-        <VaInput v-model="newLabForm.dir" label="Dirección del laboratorio" class="mb-4" />
-        <VaInput v-model="newLabForm.phoneNums[0]" label="Teléfono principal" class="mb-4" />
-        <VaInput v-model="newLabForm.phoneNums[1]" label="Teléfono secundario (opcional)" class="mb-4" />
-
-        <div class="flex justify-end">
-          <VaButton preset="secondary" @click="closeAddLabModal" class="mr-2">Cancelar</VaButton>
-          <VaButton @click="submitNewLab" :loading="isLoading">Guardar</VaButton>
-        </div>
-      </div>
-    </VaModal>
 
     <!-- Dashboard Content -->
     <h1 class="text-3xl font-semibold mb-4">Panel Principal</h1>
@@ -169,7 +124,7 @@ const submitNewLab = async () => {
         <MonthlyEarnings />
       </div> -->
     </div>
-   <!--  <DataSection />
+    <!--  <DataSection />
     <div class="flex flex-col md:flex-row gap-4">
       <RevenueByLocationMap class="w-full md:w-4/6" />
       <RegionRevenue class="w-full md:w-2/6" />

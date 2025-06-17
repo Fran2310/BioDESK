@@ -7,7 +7,6 @@
       <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary text-blue-800">Regístrese</RouterLink>
     </p>
 
-
     <VaForm ref="form" @submit.prevent="submit">
       <VaInput
         v-model="formData.email"
@@ -36,7 +35,11 @@
       </VaValue>
 
       <div class="auth-layout__options flex flex-col sm:flex-row items-start sm:items-center justify-between">
-        <VaCheckbox v-model="formData.keepLoggedIn" class="mb-2 sm:mb-0 checkbox-square-border-3" label="Recordarme en este dispositivo" />
+        <VaCheckbox
+          v-model="formData.keepLoggedIn"
+          class="mb-2 sm:mb-0 checkbox-square-border-3"
+          label="Recordarme en este dispositivo"
+        />
         <RouterLink :to="{ name: 'recover-password' }" class="mt-2 sm:mt-0 sm:ml-1 font-semibold text-primary">
           ¿Olvidó su contraseña?
         </RouterLink>
@@ -48,9 +51,6 @@
     </VaForm>
   </div>
 </template>
-
-
-
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
@@ -76,7 +76,7 @@ const isLoading = ref(false)
 const submit = async () => {
   if (!validate()) return
 
-  isLoading.value=true
+  isLoading.value = true
 
   try {
     const res = await fetch('https://biodesk.onrender.com/api/auth/login', {
@@ -94,8 +94,6 @@ const submit = async () => {
 
     const data = await res.json()
 
-
-
     // GUARDAR TOKEN Y LABORATORIOS EN STORE
     authStore.setToken(data.access_token)
     authStore.setLabs(data.labs ? [...data.labs] : [])
@@ -109,47 +107,37 @@ const submit = async () => {
     // NAVEGAR AL DASHBOARD O LABORATORIO ESPECÍFICO
 
     if (/* data.labs.length === 1 */ 1) {
-
       // DASHBOARD
 
       push({ name: 'dashboard' })
     } else {
-
       // VISTA DE SELECCIÓN DE LABORATORIOS
 
       push({ name: 'select-lab' })
     }
-
-
 
     init({
       message: `Login successful! Token: ${data.access_token.substring(0, 20)}...`,
       color: 'success',
       timeout: 5000,
     })
-
   } catch (e: any) {
     console.error(e)
     init({ message: 'Login failed. Check your credentials.', color: 'danger' })
+  } finally {
+    isLoading.value = false
   }
-
-  finally{isLoading.value=false}
 }
 </script>
 
 <!-- CÓDIGO CSS PARA MODIFICAR EL GROSOR DEL BORDE DE INPUT Y CHECKBOX -->
 
 <style scoped>
-
 ::v-deep(.va-checkbox:not(.va-checkbox--checked)) {
   --va-checkbox-square-border: 3px solid #4a5568; /* gris oscuro (Tailwind gray-700) */
-
-
 }
 
 ::v-deep(.va-input-wrapper__field::after) {
   border: solid 1px gray;
-
-
 }
 </style>

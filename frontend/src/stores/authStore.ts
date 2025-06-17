@@ -34,11 +34,12 @@ export const useAuthStore = defineStore('auth', {
 
     setCurrentLab(lab: Lab) {
       this.currentLab = lab
+      localStorage.setItem('lab', JSON.stringify(this.currentLab))
     },
 
     addLab(lab: Lab) {
-    this.labs.push(lab)
-  },
+      this.labs.push(lab)
+    },
 
     clearAuth() {
       this.token = null

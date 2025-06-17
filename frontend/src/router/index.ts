@@ -39,32 +39,31 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
-        name:'users',
-        path:'/users',
+        name: 'users',
+        path: '/users',
         component: () => import('../pages/users/UsersPage.vue'),
-
       },
-        //Root of patients data.
+      //Root of patients data.
       {
         name: 'Patients data',
         path: '/p-data',
         component: RouteViewComponent,
         children: [
-        {
-        name: 'patients', //Patients route
-        path: '/patients',
-        component: () => import('../pages/patients/PatientsPage.vue'),
-        },
-        {
-        name: 'med-history', //Medical records route
-        path: '/med-history',
-        component: () => import('../pages/404.vue'),
-        },
-        {
-        name: 'test-req', //Test request route
-        path: '/test-req',
-        component: () => import('../pages/404.vue'),
-        },
+          {
+            name: 'patients', //Patients route
+            path: '/patients',
+            component: () => import('../pages/patients/PatientsPage.vue'),
+          },
+          {
+            name: 'med-history', //Medical records route
+            path: '/med-history',
+            component: () => import('../pages/404.vue'),
+          },
+          {
+            name: 'test-req', //Test request route
+            path: '/test-req',
+            component: () => import('../pages/404.vue'),
+          },
         ],
       },
       {
@@ -147,6 +146,11 @@ const routes: Array<RouteRecordRaw> = [
     name: '404',
     path: '/404',
     component: () => import('../pages/404.vue'),
+  },
+  {
+    name: 'select-lab',
+    path: '/select-lab',
+    component: () => import('../pages/select-lab/SelectLab.vue'),
   },
 ]
 

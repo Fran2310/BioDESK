@@ -28,12 +28,11 @@ export default {
     },
 
     {
-      name:'users',
-      displayName:'menu.users',
-      meta:{
-        icon:'group',
+      name: 'users',
+      displayName: 'menu.users',
+      meta: {
+        icon: 'group',
       },
-
     },
 
     {
@@ -47,16 +46,16 @@ export default {
 
       children: [
         {
-        name: 'patients', //Patients
-        displayName:'menu.patients',
+          name: 'patients', //Patients
+          displayName: 'menu.patients',
         },
         {
-        name: 'med-history', //Medic history
-        displayName:'menu.history',
+          name: 'med-history', //Medic history
+          displayName: 'menu.history',
         },
         {
-        name: 'test-req', //Test request
-        displayName:'menu.testreq',
+          name: 'test-req', //Test request
+          displayName: 'menu.testreq',
         },
       ],
     },
@@ -66,18 +65,10 @@ export default {
       meta: {
         icon: 'medical_services',
       },
-    },
-
-    {
-      name: 'payments',
-      displayName: 'menu.payments',
-      meta: {
-        icon: 'credit_card',
-      },
-       children: [
+      children: [
         {
-        name: 'laboratory-catalog', //Laboratory catalog
-        displayName:'Laboratory Catalog',
+          name: 'laboratory-catalog', //Laboratory catalog
+          displayName: 'Laboratory Catalog',
         },
       ],
     },
