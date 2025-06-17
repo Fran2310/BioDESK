@@ -5,6 +5,7 @@ export type Patient = {
   lastName: string
   secondName?: string
   secondLastName?: string
+  gender?:string
   email: string
   phoneNums: string[]
   dir: string

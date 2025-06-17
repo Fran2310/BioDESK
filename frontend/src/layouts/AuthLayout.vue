@@ -4,10 +4,10 @@
       <RouterLink
         class="bg-tertiary h-full flex items-center justify-center"
         style="width: 35vw"
-        to="/"
+        to="login"
         aria-label="Visit homepage"
       >
-        <!-- <VuesticLogo :height="28" start="#FFF" /> -->
+        
 
       <BiodeskLogo/>
 
@@ -19,13 +19,14 @@
       </main>
     </template>
   </VaLayout>
-  <VaLayout v-else class="h-screen bg-[var(--va-background-secondary)]" id="left">
+
+  <VaLayout v-else class="h-screen bg-[var(--va-background-secondary)]">
     <template #content>
       <div class="p-4">
         <main class="h-full flex flex-row items-center justify-start mx-auto max-w-[420px]">
           <div class="flex flex-col items-start">
-            <RouterLink class="py-4" to="/" aria-label="Visit homepage">
-              <!-- <VuesticLogo class="mb-2" start="#0E41C9" /> -->
+            <RouterLink class="py-4" to="login" aria-label="Visit homepage">
+              
                <BiodeskLogo/>
 
             </RouterLink>
@@ -39,13 +40,9 @@
 
 <script lang="ts" setup>
 import { useBreakpoint } from 'vuestic-ui'
+
 import BiodeskLogo from '../components/Biodesk-logo.vue';
 
 const breakpoint = useBreakpoint()
 </script>
 
-<style scoped>
-  .bg-primary {
-    background-color: #91bb8d;
-  }
-</style>

@@ -25,6 +25,7 @@ const defaultNewPatient = {
   lastName: '',
   secondName: '',
   secondLastName: '',
+  gender:'',
   email: '',
   phoneNums: [''],
   dir: '',
@@ -95,9 +96,9 @@ const removePhone = (index: number) => {
 <template>
   <div>
     <VaForm v-slot="{ isValid }" ref="add-patient-form" class="flex-col justify-start items-start gap-4 inline-flex w-full">
-      
-      
-      
+
+
+
       <!-- <VaFileUpload
         v-model="avatar"
         type="single"

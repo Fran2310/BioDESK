@@ -5,7 +5,7 @@
         <VaButton preset="secondary" color="textPrimary">
           <span class="profile-dropdown__anchor min-w-max">
             <slot />
-            <VaAvatar :size="32" color="warning"> 😍 </VaAvatar>
+            <VaAvatar :size="32" color="primary" icon="person"></VaAvatar>
           </span>
         </VaButton>
       </template>
@@ -81,14 +81,14 @@ withDefaults(
             to: 'billing',
             icon: 'mso-receipt_long',
           },
-          {
+         /*  {
             name: 'projects',
             to: 'projects',
             icon: 'mso-favorite',
-          },
+          }, */
         ],
       },
-      {
+      /* {
         name: 'explore',
         separator: true,
         list: [
@@ -103,7 +103,7 @@ withDefaults(
             icon: 'mso-error',
           },
         ],
-      },
+      }, */
       {
         name: '',
         separator: false,

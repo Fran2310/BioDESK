@@ -36,6 +36,10 @@ export const useAuthStore = defineStore('auth', {
       this.currentLab = lab
     },
 
+    addLab(lab: Lab) {
+    this.labs.push(lab)
+  },
+
     clearAuth() {
       this.token = null
       this.labs = []

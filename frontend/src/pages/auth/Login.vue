@@ -2,10 +2,10 @@
   <div class="bg-quaternary p-4 py-7 rounded shadow-lg border-4 border-blue-500 block w-full max-w-500">
     <h1 class="font-semibold text-4xl mb-4">Iniciar sesión</h1>
 
-    <!-- <p class="text-base mb-4 leading-5">
+    <p class="text-base mb-4 leading-5">
       ¿Nuevo en BioDesk?
-      <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary">Regístrese</RouterLink>
-    </p> -->
+      <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary text-blue-800">Regístrese</RouterLink>
+    </p>
 
 
     <VaForm ref="form" @submit.prevent="submit">
@@ -43,15 +43,17 @@
       </div>
 
       <div class="flex justify-center mt-4">
-        <VaButton class="w-full" @click="submit"> Ingresar</VaButton>
+        <VaButton class="w-full" @click="submit" :loading="isLoading"> Ingresar</VaButton>
       </div>
     </VaForm>
   </div>
 </template>
 
 
+
+
 <script lang="ts" setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useForm, useToast } from 'vuestic-ui'
 import { validators } from '../../services/utils'
@@ -69,8 +71,12 @@ const formData = reactive({
   keepLoggedIn: false,
 })
 
+const isLoading = ref(false)
+
 const submit = async () => {
   if (!validate()) return
+
+  isLoading.value=true
 
   try {
     const res = await fetch('https://biodesk.onrender.com/api/auth/login', {
@@ -88,7 +94,7 @@ const submit = async () => {
 
     const data = await res.json()
 
- 
+
 
     // GUARDAR TOKEN Y LABORATORIOS EN STORE
     authStore.setToken(data.access_token)
@@ -103,12 +109,12 @@ const submit = async () => {
     // NAVEGAR AL DASHBOARD O LABORATORIO ESPECÍFICO
 
     if (/* data.labs.length === 1 */ 1) {
-      
+
       // DASHBOARD
 
       push({ name: 'dashboard' })
     } else {
-     
+
       // VISTA DE SELECCIÓN DE LABORATORIOS
 
       push({ name: 'select-lab' })
@@ -126,6 +132,8 @@ const submit = async () => {
     console.error(e)
     init({ message: 'Login failed. Check your credentials.', color: 'danger' })
   }
+
+  finally{isLoading.value=false}
 }
 </script>
 
@@ -142,6 +150,6 @@ const submit = async () => {
 ::v-deep(.va-input-wrapper__field::after) {
   border: solid 1px gray;
 
-  
+
 }
 </style>

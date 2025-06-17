@@ -8,14 +8,20 @@ import RouteViewComponent from '../layouts/RouterBypass.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/:pathMatch(.*)*',
-    redirect: { name: 'dashboard' },
+    redirect: { name: 'homepage' },
   },
   {
     name: 'admin',
     path: '/',
     component: AppLayout,
-    redirect: { name: 'dashboard' },
+    redirect: { name: 'homepage' },
     children: [
+      {
+        name: 'homepage',
+        path: 'homepage',
+        component: () => import('../pages/home-page/HomePage.vue'),
+      },
+
       {
         name: 'dashboard',
         path: 'dashboard',
@@ -36,7 +42,7 @@ const routes: Array<RouteRecordRaw> = [
         name:'users',
         path:'/users',
         component: () => import('../pages/users/UsersPage.vue'),
-        
+
       },
         //Root of patients data.
       {
@@ -69,7 +75,14 @@ const routes: Array<RouteRecordRaw> = [
       {
         name: 'laboratory',
         path: '/laboratory',
-        component: () => import('../pages/laboratory/LaboratoryCatalog.vue'),
+        component: RouteViewComponent,
+        children: [
+          {
+            name: 'laboratory-catalog',
+            path: 'laboratory-catalog',
+            component: () => import('../pages/laboratory/LaboratoryCatalog.vue'),
+          },
+        ],
       },
       {
         name: 'payments',
@@ -151,6 +164,19 @@ const router = createRouter({
     }
   },
   routes,
+})
+
+// Router guard
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  // Example: protect all routes except auth
+  if (to.path.startsWith('/auth')) {
+    next()
+  } else if (!token) {
+    next({ name: 'login' })
+  } else {
+    next()
+  }
 })
 
 export default router
