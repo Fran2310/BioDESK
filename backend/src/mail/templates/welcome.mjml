@@ -9,7 +9,7 @@
     <!-- Banner con logo -->
     <mj-section background-color="#f8f9fa" padding="0">
       <mj-column>
-        <mj-image src="https://www.ebersbanden.nl/wp-content/uploads/2019/10/email-banner-300x101.jpg" alt="Logo App" width="500%" />
+        <mj-image src="https://biodesk.onrender.com/banners/system/bienvenida.jpg" alt="Logo App" width="500%" />
       </mj-column>
     </mj-section>
 

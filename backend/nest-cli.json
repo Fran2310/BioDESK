@@ -4,7 +4,8 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "assets": [
-      "./mail/**/*"
+      "./mail/**/*",
+      "./../img/**/*"
     ],
     "deleteOutDir": true,
     "plugins": ["@nestjs/swagger"]
