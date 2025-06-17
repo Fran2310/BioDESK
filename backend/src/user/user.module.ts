@@ -7,6 +7,7 @@ import { AuditModule } from 'src/audit/audit.module';
 import { RoleModule } from 'src/role/role.module';
 import { UserController } from './user.controller';
 import { SystemUserModule } from './system-user/system-user.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SystemUserModule } from './system-user/system-user.module';
     AuditModule,
     LabModule,
     forwardRef(() => RoleModule),
+    forwardRef(() => MailModule),
   ],
   providers: [UserService],
   exports: [UserService],

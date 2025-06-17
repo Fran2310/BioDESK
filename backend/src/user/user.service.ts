@@ -14,6 +14,7 @@ import { RoleService } from '../role/role.service';
 import { SystemUserService } from './system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UserService {
@@ -24,7 +25,7 @@ export class UserService {
 
     readonly labUserService: LabUserService,
     readonly systemUserService: SystemUserService,
-
+    private readonly mailService: MailService,
     private readonly roleService: RoleService,
     private readonly auditService: AuditService,
   ) {}
@@ -213,6 +214,8 @@ export class UserService {
         user.uuid, // Ahora sí existe el uuid del propio usuario
       );
 
+      await this.mailService.sendWelcomeEmail(user.email)
+      
       // 🗒️ Auditar creación de LabUser como administrador inicial
       if (labUser) {
         await this.auditService.logAction(labRecord.id, user.uuid, {
@@ -347,6 +350,8 @@ export class UserService {
 
     // 2. Asociarlo a la DB central (si no lo está)
     await this.systemUserService.linkSystemUserToLab(user.uuid, labId);
+
+    await this.mailService.sendWelcomeToLabEmail(user.email, labId, role.role)
 
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'create',
@@ -488,7 +493,7 @@ export class UserService {
       action: 'delete',
       details: `Se eliminó la asignación del usuario ${user.name} ${user.lastName} del laboratorio`,
       entity: 'LabUser',
-      recordEntityId: deletedUser.id,
+      recordEntityId: `${deletedUser.id}`,
       operationData: {
         before: deletedUser,
       },
