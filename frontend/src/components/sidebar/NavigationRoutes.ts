@@ -15,7 +15,7 @@ export default {
       name: 'homepage',
       displayName: 'Home',
       meta: {
-        icon: 'vuestic-iconset-dashboard',
+        icon: 'home',
       },
     },
 
@@ -67,13 +67,7 @@ export default {
         icon: 'medical_services',
       },
     },
-    {
-      name: 'laboratory',
-      displayName: 'Laboratory',
-      meta: {
-        icon: 'medical_services',
-      },
-    },
+
     {
       name: 'payments',
       displayName: 'menu.payments',

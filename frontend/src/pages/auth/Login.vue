@@ -2,10 +2,10 @@
   <div class="bg-quaternary p-4 py-7 rounded shadow-lg border-4 border-blue-500 block w-full max-w-500">
     <h1 class="font-semibold text-4xl mb-4">Iniciar sesión</h1>
 
-    <!-- <p class="text-base mb-4 leading-5">
+    <p class="text-base mb-4 leading-5">
       ¿Nuevo en BioDesk?
-      <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary">Regístrese</RouterLink>
-    </p> -->
+      <RouterLink :to="{ name: 'signup' }" class="font-semibold text-primary text-blue-800">Regístrese</RouterLink>
+    </p>
 
 
     <VaForm ref="form" @submit.prevent="submit">
