@@ -197,10 +197,6 @@
                 Guardar
               </va-button>
             </div>
-
-            <va-button color="info" @click="printaLabId">
-            Imprimir ID del laboratorio
-            </va-button>
             
           </form>
         </va-card-content>
@@ -216,15 +212,6 @@ import { fetchMedicTests, addMedicTest, updateMedicTest, deleteMedicTest } from 
 import { useAuthStore } from '../../stores/authStore';
 
 const authStore = useAuthStore();
-
-function printaLabId() {
-  if (!labId) {
-    console.error('No se ha seleccionado un laboratorio.');
-    return;
-  }
-  console.log('ID del laboratorio actual:', labId);
-}
-
 const labId = authStore.currentLabId;
 const token = authStore.token;
 
@@ -330,7 +317,7 @@ function closeModal() {
 }
 
 const fetchExams = async () => {
-  if (!labId || !token) {
+  if (!authData.labId || !authData.token) {
     console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
     return;
   }

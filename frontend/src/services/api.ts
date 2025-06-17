@@ -45,9 +45,6 @@ export default {
 }
 
 
-
-import { useAuthStore } from '../stores/authStore';
-
 const labId = localStorage.getItem('Id'); // Obtén el ID del laboratorio desde localStorage
 const token = localStorage.getItem('token'); // Obtén el token desde localStorage
 
