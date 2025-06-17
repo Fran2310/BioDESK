@@ -40,17 +40,17 @@ export class CreatePatientDto {
   email: string;
 
   @ApiProperty({
-	  example: 'Av. Principal #123',
-	  description: 'Dirección fiscal completa',
+	example: 'Av. Principal #123',
+	description: 'Dirección fiscal completa',
 	})
   @IsNotEmpty()
   @IsString()
   dir: string;
   
   @ApiProperty({
-	  type: [String],
-	  minItems: 1,
-	  example: ['04121234567', '02121234567'],
+	type: [String],
+	minItems: 1,
+	example: ['04121234567', '02121234567'],
 	})
   @IsArray()
   @IsString({ each: true })

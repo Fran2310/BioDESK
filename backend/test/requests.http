@@ -70,8 +70,8 @@ POST http://localhost:3000/api/auth/login
 content-type: application/json
 
 {
-  "email": "joshuacarreraramos@gmail.com",
-  "password": "123456789"
+  "email": "pepe@example.com",
+  "password": "securePass123!"
 }
 
 --------------------------------------------------
