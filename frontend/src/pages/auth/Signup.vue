@@ -66,7 +66,7 @@
       <!-- Actions -->
       <div class="flex justify-between mt-6">
         <VaButton preset="secondary" @click="$router.push({ name: 'login' })">Atrás</VaButton>
-        <VaButton type="submit" @click="submit">Siguiente</VaButton>
+        <VaButton type="submit" @click="submit" :loading="isLoading">Siguiente</VaButton>
       </div>
     </div>
   </div>
@@ -83,6 +83,7 @@ const router = useRouter()
 // 🔐 Auth state
 const token = ref<string | null>(null)
 const isLoggedIn = ref(false)
+const isLoading = ref(false)
 
 // 📦 Form data
 const formData = ref({
@@ -283,7 +284,7 @@ const submit = async () => {
     const result = await res.json()
     init({ message: 'Registro exitoso', color: 'success' })
     setTimeout(() => {
-      router.push({ name: 'dashboard' })
+      router.push({ name: 'login' })
     }, 1000)
   } catch (e: any) {
     init({ message: e.message || 'No se pudo enviar el registro', color: 'danger' })
