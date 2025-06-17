@@ -79,11 +79,38 @@
               label="Descripción"
               class="mb-3"
             />
-            <va-input
-              v-model="newExam.suppliesText"
-              label="Insumos (separados por coma)"
-              class="mb-3"
+            
+            <div class="insumos-section">
+            <va-input 
+              v-model="newInsumo" 
+              label="Agregar Insumo"
+              placeholder="Escribe un insumo y presiona agregar"
             />
+
+            <va-button
+              color="primary"
+              size="small"
+              @click="addInsumo"
+              class="custom-button"
+              icon="add"
+            >
+            Agregar
+            </va-button>
+
+            <!-- Lista de insumos -->
+            <ul>
+              <li v-for="(insumo, index) in insumos" :key="index">
+                {{ insumo }}
+                <va-button 
+                  icon="close" 
+                  color="danger" 
+                  size="small" 
+                  @click="removeInsumo(index)" 
+                />
+              </li>
+            </ul>
+          </div>
+
             <va-input
               v-model.number="newExam.price"
               label="Precio"
@@ -91,40 +118,82 @@
               min="0"
               class="mb-3"
             />
+
+            <!-- Propiedades-->
+
             <div class="mb-3">
-              <label class="block mb-1 font-semibold">Propiedades adicionales</label>
-              <div v-for="(pair, idx) in propertiesPairs" :key="idx" class="flex gap-2 mb-2">
-                <va-input
-                  v-model="pair.key"
-                  placeholder="Clave"
-                  class="flex-1"
-                  size="small"
-                />
-                <va-input
-                  v-model="pair.value"
-                  placeholder="Valor"
-                  class="flex-1"
-                  size="small"
-                />
-                <va-button
-                  icon="delete"
-                  color="danger"
-                  size="small"
-                  @click="removeProperty(idx)"
-                  class="self-center"
-                  aria-label="Eliminar propiedad"
-                />
+              <label class="block mb-3 especial">PROPIEDADES</label>
+
+              <!-- Lista de nombres y unidades con sus combinaciones -->
+              <div v-for="(reference, idx) in referenceData" :key="idx" class="reference-block">
+                <div class="header">
+                  <span class="reference-name">{{ reference.name }}</span>
+                  <span class="reference-unit">{{ reference.unit }}</span>
+                  <va-button icon="delete" color="danger" size="small" @click.stop="removeReference(idx)" />
+                </div>
+
+                <div class="variations">
+                  <div v-for="(variation, vIdx) in reference.variations" :key="vIdx" class="variation-row">
+                    <span class="variation-detail">{{ variation.ageGroup }}</span>
+                    <span class="variation-detail">{{ variation.gender }}</span>
+                    <span class="variation-detail">{{ variation.range }}</span>
+                    <va-button 
+                      icon="delete"  
+                      color="danger" 
+                      size="small" 
+                      @click="removeVariation(idx, vIdx)" 
+                    />
+                  </div>
+                </div>
+
+                <va-button color="primary" size="small" @click="openModalForNewVariation(idx)" class="custom-button" icon="add">
+                  Agregar Referencia
+                </va-button>
               </div>
-              <va-button
-                color="primary"
-                size="small"
-                @click="addProperty"
-                class="mt-1"
-                icon="add"
-              >
-                Agregar propiedad
+
+              <!-- Botón para abrir el modal y agregar un nuevo nombre/unidad -->
+              <va-button color="primary" size="small" @click="openModalForNewReference" class="custom-button" icon="add">
+                Agregar Propiedad
               </va-button>
+
+              <!-- Modal para ingresar/editar nombre y unidad -->
+              <va-modal v-model="showModal" hide-default-actions>
+                <va-card>
+                  <va-card-title>{{ isEditingReference ? "Editar Valor de Referencia" : "Agregar Valor de Referencia" }}</va-card-title>
+                  <va-card-content>
+                    <div class="flex flex-col gap-3">
+                      <va-input v-model="selectedReference.name" placeholder="Nombre del valor" />
+                      <va-input v-model="selectedReference.unit" placeholder="Unidad" />
+                    </div>
+                  </va-card-content>
+                  <va-card-actions class="flex justify-end">
+                    <va-button color="secondary" @click="showModal = false">Cancelar</va-button>
+                    <va-button color="success" @click="saveReference">Guardar</va-button>
+                  </va-card-actions>
+                </va-card>
+              </va-modal>
+
+              <!-- Modal para ingresar/editar combinaciones de grupo de edad, sexo y rango -->
+              <va-modal v-model="showVariationModal" hide-default-actions>
+                <va-card>
+                  <va-card-title>{{ isEditingVariation ? "Editar Combinación" : "Agregar Combinación" }}</va-card-title>
+                  <va-card-content>
+                    <div class="flex flex-col gap-3">
+                      <va-select v-model="selectedVariation.ageGroup" :options="ageGroups" placeholder="Grupo de edad" />
+                      <va-select v-model="selectedVariation.gender" :options="genderOptions" placeholder="Sexo" />
+                      <va-input v-model="selectedVariation.range" placeholder="Rango" />
+                    </div>
+                  </va-card-content>
+                  <va-card-actions class="flex justify-end">
+                    <va-button color="secondary" @click="showVariationModal = false">Cancelar</va-button>
+                    <va-button color="success" @click="saveVariation">Guardar</va-button>
+                  </va-card-actions>
+                </va-card>
+              </va-modal>
             </div>
+
+            
+            
             <div class="flex gap-2 justify-end mt-4">
               <va-spacer />
               <va-button color="secondary" @click="closeModal" type="button">
@@ -152,6 +221,28 @@ interface MedicTestCatalog {
   properties?: any
   supplies: string[]
   price: number
+}
+
+
+//para el manejo de referencias
+const referenceValues = ref([
+  { ageGroup: "adult", sex: "any", value: "120-140" },
+]); // Lista de valores de referencia
+
+
+
+const insumos = ref([]); // Lista de insumos
+const newInsumo = ref(""); // Nuevo insumo
+
+function addInsumo() {
+  if (newInsumo.value && insumos.value.length < 10) {
+    insumos.value.push(newInsumo.value.trim());
+    newInsumo.value = "";
+  }
+}
+
+function removeInsumo(index) {
+  insumos.value.splice(index, 1);
 }
 
 const search = ref('')
@@ -330,11 +421,179 @@ function viewDetails(row: MedicTestCatalog) {
   alert(`Detalles de: ${row.name}`)
 }
 
+
+//modal para agregar valores de referencia
+
+const showModal = ref(false);
+const showVariationModal = ref(false);
+const isEditingReference = ref(false);
+const isEditingVariation = ref(false);
+const referenceData = ref([]);
+const selectedReference = ref({ name: "", unit: "", variations: [] });
+const selectedVariation = ref({ ageGroup: "", gender: "", range: "" });
+const selectedReferenceIndex = ref(null);
+const selectedVariationIndex = ref(null);
+
+const ageGroups = ["CHILD", "ADULT", "ANY"];
+const genderOptions = ["MALE", "FEMALE", "ANY"];
+
+
+function removeVariation(referenceIndex, variationIndex) {
+  referenceData.value[referenceIndex].variations.splice(variationIndex, 1);
+}
+
+function openModalForNewReference() {
+  selectedReference.value = { name: "", unit: "", variations: [] };
+  isEditingReference.value = false;
+  showModal.value = true;
+}
+
+function editReference(index) {
+  selectedReferenceIndex.value = index;
+  selectedReference.value = { ...referenceData.value[index] };
+  isEditingReference.value = true;
+  showModal.value = true;
+}
+
+function saveReference() {
+  if (isEditingReference.value) {
+    referenceData.value[selectedReferenceIndex.value] = { ...selectedReference.value };
+  } else {
+    referenceData.value.push({ ...selectedReference.value });
+  }
+  showModal.value = false;
+}
+
+function removeReference(index) {
+  referenceData.value.splice(index, 1);
+}
+
+function openModalForNewVariation(referenceIndex) {
+  selectedReferenceIndex.value = referenceIndex;
+  selectedVariation.value = { ageGroup: "", gender: "", range: "" };
+  isEditingVariation.value = false;
+  showVariationModal.value = true;
+}
+
+function editVariation(referenceIndex, variationIndex) {
+  selectedReferenceIndex.value = referenceIndex;
+  selectedVariationIndex.value = variationIndex;
+  selectedVariation.value = { ...referenceData.value[referenceIndex].variations[variationIndex] };
+  isEditingVariation.value = true;
+  showVariationModal.value = true;
+}
+
+function saveVariation() {
+  if (isEditingVariation.value) {
+    referenceData.value[selectedReferenceIndex.value].variations[selectedVariationIndex.value] = { ...selectedVariation.value };
+  } else {
+    referenceData.value[selectedReferenceIndex.value].variations.push({ ...selectedVariation.value });
+  }
+  showVariationModal.value = false;
+}
+
+
 onMounted(fetchExams)
 </script>
 
+
 <style scoped>
-.laboratory-catalog-page {
-  padding: 24px;
+
+.custom-button { /*va-button style*/ 
+  margin-top: 10px; 
+  margin-bottom: 10px; 
 }
+
+
+ul {
+  display: flex;  /* Hace que los elementos estén en línea */
+  gap: 12px;      /* Espaciado entre los elementos */
+  flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
+  list-style: none; /* Elimina los estilos de la lista */
+  padding: 0; /* Ajusta el espaciado */
+}
+li {
+  display: flex;
+  margin-bottom: 12px;
+  margin-top: 12px;
+  align-items: center; /* Alinea los elementos verticalmente */
+  gap: 6px; /* Espaciado entre el texto y el botón */
+  background: #f9f9f9; /* Opcional: fondo para los ítems */
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.especial {
+  font-size: 9px;
+  line-height: 14px; 
+  letter-spacing: 0.4px; 
+  min-height: 14px;
+  --va-font-family: 'Inter', sans-serif;
+  font-weight: bold;
+  color: var(--va-primary);
+}
+
+.mb-3 {
+  margin-bottom: 16px;
+}
+
+.espcial-2{
+  display: flex;
+  flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
+  gap: 12px; /* Espaciado entre elementos */
+
+}
+
+.card {
+  min-width: 180px;
+  padding: 10px;
+  cursor: pointer; /* Hace que la tarjeta parezca interactiva */
+}
+
+.reference-block {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background-color: #f9f9f9;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.reference-name {
+  font-size: 16px;
+  color: #333;
+}
+
+.reference-unit {
+  font-size: 14px;
+  color: #666;
+}
+
+.variations {
+  margin-top: 8px;
+  border-top: 1px solid #ddd;
+  padding-top: 8px;
+}
+
+.variation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.variation-detail {
+  font-size: 14px;
+  color: #555;
+}
+
 </style>
+
+

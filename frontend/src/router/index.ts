@@ -75,7 +75,14 @@ const routes: Array<RouteRecordRaw> = [
       {
         name: 'laboratory',
         path: '/laboratory',
-        component: () => import('../pages/laboratory/LaboratoryCatalog.vue'),
+        component: RouteViewComponent,
+        children: [
+          {
+            name: 'laboratory-catalog',
+            path: 'laboratory-catalog',
+            component: () => import('../pages/laboratory/LaboratoryCatalog.vue'),
+          },
+        ],
       },
       {
         name: 'payments',
