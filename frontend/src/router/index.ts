@@ -8,14 +8,20 @@ import RouteViewComponent from '../layouts/RouterBypass.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/:pathMatch(.*)*',
-    redirect: { name: 'dashboard' },
+    redirect: { name: 'homepage' },
   },
   {
     name: 'admin',
     path: '/',
     component: AppLayout,
-    redirect: { name: 'dashboard' },
+    redirect: { name: 'homepage' },
     children: [
+      {
+        name: 'homepage',
+        path: 'homepage',
+        component: () => import('../pages/home-page/HomePage.vue'),
+      },
+      
       {
         name: 'dashboard',
         path: 'dashboard',

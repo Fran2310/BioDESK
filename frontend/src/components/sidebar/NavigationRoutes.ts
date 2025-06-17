@@ -12,6 +12,14 @@ export default {
   },
   routes: [
     {
+      name: 'homepage',
+      displayName: 'Home',
+      meta: {
+        icon: 'vuestic-iconset-dashboard',
+      },
+    },
+    
+    {
       name: 'dashboard',
       displayName: 'menu.dashboard',
       meta: {
