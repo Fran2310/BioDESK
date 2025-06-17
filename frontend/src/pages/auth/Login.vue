@@ -43,7 +43,7 @@
       </div>
 
       <div class="flex justify-center mt-4">
-        <VaButton class="w-full" @click="submit"> Ingresar</VaButton>
+        <VaButton class="w-full" @click="submit" :loading="isLoading"> Ingresar</VaButton>
       </div>
     </VaForm>
   </div>
@@ -51,7 +51,7 @@
 
 
 <script lang="ts" setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useForm, useToast } from 'vuestic-ui'
 import { validators } from '../../services/utils'
@@ -69,9 +69,13 @@ const formData = reactive({
   keepLoggedIn: false,
 })
 
+const isLoading = ref(false)
+
 const submit = async () => {
   if (!validate()) return
 
+  isLoading.value=true
+  
   try {
     const res = await fetch('https://biodesk.onrender.com/api/auth/login', {
       method: 'POST',
@@ -126,6 +130,8 @@ const submit = async () => {
     console.error(e)
     init({ message: 'Login failed. Check your credentials.', color: 'danger' })
   }
+
+  finally{isLoading.value=false}
 }
 </script>
 

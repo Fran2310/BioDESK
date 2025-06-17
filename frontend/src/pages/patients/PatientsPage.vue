@@ -13,7 +13,7 @@ import { Patient } from './patients.types'
 
 const { t } = useI18n()
 const { patients, isLoading, filters, sorting, pagination, error, ...usersApi } = usePatients()
-/* const { projects } = useProjects() */
+
 
 const doShowEditPatientModal = ref(false)
 const patientToEdit = ref<Patient | null>(null)
@@ -101,8 +101,8 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
           <VaButton @click="showAddPatientModal">{{t('form.addPatient')}}</VaButton>
         </div>
 
-        <h1>Hola</h1> <pre>{{ patients }}</pre> <div>Pagination: {{ pagination }}</div>
-<div>Patients passed: {{ patients.length }}</div>
+        <!-- <h1>Hola</h1> <pre>{{ patients }}</pre> <div>Pagination: {{ pagination }}</div>
+<div>Patients passed: {{ patients.length }}</div> -->
         <CustomPatientsTable
         v-model:sort-by="sorting.sortBy"
         v-model:sorting-order="sorting.sortingOrder"

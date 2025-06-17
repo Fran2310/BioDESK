@@ -25,6 +25,7 @@ const defaultNewPatient = {
   lastName: '',
   secondName: '',
   secondLastName: '',
+  gender:'',
   email: '',
   phoneNums: [''],
   dir: '',
