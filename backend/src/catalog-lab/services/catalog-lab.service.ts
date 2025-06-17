@@ -150,8 +150,8 @@ export class CatalogLabService {
    */
   async createMedicTestCatalog(
     labId: number,
-    performedByUserUuid: string,
     dto: CreateMedicTestDto,
+    performedByUserUuid: string,
   ) {
     const prisma = await this.labDbManageService.genInstanceLabDB(labId);
     const { name, description, price, supplies, properties } = dto;
@@ -174,9 +174,9 @@ export class CatalogLabService {
         ...(prop.unit && { unit: prop.unit }),
       };
 
-      if (prop.valuesReferences && prop.valuesReferences.length > 0) {
+      if (prop.valueReferences && prop.valueReferences.length > 0) {
         base.valueReferences = {
-          create: prop.valuesReferences.map((v) => ({
+          create: prop.valueReferences.map((v) => ({
             range: v.range,
             gender: v.gender,
             ageGroup: v.ageGroup,
@@ -222,12 +222,155 @@ export class CatalogLabService {
           properties: createdTest.properties.map((p) => ({
             name: p.name,
             unit: p.unit,
-            valuesReferences: p.valueReferences,
+            valueReferences: p.valueReferences,
           })),
         },
       },
     });
 
     return createdTest;
+  }
+
+  /**
+   * Valida que no exista otro examen con el mismo nombre (case-insensitive).
+   * Si se pasa un testId, lo excluye de la búsqueda (para update).
+   */
+  private async validateUniqueTestName(
+    prisma: any,
+    name: string,
+    testId?: number,
+  ) {
+    const where: any = { name: { equals: name, mode: 'insensitive' } };
+    if (testId) {
+      where.id = { not: testId };
+    }
+    const existing = await prisma.medicTestCatalog.findFirst({ where });
+    if (existing) {
+      throw new ConflictException(
+        `Ya existe un examen con el nombre "${name}".`,
+      );
+    }
+  }
+
+  async updateMedicTestCatalog(
+    labId: number,
+    testId: number,
+    dto: UpdateMedicTestDto,
+    performedByUserUuid: string,
+  ) {
+    const prisma = await this.labDbManageService.genInstanceLabDB(labId);
+
+    // Validar nombre único (si se va a cambiar el nombre)
+    if (dto.name) {
+      await this.validateUniqueTestName(prisma, dto.name, testId);
+    }
+
+    // Obtener datos antes de la actualización
+    const beforeUpdate = await prisma.medicTestCatalog.findUnique({
+      where: { id: testId },
+      include: {
+        properties: {
+          include: { valueReferences: true },
+        },
+      },
+    });
+
+    if (!beforeUpdate) {
+      throw new NotFoundException(
+        `No se encontró el examen con ID ${testId} en el catálogo.`,
+      );
+    }
+
+    const updatedTest = await prisma.$transaction(async (tx) => {
+      // eliminar propiedades y referencias de valores existentes
+      await tx.medicTestProperty.deleteMany({
+        where: { catalogId: testId },
+      });
+
+      // Actualizar el examen principal
+      const updated = await tx.medicTestCatalog.update({
+        where: { id: testId },
+        data: {
+          name: dto.name,
+          description: dto.description,
+          price: dto.price,
+          supplies: dto.supplies,
+          properties: {
+            create:
+              dto.properties?.map((prop) => ({
+                name: prop.name,
+                unit: prop.unit,
+                valueReferences: {
+                  create:
+                    prop.valueReferences?.map((v) => ({
+                      range: v.range,
+                      gender: v.gender,
+                      ageGroup: v.ageGroup,
+                    })) || [],
+                },
+              })) || [],
+          },
+        },
+        include: {
+          properties: { include: { valueReferences: true } },
+        },
+      });
+
+      return updated;
+    });
+
+    // Auditoría (ahora incluye before y after)
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'update',
+      entity: 'MedicTestCatalog',
+      recordEntityId: updatedTest.id.toString(),
+      details: `Actualizó el examen "${updatedTest.name}" en el catálogo del laboratorio`,
+      operationData: { before: beforeUpdate, after: updatedTest },
+    });
+
+    return updatedTest;
+  }
+
+  /**
+   * Elimina un examen del catálogo y todas sus relaciones (propiedades y valores de referencia) en cascada.
+   */
+  async deleteMedicTestCatalog(
+    labId: number,
+    testId: number,
+    performedByUserUuid: string,
+  ) {
+    const prisma = await this.labDbManageService.genInstanceLabDB(labId);
+
+    // Validar que el examen exista antes de eliminar
+    const existingTest = await prisma.medicTestCatalog.findUnique({
+      where: { id: testId },
+      include: {
+        properties: {
+          include: { valueReferences: true },
+        },
+      },
+    });
+
+    if (!existingTest) {
+      throw new NotFoundException(
+        `No se encontró el examen con ID ${testId} en el catálogo.`,
+      );
+    }
+
+    // Eliminar el examen (las propiedades y valores de referencia se eliminan en cascada)
+    await prisma.medicTestCatalog.delete({
+      where: { id: testId },
+    });
+
+    // Auditoría
+    await this.auditService.logAction(labId, performedByUserUuid, {
+      action: 'delete',
+      entity: 'MedicTestCatalog',
+      recordEntityId: testId.toString(),
+      details: `Eliminó el examen "${existingTest.name}" del catálogo del laboratorio`,
+      operationData: { before: existingTest },
+    });
+
+    return { success: true, deletedId: testId };
   }
 }

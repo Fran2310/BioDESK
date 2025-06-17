@@ -26,7 +26,7 @@ import { Request } from 'express';
 @ApiBearerAuth()
 @ApiTags('[Catálogo de Exámenes] Propiedades de Exámen')
 @ApiHeaders([X_LAB_ID_HEADER])
-@Controller('medic-test-catalog/properties')
+@Controller('medic-test-catalog/property')
 export class MedicTestPropertyController {
   constructor(
     private readonly propertyService: PropertyService,

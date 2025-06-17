@@ -57,7 +57,17 @@ export class PropertyService {
         name: dto.name,
         unit: dto.unit ?? undefined,
         catalogId,
+        valueReferences: dto.valueReferences?.length
+          ? {
+              create: dto.valueReferences.map((v) => ({
+                range: v.range,
+                gender: v.gender,
+                ageGroup: v.ageGroup,
+              })),
+            }
+          : undefined,
       },
+      include: { valueReferences: true },
     });
 
     return created;
@@ -114,8 +124,14 @@ export class PropertyService {
       propertyId,
     );
 
+    // Eliminar primero los valores de referencia asociados
+    await prisma.valueReference.deleteMany({
+      where: { medicTestPropertyId: propertyId },
+    });
+
     await prisma.medicTestProperty.delete({
       where: { id: propertyId },
+      include: { valueReferences: true },
     });
 
     return { message: `Propiedad eliminada correctamente` };

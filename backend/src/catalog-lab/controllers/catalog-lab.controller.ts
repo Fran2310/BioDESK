@@ -24,6 +24,7 @@ import { CatalogLabService } from '../services/catalog-lab.service';
 import { CreateMedicTestDto } from '../dto/create-medic-test.dto';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
+import { UpdateMedicTestDto } from '../dto/update-medic-test.dto';
 
 @ApiBearerAuth()
 @ApiTags('Catálogo de Exámenes')
@@ -106,8 +107,66 @@ export class CatalogLabController {
     const performedByUserUuid = req.user.sub;
     return this.catalogLabService.createMedicTestCatalog(
       labId,
-      performedByUserUuid,
       dto,
+      performedByUserUuid,
+    );
+  }
+
+  @Patch('update')
+  @CheckAbility({ actions: 'update', subject: 'MedicTestCatalog' })
+  @ApiOperation({
+    summary: 'Actualizar un  examen en el catálogo del laboratorio',
+    description:
+      'Actualiza un examen existente en el catálogo del laboratorio. El ID del examen se pasa como parámetro de consulta. Los campos que no se envían en el cuerpo de la solicitud no se actualizarán. Asegúrate de enviar todos los campos del catalogo, ya que la actualizacion re-escribe todo el examen.',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'ID del examen a actualizar',
+    required: true,
+    type: Number,
+    example: 1,
+  })
+  @ApiBody({ type: UpdateMedicTestDto })
+  async updateMedicTestCatalog(
+    @Query('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMedicTestDto,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+
+    const performedByUserUuid = req.user.sub;
+    return this.catalogLabService.updateMedicTestCatalog(
+      labId,
+      id,
+      dto,
+      performedByUserUuid,
+    );
+  }
+
+  @Delete('delete')
+  @CheckAbility({ actions: 'delete', subject: 'MedicTestCatalog' })
+  @ApiOperation({
+    summary: 'Eliminar un examen del catálogo del laboratorio',
+    description:
+      'Elimina un examen del catálogo y todas sus propiedades y valores de referencia asociados en cascada. El ID del examen se pasa como parámetro de consulta.',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'ID del examen a eliminar',
+    required: true,
+    type: Number,
+    example: 1,
+  })
+  async deleteMedicTestCatalog(
+    @Query('id', ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    const performedByUserUuid = req.user.sub;
+    return this.catalogLabService.deleteMedicTestCatalog(
+      labId,
+      id,
+      performedByUserUuid,
     );
   }
 }

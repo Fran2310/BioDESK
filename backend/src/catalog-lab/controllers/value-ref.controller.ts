@@ -23,9 +23,9 @@ import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db
 import { ValueReferenceService } from '../services/value-reference.service';
 
 @ApiBearerAuth()
-@ApiTags('[Catálogo de Exámenes] Valores de Referencia')
+@ApiTags('[Propiedades de Exámen] Valores de Referencia')
 @ApiHeaders([X_LAB_ID_HEADER])
-@Controller('medic-test-catalog/value-ref')
+@Controller('medic-test-catalog/property/value-ref')
 export class ValueRefController {
   constructor(
     private readonly valueReferenceService: ValueReferenceService,
