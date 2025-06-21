@@ -115,14 +115,14 @@ export class RoleController {
   @ApiOperation({
     summary: 'Obtener todos los usuarios asociados a un rol por su ID',
   })
-  @ApiQuery({
+  @ApiParam({
     name: 'roleId',
     required: true,
     type: Number,
     description: 'ID del rol para obtener sus usuarios asignados',
   })
   async getUsersByRoleId(
-    @Query('roleId', ParseIntPipe) roleId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
     @Request() req,
   ) {
     const prisma = await this.getPrismaClientFromRequest(req);
@@ -148,14 +148,14 @@ export class RoleController {
     );
   }
 
-  @Patch('')
+  @Patch(':roleId')
   @CheckAbility({
     actions: 'update',
     subject: 'Role',
     fields: 'role,description,permissions',
   })
   @ApiOperation({ summary: 'Actualizar un rol existente por ID' })
-  @ApiQuery({
+  @ApiParam({
     name: 'roleId',
     required: true,
     type: Number,
@@ -165,7 +165,7 @@ export class RoleController {
   })
   @ApiBody({ type: UpdateRoleDto })
   async updateRole(
-    @Query('roleId', ParseIntPipe) roleId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
     @Body() updateDto: UpdateRoleDto,
     @Request() req,
   ) {
@@ -181,10 +181,10 @@ export class RoleController {
     );
   }
 
-  @Delete('')
+  @Delete(':roleId')
   @CheckAbility({ actions: 'delete', subject: 'Role' })
   @ApiOperation({ summary: 'Eliminar un rol por ID' })
-  @ApiQuery({
+  @ApiParam({
     name: 'roleId',
     type: Number,
     required: true,
