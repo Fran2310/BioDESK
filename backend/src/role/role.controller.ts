@@ -9,6 +9,7 @@ import {
   Request,
   ParseIntPipe,
   Delete,
+  Param,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
@@ -21,6 +22,7 @@ import {
   ApiBody,
   ApiHeaders,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -29,7 +31,7 @@ import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 @ApiBearerAuth()
 @ApiHeaders([X_LAB_ID_HEADER])
 @ApiTags('Role')
-@Controller('role')
+@Controller('roles')
 export class RoleController {
   constructor(
     private readonly roleService: RoleService,
@@ -48,7 +50,7 @@ export class RoleController {
     return this.labPrismaFactory.createInstanceDB(dbName);
   }
 
-  @Get('get-all')
+  @Get('')
   @CheckAbility({
     actions: 'read',
     subject: 'Role',
@@ -79,26 +81,26 @@ export class RoleController {
     return this.roleService.getAllRoles(prisma, { limit, offset });
   }
 
-  @Get('get-by-id')
+  @Get(':roleId')
   @CheckAbility({
     actions: 'read',
     subject: 'Role',
   })
   @ApiOperation({ summary: 'Obtener un rol por su ID' })
-  @ApiQuery({
-    name: 'id',
+  @ApiParam({
+    name: 'roleId',
     required: true,
     type: Number,
     example: 1,
     description:
       'ID numérico del rol a consultar. Este ID debe existir en la base de datos del laboratorio.',
   })
-  async getRoleById(@Query('id', ParseIntPipe) id: number, @Request() req) {
+  async getRoleById(@Param('roleId', ParseIntPipe) roleId: number, @Request() req) {
     const prisma = await this.getPrismaClientFromRequest(req);
-    return this.roleService.getRoleById(prisma, id);
+    return this.roleService.getRoleById(prisma, roleId);
   }
 
-  @Get('users-by-role')
+  @Get(':roleId/users')
   @CheckAbility(
     {
       actions: 'read',
@@ -114,20 +116,20 @@ export class RoleController {
     summary: 'Obtener todos los usuarios asociados a un rol por su ID',
   })
   @ApiQuery({
-    name: 'id',
+    name: 'roleId',
     required: true,
     type: Number,
     description: 'ID del rol para obtener sus usuarios asignados',
   })
   async getUsersByRoleId(
-    @Query('id', ParseIntPipe) id: number,
+    @Query('roleId', ParseIntPipe) roleId: number,
     @Request() req,
   ) {
     const prisma = await this.getPrismaClientFromRequest(req);
-    return this.roleService.getUsersByRoleId(prisma, id);
+    return this.roleService.getUsersByRoleId(prisma, roleId);
   }
 
-  @Post('create')
+  @Post('')
   @CheckAbility({
     actions: 'create',
     subject: 'Role',
@@ -146,7 +148,7 @@ export class RoleController {
     );
   }
 
-  @Patch('update')
+  @Patch('')
   @CheckAbility({
     actions: 'update',
     subject: 'Role',
@@ -154,7 +156,7 @@ export class RoleController {
   })
   @ApiOperation({ summary: 'Actualizar un rol existente por ID' })
   @ApiQuery({
-    name: 'id',
+    name: 'roleId',
     required: true,
     type: Number,
     example: 1,
@@ -163,7 +165,7 @@ export class RoleController {
   })
   @ApiBody({ type: UpdateRoleDto })
   async updateRole(
-    @Query('id', ParseIntPipe) id: number,
+    @Query('roleId', ParseIntPipe) roleId: number,
     @Body() updateDto: UpdateRoleDto,
     @Request() req,
   ) {
@@ -172,26 +174,26 @@ export class RoleController {
 
     return this.roleService.updateRoleById(
       prisma,
-      id,
+      roleId,
       updateDto,
       labId,
       req.user.sub,
     );
   }
 
-  @Delete('delete')
+  @Delete('')
   @CheckAbility({ actions: 'delete', subject: 'Role' })
   @ApiOperation({ summary: 'Eliminar un rol por ID' })
   @ApiQuery({
-    name: 'id',
+    name: 'roleId',
     type: Number,
     required: true,
     description: 'ID del rol a eliminar',
   })
-  async deleteRole(@Query('id', ParseIntPipe) id: number, @Request() req) {
+  async deleteRole(@Query('roleId', ParseIntPipe) roleId: number, @Request() req) {
     const labId = Number(req.headers['x-lab-id']);
     const prisma = await this.getPrismaClientFromLabId(labId);
 
-    return this.roleService.deleteRoleById(prisma, id, labId, req.user.sub);
+    return this.roleService.deleteRoleById(prisma, roleId, labId, req.user.sub);
   }
 }
