@@ -34,11 +34,11 @@ import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 @ApiBearerAuth()
 @ApiTags('User')
 @ApiHeaders([X_LAB_ID_HEADER])
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('data-lab-users')
+  @Get('mix')
   @CheckAbility(
     { actions: 'read', subject: 'LabUser' },
     { actions: 'read', subject: 'SystemUser' },
@@ -85,7 +85,7 @@ export class UserController {
     );
   }
 
-  @Get('global-user')
+  @Get('system')
   @CheckAbility({ actions: 'read', subject: 'SystemUser' })
   @ApiOperation({
     summary: 'consultar usuario registrado en el sistema central',
@@ -131,7 +131,7 @@ export class UserController {
     return safeUser as SystemUserDto;
   }
 
-  @Post('create-with-role')
+  @Post('mix/create-with-role')
   @CheckAbility(
     { actions: 'create', subject: 'LabUser' },
     { actions: 'create', subject: 'SystemUser' },
@@ -165,7 +165,7 @@ export class UserController {
     );
   }
 
-  @Post('create-with-role-id')
+  @Post('mix/create-with-role-id')
   @CheckAbility(
     {
       actions: 'create',
@@ -194,7 +194,7 @@ export class UserController {
     );
   }
 
-  @Post('assign-user-to-lab')
+  @Post('lab/assign-user-to-lab')
   @CheckAbility({ actions: 'create', subject: 'LabUser' })
   @ApiOperation({
     summary:
@@ -209,7 +209,7 @@ export class UserController {
     return this.userService.assignExistUserToLab(labId, dto, req.user.sub);
   }
 
-  @Patch('update')
+  @Patch('system')
   @CheckAbility({
     actions: 'update',
     subject: 'SystemUser',
@@ -239,7 +239,7 @@ export class UserController {
     );
   }
 
-  @Patch('assign-role')
+  @Patch('lab/assign-role')
   @CheckAbility({
     actions: 'update',
     subject: 'LabUser',
@@ -275,7 +275,7 @@ export class UserController {
     return this.userService.updateUserRole(labId, uuid, roleId, performedBy);
   }
 
-  @Delete('soft-delete')
+  @Delete('lab/soft-delete')
   @CheckAbility({ actions: 'delete', subject: 'LabUser' })
   @ApiOperation({
     summary: 'Eliminar la asignación de un usuario a un laboratorio',
@@ -300,7 +300,7 @@ export class UserController {
     );
   }
 
-  @Delete('hard-delete')
+  @Delete('system/hard-delete')
   @CheckAbility({ actions: 'delete', subject: 'SystemUser' })
   @ApiOperation({
     summary: 'Eliminar completamente un usuario del sistema',
