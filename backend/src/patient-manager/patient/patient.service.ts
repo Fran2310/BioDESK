@@ -145,6 +145,23 @@ export class PatientService {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
+      
+
+      // Primero obtenemos los datos para auditoría
+      const patientWithRelations = await labPrisma.patient.findUnique({
+        where: { id: Number(patientId) },
+        include: {
+          medicHistory: {
+            include: {
+              requestMedicTests: true
+            }
+          }
+        }
+      });
+
+      if (!patientWithRelations) {
+        throw new NotFoundException(`Paciente con ID ${patientId} no encontrado`);
+      }
 
       const deletedPatient = await labPrisma.patient.delete({
         where: { id: Number(patientId) },
@@ -156,7 +173,7 @@ export class PatientService {
         recordEntityId: deletedPatient.id.toString(),
         details: `El usuario ${systemUser.name} ${systemUser.lastName} eliminó al paciente ${deletedPatient.name} ${deletedPatient.lastName} C.I: ${deletedPatient.ci}`,
         operationData: {
-          before: deletedPatient,
+          before: patientWithRelations, // Se guardan toda la información borrada en cascade
         },
       });
 
