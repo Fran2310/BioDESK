@@ -525,6 +525,13 @@ function printLabId() {
 }
 
 onMounted(fetchExams)
+
+function getAuthData() {
+  return {
+    labId: localStorage.getItem('Id'),
+    token: localStorage.getItem('token'),
+  };
+}
 </script>
 
 
