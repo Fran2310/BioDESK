@@ -68,7 +68,14 @@ export class PatientService {
       return await labPrisma.patient.findMany({
         skip: offset,
         take: limit,
-        omit: selectFieldsToOmit, //TODO colocar include despues para el patient-history
+        omit: selectFieldsToOmit,
+        include: {
+          medicHistory: { // Devolvemos también el id del historial médico de ese usuario
+            select: {
+              id: true
+            }
+          }
+        }
       })
 
     } catch (error) {
@@ -94,6 +101,13 @@ export class PatientService {
 
     const patient = await labPrisma.patient.findFirst({
       where,
+      include: {
+        medicHistory: {
+          select: {
+            id: true
+          }
+        }
+      }
     });
 
     if (!patient) {
