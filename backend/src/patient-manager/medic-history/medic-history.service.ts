@@ -104,32 +104,6 @@ export class MedicHistoryService {
     }
   }
 
-  async getAllMedicHistories(labId: number, limit: number, offset: number, all_data: boolean) {
-    try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-
-      const selectFieldsToOmitInMedicTests = {
-        resultProperties: !all_data,
-        observation: !all_data,
-      }
-
-      return await labPrisma.medicHistory.findMany({
-        skip: offset,
-        take: limit,
-        include: {
-          requestMedicTests: {
-            omit: selectFieldsToOmitInMedicTests
-          }, // Incluye todos los RequestMedicTest relacionados
-        }
-      })
-
-    } catch (error) {
-      this.logger.error(`Error al obtener los historiales de los pacientes: ${error.message}`);
-      throw new NotFoundException(`${error.message}`);
-    }
-  }
-
   async getMedicHistory(labId: number, all_data: boolean, patientId?: number, medicHistoryId?: number) {
     try {
       const lab = await this.labService.getLabById(labId);
@@ -170,15 +144,14 @@ export class MedicHistoryService {
     labId: number, 
     dto: UpdateMedicHistory, 
     performedByUserUuid, 
-    patientId: number,
-    medicHistoryId: number) {
+    patientId: number) {
     try {
       const lab = await this.labService.getLabById(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
       
       // Verificar existencia del historial
-      const before = await this.getMedicHistory(labId, false, patientId, medicHistoryId)
+      const before = await this.getMedicHistory(labId, false, patientId)
       if (!before) {
         throw new NotFoundException(`Historial médico no encontrado para el paciente ${patientId}`);
       }
@@ -221,14 +194,13 @@ export class MedicHistoryService {
   async deleteMedicHistory(
     labId: number, 
     performedByUserUuid, 
-    patientId: number,
-    medicHistoryId: number) {
+    patientId: number) {
     try {
       const lab = await this.labService.getLabById(labId);
       const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
-      const before = await this.getMedicHistory(labId, false, patientId, medicHistoryId)
+      const before = await this.getMedicHistory(labId, false, patientId)
       if (!before) {
         throw new NotFoundException(`Historial médico no encontrado para el paciente ${patientId}`);
       }

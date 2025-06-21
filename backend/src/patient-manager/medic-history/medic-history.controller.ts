@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, ParseBoolPipe, ParseIntPipe, Patch, Post, Query, Request } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeaders, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, ParseBoolPipe, ParseIntPipe, Patch, Post, Query, Request } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeaders, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { MedicHistoryService } from './medic-history.service';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
@@ -13,7 +13,8 @@ import { UpdateMedicHistory } from './dto/update-medic-history.dto';
 export class MedicHistoryController {
   constructor(private readonly medicHistoryService: MedicHistoryService) {} 
 
-  @Post('create-history')
+  /*
+  @Post('medic-history')
   @ApiOperation({ summary: 'Crear un historial médico para un paciente' })
   @CheckAbility({ actions: 'create', subject: 'medicHistory' })
   create(
@@ -24,41 +25,14 @@ export class MedicHistoryController {
 
     return this.medicHistoryService.createMedicHistory(+labId, dto, performedByUserUuid);
   }
+  */
 
-  @Get('medic-histories')
-  @ApiOperation({ summary: 'Obtiene historiales médicos' })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'offset',
-    required: false,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'all-data',
-    required: false,
-    type: Boolean,
-  })
-  @CheckAbility({ actions: 'read', subject: 'medicHistory' })
-  getMedicHistories(
-    @Query('limit', ParseIntPipe) limit = 20,
-    @Query('offset', ParseIntPipe) offset = 0,
-    @Query('all-data', ParseBoolPipe) all_data = false,
-    @Request() req,
-  ) {
-    const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
-    return this.medicHistoryService.getAllMedicHistories(+labId, limit, offset, all_data);
-  }
-
-  @Get('medic-history')
+  @Get(':patientId/medic-history')
   @ApiOperation({ summary: 'Obtiene un historial médico de un paciente' })
-  @ApiQuery({
+  @ApiParam({
     name: 'patientId',
     required: true,
-    type: String,
+    type: Number,
   })
   @ApiQuery({
     name: 'all-data',
@@ -67,7 +41,7 @@ export class MedicHistoryController {
   })
   @CheckAbility({ actions: 'read', subject: 'medicHistory' })
   getMedicHistory(
-    @Query('patientId', ParseIntPipe) patientId,
+    @Param('patientId', ParseIntPipe) patientId: number,
     @Query('all-data', ParseBoolPipe) all_data = false,
     @Request() req,
   ) {
@@ -75,27 +49,19 @@ export class MedicHistoryController {
     return this.medicHistoryService.getMedicHistory(+labId, all_data, patientId);
   }
 
-  @Patch('update-history')
+  @Patch(':patientId/medic-history')
   @ApiOperation({
-    summary: 'Actualizar datos de un paciente de un laboratorio',
+    summary: 'Actualizar historial médico de un paciente de un laboratorio',
   })
-  @ApiQuery({
+  @ApiParam({
     name: 'patientId',
-    required: false,
+    required: true,
     type: Number,
-    description: 'Id del paciente para actualizar',
-  })
-  @ApiQuery({
-    name: 'medicHistoryId',
-    required: false,
-    type: Number,
-    description: 'Id del medic history para actualizar',
+    description: 'Id del paciente para actualizar su historial',
   })
   @CheckAbility({ actions: 'update', subject: 'medicHistory' })
   update(
-    @Query('patientId') patientId: number,
-    @Query('medicHistoryId') medicHistoryId: number,
-
+    @Param('patientId') patientId: number,
     @Body() dto: UpdateMedicHistory,
     @Request() req,
   ) {
@@ -107,28 +73,20 @@ export class MedicHistoryController {
       dto,
       performedByUserUuid,
       +patientId,
-      +medicHistoryId,
     );
   }
-
+  /*
+  @Delete(':patientId/medic-history')
   @ApiOperation({ summary: 'Eliminar historial médico de un paciente' })
-  @ApiQuery({
+  @ApiParam({
     name: 'patientId',
-    required: false,
+    required: true,
     type: Number,
     description: 'Id del paciente para eliminar su historial médico',
   })
-  @ApiQuery({
-    name: 'medicHistoryId',
-    required: false,
-    type: Number,
-    description: 'Id del paciente para eliminarlo',
-  })
   @CheckAbility({ actions: 'delete', subject: 'medicHistory' })
-  @Delete('delete-history')
   deleteMedicHistory(
-    @Query('patientId') patientId: number, 
-    @Query('medicHistoryId') medicHistoryId: number, 
+    @Param('patientId') patientId: number, 
     @Request() req
   ) {
     const labId = Number(req.headers['x-lab-id']);
@@ -138,7 +96,7 @@ export class MedicHistoryController {
       +labId,
       performedByUserUuid,
       +patientId,
-      +medicHistoryId,
     );
-  }
+  } 
+  */
 }

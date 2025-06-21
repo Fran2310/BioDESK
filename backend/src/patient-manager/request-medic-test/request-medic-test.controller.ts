@@ -18,6 +18,7 @@ import {
     ApiBearerAuth,
     ApiHeaders,
     ApiOperation,
+    ApiParam,
     ApiQuery,
     ApiTags,
   } from '@nestjs/swagger';
@@ -30,17 +31,16 @@ import {
   @ApiBearerAuth()
   @ApiTags('Peticiones de Exámenes Médicos')
   @ApiHeaders([X_LAB_ID_HEADER])
-  @Controller('request-medic-tests')
+  @Controller('patients/')
   export class RequestMedicTestController {
     constructor(
       private readonly requestMedicTestService: RequestMedicTestService,
     ) {}
   
-    @Post('create/:patientId')
+    @Post('request-medic-tests')
     @ApiOperation({ summary: 'Crear una petición de examen médico para un paciente' })
     @CheckAbility({ actions: 'create', subject: 'RequestMedicTest' })
     create(
-      @Param('patientId', ParseIntPipe) patientId: number,
       @Body() dto: CreateRequestMedicTestDto,
       @Request() req,
     ) {
@@ -49,58 +49,93 @@ import {
   
       return this.requestMedicTestService.createRequestMedicTest(
         labId,
-        patientId,
         dto,
         performedByUserUuid,
       );
     }
   
-    @Get('all')
-    @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de un paciente o historial' })
+    @Get(':medicHistoryId/request-medic-tests')
+    @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de un historial médico' })
     @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
+    @ApiQuery({
+      name: 'limit',
+      required: false,
+      type: String,
+    })
+    @ApiQuery({
+      name: 'offset',
+      required: false,
+      type: String,
+    })
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
-    @ApiQuery({ name: 'patientId', required: false, type: Number, description: 'ID del paciente para buscar su historial activo' })
-    @ApiQuery({ name: 'medicHistoryId', required: false, type: Number, description: 'ID del historial médico' })
-    getAll(
+    @ApiParam({ name: 'medicHistoryId', required: true, type: Number, description: 'ID del paciente para buscar su historial activo' })
+    getAllFromOne(
       @Request() req,
+      @Query('limit', ParseIntPipe) limit = 20,
+      @Query('offset', ParseIntPipe) offset = 0,
       @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
-      @Query('patientId', new ParseIntPipe({ optional: true })) patientId?: number,
-      @Query('medicHistoryId', new ParseIntPipe({ optional: true })) medicHistoryId?: number,
+      @Param('medicHistoryId', new ParseIntPipe({ optional: true })) medicHistoryId: number,
     ) {
       const labId = Number(req.headers['x-lab-id']);
       return this.requestMedicTestService.getAllRequestsMedicTestFromOne(
         labId,
+        limit,
+        offset,
         all_data,
         medicHistoryId,
-        patientId,
+      );
+    }
+
+    @Get('request-medic-tests')
+    @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de todos los pacientes' })
+    @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
+    @ApiQuery({
+      name: 'limit',
+      required: false,
+      type: String,
+    })
+    @ApiQuery({
+      name: 'offset',
+      required: false,
+      type: String,
+    })
+    @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
+    getAllFromAll(
+      @Request() req,
+      @Query('limit', ParseIntPipe) limit = 20,
+      @Query('offset', ParseIntPipe) offset = 0,
+      @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
+    ) {
+      const labId = Number(req.headers['x-lab-id']);
+      return this.requestMedicTestService.getAllRequestsMedicTestFromAll(
+        labId,
+        limit,
+        offset,
+        all_data,
       );
     }
   
-    @Get(':requestMedicTestId')
+  
+    @Get('request-medic-tests/:requestMedicTestId')
     @ApiOperation({ summary: 'Obtener una petición de examen médico por su ID' })
     @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
-    @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
     getOne(
       @Request() req,
       @Param('requestMedicTestId', ParseIntPipe) requestMedicTestId: number,
-      @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
     ) {
       const labId = Number(req.headers['x-lab-id']);
       return this.requestMedicTestService.getRequestMedicTest(
         labId,
-        all_data,
         requestMedicTestId,
       );
     }
   
-    @Patch('update/:requestMedicTestId')
+    @Patch('request-medic-tests/:requestMedicTestId')
     @ApiOperation({ summary: 'Actualizar una petición de examen médico' })
     @CheckAbility({ actions: 'update', subject: 'RequestMedicTest' })
-    @ApiQuery({ name: 'patientId', required: true, type: Number, description: 'ID del paciente al que pertenece el examen' })
     update(
       @Request() req,
       @Param('requestMedicTestId', ParseIntPipe) requestMedicTestId: number,
-      @Query('patientId', ParseIntPipe) patientId: number,
       @Body() dto: UpdateRequestMedicTest,
     ) {
       const labId = Number(req.headers['x-lab-id']);
@@ -109,20 +144,17 @@ import {
       return this.requestMedicTestService.updateRequestMedicTest(
         labId,
         requestMedicTestId,
-        patientId,
         dto,
         performedByUserUuid,
       );
     }
   
-    @Delete('delete/:requestMedicTestId')
+    @Delete('request-medic-tests/:requestMedicTestId')
     @ApiOperation({ summary: 'Eliminar una petición de examen médico' })
     @CheckAbility({ actions: 'delete', subject: 'RequestMedicTest' })
-    @ApiQuery({ name: 'patientId', required: true, type: Number, description: 'ID del paciente al que pertenece el examen' })
     delete(
       @Request() req,
       @Param('requestMedicTestId', ParseIntPipe) requestMedicTestId: number,
-      @Query('patientId', ParseIntPipe) patientId: number,
     ) {
       const labId = Number(req.headers['x-lab-id']);
       const performedByUserUuid = req.user.sub;
@@ -130,7 +162,6 @@ import {
       return this.requestMedicTestService.deleteRequestMedicTest(
         labId,
         requestMedicTestId,
-        patientId,
         performedByUserUuid,
       );
     }

@@ -5,6 +5,7 @@ import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factor
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { LabService } from 'src/lab/services/lab.service';
+import { MedicHistoryService } from '../medic-history/medic-history.service';
 
 @Injectable()
 export class PatientService {
@@ -14,6 +15,7 @@ export class PatientService {
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemUserService: SystemUserService,
     private readonly labService: LabService,
+    private readonly medicHistoryService: MedicHistoryService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -30,6 +32,12 @@ export class PatientService {
       const patient = await labPrisma.patient.create({
         data: dto,
       });
+
+      await labPrisma.medicHistory.create({
+        data: {
+          patientId: patient.id,
+        },
+      })
 
       this.logger.log(
         `Paciente creado para el laboratorio ${lab.name} (${lab.rif})`,

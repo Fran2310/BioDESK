@@ -8,14 +8,14 @@ export class CreateMedicHistoryDto {
     description: 'Alergias del paciente',
   })
   @IsString()
-  allergies: string;
+  allergies?: string;
 
   @ApiProperty({
     example: '',
     description: 'Patologías del paciente',
   })
   @IsString()
-  pathologies: string;
+  pathologies?: string;
 
   @ApiProperty({
     example: '1',

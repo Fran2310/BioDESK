@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiHeaders,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -32,7 +33,7 @@ import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
 export class PatientController {
   constructor(private readonly patientService: PatientService) {}
 
-  @Post('create')
+  @Post('')
   @ApiOperation({ summary: 'Crear un paciente para un laboratorio' })
   @CheckAbility({ actions: 'create', subject: 'Patient' })
   create(@Body() dto: CreatePatientDto, @Request() req) {
@@ -42,8 +43,8 @@ export class PatientController {
     return this.patientService.createPatient(+labId, dto, performedByUserUuid);
   }
 
+  @Get('')
   @CheckAbility({ actions: 'read', subject: 'Patient' })
-  @Get('data-patients')
   @ApiOperation({ summary: 'Obtiene los datos de pacientes de un laboratorio' })
   @ApiQuery({
     name: 'limit',
@@ -70,39 +71,41 @@ export class PatientController {
     return this.patientService.getAllPatients(+labId, limit, offset, all_data);
   }
 
-  @Get('data-patient')
+  @Get(':patientId')
   @ApiOperation({ summary: 'Obtener datos de un paciente de un laboratorio' })
-  @ApiQuery({
+  @ApiParam({ 
     name: 'patientId',
     required: true,
-    type: String,
+    type: Number,
     description: 'Id del paciente para obtener todos sus datos',
   })
   @CheckAbility({ actions: 'read', subject: 'Patient' })
-  getDataPatient(@Query('patientId') patientId: number, @Request() req) {
+  getDataPatient(
+    @Param('patientId') patientId: number, 
+    @Request() req) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
     return this.patientService.getPatient(+labId, +patientId);
   }
 
-  @Patch('update')
+  @Patch(':patientId') // Cambia la ruta para incluir el parámetro de path
   @ApiOperation({
     summary: 'Actualizar datos de un paciente de un laboratorio',
   })
-  @ApiQuery({
+  @ApiParam({
     name: 'patientId',
     required: true,
-    type: String,
+    type: Number,
     description: 'Id del paciente para actualizar',
   })
   @CheckAbility({ actions: 'update', subject: 'Patient' })
   update(
-    @Query('patientId') patientId: number,
+    @Param('patientId') patientId: number, // Cambia de Query a Param
     @Body() dto: UpdatePatientDto,
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']);
     const performedByUserUuid = req.user.sub;
-
+  
     return this.patientService.updatePatient(
       +labId,
       +patientId,
@@ -110,17 +113,21 @@ export class PatientController {
       performedByUserUuid,
     );
   }
-
-  @ApiOperation({ summary: 'Eliminar un paciente de un laboratorio' })
-  @ApiQuery({
+  
+  @Delete(':patientId')
+  @ApiOperation({
+    summary: 'Eliminar un paciente de un laboratorio',
+  })
+  @ApiParam({ // Cambia de ApiQuery a ApiParam
     name: 'patientId',
     required: true,
-    type: String,
-    description: 'Id del paciente para eliminarlo',
+    type: Number,
+    description: 'Id del paciente para borrar',
   })
   @CheckAbility({ actions: 'delete', subject: 'Patient' })
-  @Delete('delete')
-  delete(@Query('patientId') patientId: number, @Request() req) {
+  delete(
+    @Param('patientId') patientId: number, 
+    @Request() req) {
     const labId = Number(req.headers['x-lab-id']);
     const performedByUserUuid = req.user.sub;
 
