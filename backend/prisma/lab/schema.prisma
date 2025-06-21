@@ -67,11 +67,11 @@ model Patient {
 
 model MedicHistory {
   id          Int        @id @default(autoincrement())
-  allergies   String?
-  pathologies String?
+  allergies   String[]   @default([""])
+  pathologies String[]   @default([""])
 
   patientId   Int        @unique
-  patient     Patient    @relation(fields: [patientId], references: [id])
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   requestMedicTests RequestMedicTest[]
 }
@@ -86,7 +86,7 @@ model RequestMedicTest {
   observation     String?
 
   medicHistoryId  Int
-  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id])
+  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id], onDelete: Cascade)
 
   medicTestCatalogId Int
   medicTestCatalog   MedicTestCatalog   @relation(fields: [medicTestCatalogId], references: [id])
