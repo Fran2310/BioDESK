@@ -73,7 +73,8 @@ export class LabController {
     },
   })
   async listLabs(@Request() req) {
-    return this.userService.getLabList(req.user);
+    const performedByUserUuid = req.user.sub;
+    return this.userService.getLabList(performedByUserUuid);
   }
 
   @Post('logo')

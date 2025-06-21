@@ -79,12 +79,6 @@ export class AuthService {
 
     return {
       access_token: token,
-      labs: user.labs.map((lab) => ({
-        id: lab.id,
-        name: lab.name,
-        status: lab.status,
-        rif: lab.rif,
-      })),
     };
   }
 

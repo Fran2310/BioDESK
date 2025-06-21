@@ -1,5 +1,5 @@
 // backend/src/user/user.service.ts
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
 
 import { RegisterDto } from 'src/auth/dto/register.dto';
@@ -509,7 +509,19 @@ export class UserService {
     };
   }
 
-  async getLabList(user: any) {
+  async getLabList(uuid: string) {
+
+    const user = await this.systemUserService.getSystemUser({
+      uuid, 
+      includeLabs: true
+    })
+
+    if (!user?.labs?.length) {
+      throw new NotFoundException(
+        'Este usuario no está asociado a ningún laboratorio.',
+      );
+    }
+
     return {
       labs: user.labs.map((lab) => ({
         id: lab.id,
