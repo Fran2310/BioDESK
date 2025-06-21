@@ -54,30 +54,21 @@ export class CatalogLabService {
    */
   async getMedicTestCatalog(
     labId: number,
-    options: { id?: number; name?: string; includeData: boolean },
+    options: { id?: number; includeData: boolean },
   ) {
-    const { id, name, includeData = false } = options;
+    const { id, includeData = false } = options;
 
-    if (!id && !name) {
+    if (!id) {
       throw new BadRequestException(
-        'Debe proporcionar un ID o nombre del examen.',
-      );
-    } else if (id && name) {
-      throw new ConflictException(
-        'No se puede proporcionar ambos criterios de busqueda ID y nombre del examen.',
+        'Debe proporcionar un ID del examen.',
       );
     }
 
     const prisma = await this.labDbManageService.genInstanceLabDB(labId);
 
-    const where = id
-      ? { id }
-      : {
-          name: {
-            equals: name,
-            mode: Prisma.QueryMode.insensitive, // que que no sea case sensitive
-          },
-        };
+    const where = {
+      id
+    };
 
     const catalog = await prisma.medicTestCatalog.findFirst({
       where,
@@ -94,7 +85,7 @@ export class CatalogLabService {
 
     if (!catalog) {
       throw new NotFoundException(
-        `No se encontró un examen con ${id ? 'ID: ' + id : 'nombre: ' + name}`,
+        `No se encontró un examen con ID: ${id}`,
       );
     }
 

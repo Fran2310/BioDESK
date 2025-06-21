@@ -38,17 +38,11 @@ export class CatalogLabController {
   @Get(':medicTestCatalogId')
   @CheckAbility({ actions: 'read', subject: 'MedicTestCatalog' })
   @ApiOperation({
-    summary: 'Obtener un examen del catálogo por ID o nombre',
+    summary: 'Obtener un examen del catálogo por ID',
     description:
-      'Retorna los datos de un examen específico según su ID o nombre. Puede incluir las propiedades del examen si se indica.',
+      'Retorna los datos de un examen específico según su ID. Puede incluir las propiedades del examen si se indica.',
   })
   @ApiParam({ name: 'medicTestCatalogId', required: false, type: Number, example: 1 })
-  @ApiQuery({
-    name: 'name',
-    required: false,
-    type: String,
-    example: 'Hemograma',
-  })
   @ApiQuery({
     name: 'includeData',
     required: false,
@@ -56,10 +50,9 @@ export class CatalogLabController {
     example: true,
     description: 'Indica si se deben incluir las propiedades del examen',
   })
-  async getTestByIdOrName(
+  async getTestById(
     @Request() req,
     @Param('medicTestCatalogId') medicTestCatalogId?: number,
-    @Query('name') name?: string,
     @Query('includeData', ParseBoolPipe) includeData = false,
   ) {
     const labId = Number(req.headers['x-lab-id']);
@@ -68,7 +61,6 @@ export class CatalogLabController {
     }
     return this.catalogLabService.getMedicTestCatalog(labId, {
       id: medicTestCatalogId,
-      name,
       includeData,
     });
   }
