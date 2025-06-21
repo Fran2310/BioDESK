@@ -1,28 +1,25 @@
-import { Injectable, Logger, NotFoundException, InternalServerErrorException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
-import { LabService } from 'src/lab/services/lab.service';
+import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 
 @Injectable()
 export class PatientService {
   private readonly logger = new Logger(PatientService.name);
 
   constructor(
-    private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemUserService: SystemUserService,
-    private readonly labService: LabService,
     private readonly auditService: AuditService,
+    private readonly labDbManageService: LabDbManageService,
   ) {}
 
   // ============ CRUD OPERATIONS ============
 
   async createPatient(labId: number, dto: CreatePatientDto, performedByUserUuid) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
       await this.validateUniquePatient(labId, dto.ci, dto.email)
@@ -36,10 +33,6 @@ export class PatientService {
           patientId: patient.id,
         },
       })
-
-      this.logger.log(
-        `Paciente creado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'create',
@@ -63,8 +56,7 @@ export class PatientService {
 
   async getAllPatients(labId: number, limit: number, offset: number, all_data: boolean) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
       const selectFieldsToOmit = {
         secondName: !all_data,
@@ -86,8 +78,7 @@ export class PatientService {
   }
 
   async getPatient(labId: number,  patientId?: number, email?: string, ci?: string): Promise<any> {
-    const lab = await this.labService.getLabById(labId);
-    const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+    const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
     if (!patientId && !email && !ci ) {
       throw new ConflictException(
@@ -113,8 +104,7 @@ export class PatientService {
 
   async updatePatient(labId: number, patientId: number, dto: UpdatePatientDto, performedByUserUuid) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
       const before = await this.getPatient(labId, patientId); // Verifica si existe
@@ -129,10 +119,6 @@ export class PatientService {
         where: { id: Number(patientId) },
         data: dto,
       });
-      
-      this.logger.log(
-        `Paciente actualizado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'update',
@@ -157,17 +143,12 @@ export class PatientService {
 
   async deletePatient(labId: number, patientId: number, performedByUserUuid) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
       const deletedPatient = await labPrisma.patient.delete({
         where: { id: Number(patientId) },
       });
-
-      this.logger.log(
-        `Paciente borrado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'delete',
@@ -192,8 +173,7 @@ export class PatientService {
   // ============ HELPER METHODS ============
 
   private async validateUniquePatient(labId: number, ci: string | undefined, email: string | undefined) {
-    const lab = await this.labService.getLabById(labId);
-    const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+    const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
     const patient = await labPrisma.patient.findFirst({
       where: {

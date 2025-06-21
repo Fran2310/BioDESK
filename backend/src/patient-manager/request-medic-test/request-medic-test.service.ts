@@ -1,25 +1,21 @@
 import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { AuditService } from 'src/audit/audit.service';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
-import { LabService } from 'src/lab/services/lab.service';
 
-import { PatientService } from '../patient/patient.service';
 import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
 import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
 import { MedicHistoryService } from '../medic-history/medic-history.service';
+import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 
 @Injectable()
 export class RequestMedicTestService {
   private readonly logger = new Logger(RequestMedicTestService.name);
   
   constructor(
-      private readonly labPrismaFactory: LabPrismaFactory,
       private readonly systemUserService: SystemUserService,
-      private readonly labService: LabService,
       private readonly medicHistory: MedicHistoryService,
       private readonly auditService: AuditService,
+      private readonly labDbManageService: LabDbManageService,
   ) {}
   
   async createRequestMedicTest(
@@ -28,8 +24,7 @@ export class RequestMedicTestService {
     performedByUserUuid: string
   ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
   
       // 1. Obtener el historial médico con el paciente relacionado
@@ -54,10 +49,6 @@ export class RequestMedicTestService {
       });
   
       // 3. Log y auditoría
-      this.logger.log(
-        `Examen médico creado para el paciente ${patient.name} ${patient.lastName} en el laboratorio ${lab.name} (${lab.rif})`,
-      );
-  
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'create',
         entity: 'requestMedicTest',
@@ -88,8 +79,7 @@ export class RequestMedicTestService {
     patientId?: number) {
     try {
 
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       
       // Si no tenemos medicHistoryId pero tenemos patientId, intentamos obtenerlo
     if (!medicHistoryId && patientId) {
@@ -142,8 +132,7 @@ export class RequestMedicTestService {
     all_data: boolean) {
     try {
 
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const selectFieldsToOmitInMedicTests = {
         resultProperties: !all_data,
         observation: !all_data,
@@ -170,8 +159,7 @@ export class RequestMedicTestService {
 
   async getRequestMedicTest(labId: number, requestMedicTestId: number) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
       const where = {
         ...(requestMedicTestId && { id: requestMedicTestId }),
@@ -194,8 +182,7 @@ export class RequestMedicTestService {
     performedByUserUuid: string
   ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
   
       // Obtener el request incluyendo el paciente relacionado
@@ -224,10 +211,6 @@ export class RequestMedicTestService {
         } 
       });
       
-      this.logger.log(
-        `Examen del paciente ${patient.name} ${patient.lastName} actualizado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
-  
       // Auditoría
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'update',
@@ -256,8 +239,7 @@ export class RequestMedicTestService {
     performedByUserUuid: string, 
   ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
   
       // 1. Obtener el examen médico con los datos completos del paciente
