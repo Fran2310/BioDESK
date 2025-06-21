@@ -5,7 +5,6 @@ import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factor
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { LabService } from 'src/lab/services/lab.service';
-import { MedicHistoryService } from '../medic-history/medic-history.service';
 
 @Injectable()
 export class PatientService {
@@ -15,7 +14,6 @@ export class PatientService {
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemUserService: SystemUserService,
     private readonly labService: LabService,
-    private readonly medicHistoryService: MedicHistoryService,
     private readonly auditService: AuditService,
   ) {}
 

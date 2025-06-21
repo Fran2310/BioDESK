@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MedicHistoryService } from './medic-history.service';
 import { MedicHistoryController } from './medic-history.controller';
 import { LabPrismaModule } from 'src/prisma-manage/lab-prisma/lab-prisma.module';
@@ -12,7 +12,7 @@ import { PatientModule } from '../patient/patient.module';
     LabPrismaModule,
     SystemUserModule,
     LabModule,
-    forwardRef(() => PatientModule),
+    PatientModule,
     AuditModule,
   ],
   providers: [MedicHistoryService],
