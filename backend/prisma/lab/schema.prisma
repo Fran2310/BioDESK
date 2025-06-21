@@ -67,8 +67,8 @@ model Patient {
 
 model MedicHistory {
   id          Int        @id @default(autoincrement())
-  allergies   String[]   @default([""])
-  pathologies String[]   @default([""])
+  allergies   String?   
+  pathologies String?   
 
   patientId   Int        @unique
   patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
