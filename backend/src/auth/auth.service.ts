@@ -29,7 +29,7 @@ export class AuthService {
    * @returns Un objeto con el token de acceso y los datos del laboratorio creado.
    */
   async register(dto: RegisterDto) {
-    const { uuid, labs } = await this.usersService.createUserAdminAndLab(dto);
+    const uuid  = await this.usersService.createUser(dto);
 
     const payload = { sub: uuid };
 
@@ -37,13 +37,6 @@ export class AuthService {
 
     return {
       access_token: token,
-      labs: labs.map((lab) => ({
-        id: lab.id,
-        name: lab.name,
-        rif: lab.rif,
-        status: lab.status,
-        createdAt: lab.createdAt,
-      })),
     };
   }
 

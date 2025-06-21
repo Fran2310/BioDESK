@@ -185,74 +185,24 @@ export class UserService {
    * @throws ConflictException si ocurre un error al crear el laboratorio o el usuario.
    * Si ocurre un error al crear el usuario, se realiza un rollback eliminando el laboratorio creado.
    */
-  async createUserAdminAndLab(dto: RegisterDto) {
-    const { lab, ...userDto } = dto;
-
-    const labRecord = await this.labService.createLab(lab);
-    if (!labRecord) {
-      throw new ConflictException('Error al crear el laboratorio.');
-    }
-
-    this.logger.log(
-      `🧪 Laboratorio creado: ${labRecord.name} (${labRecord.rif})`,
-    );
+  async createUser(dto: RegisterDto) {
+    const userDto = dto;
 
     try {
       // ✅ Primero creas el usuario y ya tienes el UUID
       const user = await this.systemUserService.createSystemUser(
         userDto,
-        labRecord.id,
-      );
-
-      // ✅ Luego lo insertas en la base de datos del laboratorio
-      const labUser = await this.labUserService.createLabUserWithRole(
-        labRecord.id,
-        {
-          systemUserUuid: user.uuid,
-          role: DEFAULT_ADMIN_ROLE,
-        },
-        user.uuid, // Ahora sí existe el uuid del propio usuario
       );
 
       await this.mailService.sendWelcomeEmail(user.email)
-      
-      // 🗒️ Auditar creación de LabUser como administrador inicial
-      if (labUser) {
-        await this.auditService.logAction(labRecord.id, user.uuid, {
-          action: 'create',
-          details: `Creó al usuario administrador ${user.name} ${user.lastName}`,
-          entity: 'LabUser',
-          recordEntityId: labUser.id.toString(),
-          operationData: {
-            after: {
-              ciField: user.ci,
-              nameField: user.name,
-              lastNameField: user.lastName,
-              emailField: user.email,
-              role: DEFAULT_ADMIN_ROLE.name,
-            },
-          },
-        });
-      }
-      this.logger.log(
-        `🧪 Usuario registrado: ${user.email} → Lab: ${labRecord.name}`,
-      );
 
       return {
         uuid: user.uuid,
-        labs: [labRecord],
       };
     } catch (error) {
       this.logger.error(
-        `❌ Error al crear el usuario administrador para el laboratorio: ${labRecord.name}. Iniciando rollback...`,
+        `❌ Error al crear el usuario`,
       );
-
-      await this.labService.rollbackLabCreation(labRecord.dbName, labRecord.id);
-
-      this.logger.warn(
-        `🚫 Rollback completado para el laboratorio ${labRecord.name}`,
-      );
-      throw error;
     }
   }
 
@@ -556,6 +506,17 @@ export class UserService {
 
     return {
       message: `Usuario ${deleted.name} ${deleted.lastName} eliminado completamente del sistema.`,
+    };
+  }
+
+  async getLabList(user: any) {
+    return {
+      labs: user.labs.map((lab) => ({
+        id: lab.id,
+        name: lab.name,
+        status: lab.status,
+        rif: lab.rif,
+      })),
     };
   }
 }

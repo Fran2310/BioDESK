@@ -2,6 +2,7 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
   Post,
   Request,
@@ -24,7 +25,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 
-@Controller('lab')
+@Controller('labs')
 export class LabController {
   constructor(
     private readonly userService: UserService,
@@ -32,16 +33,47 @@ export class LabController {
   ) {}
 
   @SkipLabIdCheck()
-  @Post('create')
+  @Post('')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Crea un laboratorio para el usuario',
+    summary: 'Crea un laboratorio para el usuario del token JWT',
     description: `Crea un nuevo laboratorio asociado al usuario autenticado. NOTA!: El usuario que registra el el laboratorio será el administrador del mismo.`,
   })
   @ApiBody({ type: CreateLabDto })
   async createLab(@Body() dto: CreateLabDto, @Request() req) {
     const userUuid = req.user.sub;
     return this.userService.createLabForUser(userUuid, dto);
+  }
+
+  @SkipLabIdCheck()
+  @Get('')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Lista los laboratorios asociados al usuario del token JWT',
+  })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      example: {
+        labs: [
+          {
+            id: 1,
+            name: 'Laboratorio Santos',
+            status: 'active',
+            rif: 'J-12345678-9',
+          },
+          {
+            id: 2,
+            name: 'Lab Grillos',
+            status: 'active',
+            rif: 'J-45678901-9',
+          },
+        ],
+      },
+    },
+  })
+  async listLabs(@Request() req) {
+    return this.userService.getLabList(req.user);
   }
 
   @Post('logo')
