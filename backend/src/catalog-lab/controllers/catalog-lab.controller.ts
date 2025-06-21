@@ -11,12 +11,14 @@ import {
   ParseBoolPipe,
   Patch,
   Delete,
+  Param,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiHeaders,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -29,18 +31,18 @@ import { UpdateMedicTestDto } from '../dto/update-medic-test.dto';
 @ApiBearerAuth()
 @ApiTags('Catálogo de Exámenes')
 @ApiHeaders([X_LAB_ID_HEADER])
-@Controller('medic-test-catalog')
+@Controller('medic-tests-catalog')
 export class CatalogLabController {
   constructor(private readonly catalogLabService: CatalogLabService) {}
 
-  @Get('get-by')
+  @Get(':medicTestCatalogId')
   @CheckAbility({ actions: 'read', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Obtener un examen del catálogo por ID o nombre',
     description:
       'Retorna los datos de un examen específico según su ID o nombre. Puede incluir las propiedades del examen si se indica.',
   })
-  @ApiQuery({ name: 'id', required: false, type: Number, example: 1 })
+  @ApiParam({ name: 'medicTestCatalogId', required: false, type: Number, example: 1 })
   @ApiQuery({
     name: 'name',
     required: false,
@@ -56,22 +58,22 @@ export class CatalogLabController {
   })
   async getTestByIdOrName(
     @Request() req,
-    @Query('id') id?: number,
+    @Param('medicTestCatalogId') medicTestCatalogId?: number,
     @Query('name') name?: string,
     @Query('includeData', ParseBoolPipe) includeData = false,
   ) {
     const labId = Number(req.headers['x-lab-id']);
-    if (id && isNaN(id)) {
+    if (medicTestCatalogId && isNaN(medicTestCatalogId)) {
       throw new BadRequestException('El ID debe ser un número válido.');
     }
     return this.catalogLabService.getMedicTestCatalog(labId, {
-      id,
+      id: medicTestCatalogId,
       name,
       includeData,
     });
   }
 
-  @Get('get-all')
+  @Get('')
   @CheckAbility({ actions: 'read', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Listar exámenes del catálogo del laboratorio',
@@ -95,7 +97,7 @@ export class CatalogLabController {
     });
   }
 
-  @Post('create')
+  @Post('')
   @CheckAbility({ actions: 'create', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Registrar un nuevo examen en el catálogo del laboratorio',
@@ -112,15 +114,15 @@ export class CatalogLabController {
     );
   }
 
-  @Patch('update')
+  @Patch(':medicTestCatalogId')
   @CheckAbility({ actions: 'update', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Actualizar un  examen en el catálogo del laboratorio',
     description:
       'Actualiza un examen existente en el catálogo del laboratorio. El ID del examen se pasa como parámetro de consulta. Los campos que no se envían en el cuerpo de la solicitud no se actualizarán. Asegúrate de enviar todos los campos del catalogo, ya que la actualizacion re-escribe todo el examen.',
   })
-  @ApiQuery({
-    name: 'id',
+  @ApiParam({
+    name: 'medicTestCatalogId',
     description: 'ID del examen a actualizar',
     required: true,
     type: Number,
@@ -128,7 +130,7 @@ export class CatalogLabController {
   })
   @ApiBody({ type: UpdateMedicTestDto })
   async updateMedicTestCatalog(
-    @Query('id', ParseIntPipe) id: number,
+    @Query('medicTestCatalogId', ParseIntPipe) medicTestCatalogId: number,
     @Body() dto: UpdateMedicTestDto,
     @Request() req,
   ) {
@@ -137,13 +139,13 @@ export class CatalogLabController {
     const performedByUserUuid = req.user.sub;
     return this.catalogLabService.updateMedicTestCatalog(
       labId,
-      id,
+      medicTestCatalogId,
       dto,
       performedByUserUuid,
     );
   }
 
-  @Delete('delete')
+  @Delete(':medicTestCatalogId')
   @CheckAbility({ actions: 'delete', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Eliminar un examen del catálogo del laboratorio',
@@ -151,21 +153,21 @@ export class CatalogLabController {
       'Elimina un examen del catálogo y todas sus propiedades y valores de referencia asociados en cascada. El ID del examen se pasa como parámetro de consulta.',
   })
   @ApiQuery({
-    name: 'id',
+    name: 'medicTestCatalogId',
     description: 'ID del examen a eliminar',
     required: true,
     type: Number,
     example: 1,
   })
   async deleteMedicTestCatalog(
-    @Query('id', ParseIntPipe) id: number,
+    @Query('medicTestCatalogId', ParseIntPipe) medicTestCatalogId: number,
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']);
     const performedByUserUuid = req.user.sub;
     return this.catalogLabService.deleteMedicTestCatalog(
       labId,
-      id,
+      medicTestCatalogId,
       performedByUserUuid,
     );
   }
