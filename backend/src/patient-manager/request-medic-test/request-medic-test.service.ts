@@ -98,13 +98,6 @@ export class RequestMedicTestService {
         observation: !all_data,
       };
 
-      // Campos de búsqueda por defecto para los exámenes médicos
-      // AJUSTA ESTOS CAMPOS según tu esquema en el modelo RequestMedicTest
-      const defaultSearchFields = [
-        'state',
-        'priority', 
-      ];
-
       // Construimos el objeto de opciones para la búsqueda
       const searchOptions = {
         skip: offset,
@@ -124,7 +117,7 @@ export class RequestMedicTestService {
       const { results: data, total } = await intelligentSearch(
           requestMedicTest, // 1. El modelo a buscar
             searchTerm,  // 2. El término de búsqueda
-            searchFields || defaultSearchFields, // 3. Los campos donde buscar
+            searchFields, // 3. Los campos donde buscar
             searchOptions // 4. Las opciones (where, skip, take, omit, etc.)
       )
 
@@ -165,16 +158,7 @@ export class RequestMedicTestService {
         resultProperties: !all_data,
         observation: !all_data,
       };
-  
-      // Campos de búsqueda por defecto para los exámenes médicos
-      // AJUSTA ESTOS CAMPOS según tu esquema en el modelo RequestMedicTest
-      // Puedes incluir campos como 'state', 'priority', o incluso campos relacionados si intelligentSearch los soporta.
-      const defaultSearchFields = [
-        'state',
-        'priority',
-        // Agrega más campos relevantes para la búsqueda en RequestMedicTest
-        // 'id', 'requestedAt', etc. (asegúrate de que sean de tipo String o que intelligentSearch los maneje)
-      ];
+
   
       // Construimos el objeto de opciones para la búsqueda inteligente
       const searchOptions = {
@@ -197,7 +181,7 @@ export class RequestMedicTestService {
       const { results: data, total } = await intelligentSearch(
         requestMedicTestModel, // 1. El modelo a buscar (requestMedicTest directamente)
         searchTerm,           // 2. El término de búsqueda
-        searchFields || defaultSearchFields, // 3. Los campos donde buscar
+        searchFields, // 3. Los campos donde buscar
         searchOptions         // 4. Las opciones (skip, take, omit, orderBy, enumFields)
       );
   

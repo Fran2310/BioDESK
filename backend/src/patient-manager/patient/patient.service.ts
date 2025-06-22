@@ -75,14 +75,6 @@ export class PatientService {
         dir: !all_data, 
       };
   
-      // Campos por defecto para búsqueda si no se especifican
-      const defaultSearchFields = [
-        'ci',
-        'email',
-        'name',
-        'lastName',
-      ];
-  
       // Opciones para intelligentSearch
       const searchOptions = {
         skip: offset,
@@ -102,7 +94,7 @@ export class PatientService {
       const { results: data, total } = await intelligentSearch(
             labPrisma.patient,
             searchTerm,
-            searchFields || defaultSearchFields,
+            searchFields,
             searchOptions
       )
 

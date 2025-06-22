@@ -77,7 +77,7 @@ export class CatalogLabController {
     name: 'search-term',
     required: false,
     description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
-    example: 'Miguel',
+    example: '',
     type: String,
   })
   @ApiQuery({

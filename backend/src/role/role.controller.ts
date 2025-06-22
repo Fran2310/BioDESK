@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   Delete,
   Param,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
@@ -57,6 +58,21 @@ export class RoleController {
   })
   @ApiOperation({ summary: 'Listar todos los roles del laboratorio' })
   @ApiQuery({
+    name: 'search-term',
+    required: false,
+    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    example: '',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search-fields',
+    required: false,
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    type: [String], // Esto indica que es un array de strings
+    isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+    example: ['role', 'description'], // Ejemplo con valores
+  })
+  @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
@@ -73,12 +89,18 @@ export class RoleController {
       'Cantidad de elementos a omitir desde el inicio (para paginación). Por defecto es 0.',
   })
   async getAllRoles(
+    @Request() req,
+    @Query('search-term') searchTerm,
+    @Query('search-fields', new ParseArrayPipe({ 
+      optional: true,
+      items: String,
+      separator: ','  
+    })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 10,
     @Query('offset', ParseIntPipe) offset = 0,
-    @Request() req,
   ) {
     const prisma = await this.getPrismaClientFromRequest(req);
-    return this.roleService.getAllRoles(prisma, { limit, offset });
+    return this.roleService.getAllRoles(prisma, { limit, offset, searchTerm, searchFields });
   }
 
   @Get(':roleId')
@@ -115,6 +137,37 @@ export class RoleController {
   @ApiOperation({
     summary: 'Obtener todos los usuarios asociados a un rol por su ID',
   })
+  @ApiQuery({
+    name: 'search-term',
+    required: false,
+    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    example: '',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search-fields',
+    required: false,
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    type: [String], // Esto indica que es un array de strings
+    isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+    example: ['ci', 'name', 'email'], // Ejemplo con valores
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description:
+      'Cantidad máxima de roles a retornar. Por defecto es 10. Úsalo junto con offset para paginación.',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    example: 0,
+    description:
+      'Cantidad de elementos a omitir desde el inicio (para paginación). Por defecto es 0.',
+  })
   @ApiParam({
     name: 'roleId',
     required: true,
@@ -122,11 +175,26 @@ export class RoleController {
     description: 'ID del rol para obtener sus usuarios asignados',
   })
   async getUsersByRoleId(
-    @Param('roleId', ParseIntPipe) roleId: number,
     @Request() req,
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Query('search-term') searchTerm,
+    @Query('search-fields', new ParseArrayPipe({ 
+      optional: true,
+      items: String,
+      separator: ','  
+    })) searchFields: string[] = [],
+    @Query('limit', ParseIntPipe) limit = 10,
+    @Query('offset', ParseIntPipe) offset = 0,
   ) {
     const prisma = await this.getPrismaClientFromRequest(req);
-    return this.roleService.getUsersByRoleId(prisma, roleId);
+    return this.roleService.getUsersByRoleId(
+      prisma, 
+      roleId,
+      offset,
+      limit,
+      searchTerm,
+      searchFields,
+    );
   }
 
   @Post('')
