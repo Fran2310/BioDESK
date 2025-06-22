@@ -2,6 +2,7 @@ import { ref, computed } from 'vue';
 import { fetchMedicTests, addMedicTest, updateMedicTest, deleteMedicTest } from '../../../services/api';
 import  { MedicTestCatalog, NewExam } from '../types';
 import { useAuthStore } from '../../../stores/authStore';
+import { getAuthData } from '../../../utils/auth';
 
 export function useLaboratoryCatalog() {
     const loading = ref(false)
@@ -13,10 +14,10 @@ export function useLaboratoryCatalog() {
     const isEditing = ref(false)
     const editingExamId = ref<number | null>(null)
     const propertiesError = ref('')
+    const { labId, token } = getAuthData();
 
     const authStore = useAuthStore();
-    const labId = authStore.currentLab?.id ?? null; // Obtiene el ID del laboratorio actual desde el store
-    const token = authStore.token;
+    
     
 
     //para el manejo de referencias
