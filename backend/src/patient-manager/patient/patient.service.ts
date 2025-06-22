@@ -203,6 +203,13 @@ export class PatientService {
         throw new NotFoundException(`Paciente con ID ${patientId} no encontrado`);
       }
 
+        // Eliminar el historial médico primero (activará la cascada)
+      if (patientWithRelations.medicHistory) {
+        await labPrisma.medicHistory.delete({
+          where: { id: patientWithRelations.medicHistory.id }
+        });
+      }
+
       const deletedPatient = await labPrisma.patient.delete({
         where: { id: Number(patientId) },
       });
