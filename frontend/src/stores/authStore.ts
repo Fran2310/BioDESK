@@ -2,24 +2,13 @@
 
 import { defineStore } from 'pinia'
 
-export interface Lab {
-  id: number
-  name: string
-  status: 'active' | 'inactive'
-  rif: string
-}
-
 interface AuthState {
   token: string | null
-  labs: Lab[]
-  currentLab: Lab | null
 }
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     token: localStorage.getItem('token') || null,
-    labs: [],
-    currentLab: null,
   }),
 
   actions: {
@@ -28,23 +17,8 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('token', token)
     },
 
-    setLabs(labs: Lab[]) {
-      this.labs = labs
-    },
-
-    setCurrentLab(lab: Lab) {
-      this.currentLab = lab
-      localStorage.setItem('lab', JSON.stringify(this.currentLab))
-    },
-
-    addLab(lab: Lab) {
-      this.labs.push(lab)
-    },
-
     clearAuth() {
       this.token = null
-      this.labs = []
-      this.currentLab = null
       localStorage.removeItem('token')
     },
   },

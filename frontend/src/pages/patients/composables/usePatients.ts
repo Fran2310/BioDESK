@@ -21,16 +21,21 @@ export const usePatients = (options?: {
   const { filters = makeFiltersRef(), sorting = makeSortingRef(), pagination = makePaginationRef() } = options || {}
 
  const fetch = async () => {
+  console.log('usePatients: fetch called');
+  const opts = {
+    filters: unref(filters),
+    sorting: unref(sorting),
+    pagination: unref(pagination),
+  };
+  console.log('usePatients: about to call patientStore.getAll', opts);
   isLoading.value = true
   try {
-    const response = await patientStore.getAll({
-      filters: unref(filters),
-      sorting: unref(sorting),
-      pagination: unref(pagination),
-    })
-
+    const response = await patientStore.getAll(opts)
     patients.value = response.data
     pagination.value = response.pagination
+  } catch (e) {
+    console.error('usePatients: fetch error', e);
+    error.value = e;
   } finally {
     isLoading.value = false
   }

@@ -1,61 +1,129 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { usePatients } from './composables/usePatients'
-
+import { ref, computed, onMounted, watch } from 'vue'
+import { usePatientsStore } from '../../stores/patientsStore'
 import { useToast, useModal } from 'vuestic-ui'
 import { useI18n } from 'vue-i18n'
 import PatientsForm from './widgets/PatientsForm.vue'
-
 import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 import { Patient } from './patients.types'
+import { useLabStore } from '../../stores/labStore'
+
 
 
 
 const { t } = useI18n()
-const { patients, isLoading, filters, sorting, pagination, error, ...usersApi } = usePatients()
+const patientsStore = usePatientsStore()
+console.log('PatientsPage: patientsStore instance', patientsStore)
+const labStore = useLabStore()
+const isLoading = ref(false)
+const error = ref<any>(null)
+const filters = ref({ isActive: true, search: '' })
+const sorting = ref({ sortBy: 'fullname', sortingOrder: null })
+const pagination = ref({ page: 1, perPage: 20, total: 0 })
+
+const fetchPatients = async () => {
+  console.log('PatientsPage: fetchPatients called', { filters: filters.value, sorting: sorting.value, pagination: pagination.value })
+  isLoading.value = true
+  error.value = null
+  try {
+    if (!labStore.currentLab?.id) {
+      error.value = new Error('No lab selected. Please select a lab to view patients.')
+      isLoading.value = false
+      return
+    }
+    const response = await patientsStore.getAll({
+      filters: filters.value,
+      sorting: sorting.value,
+      pagination: pagination.value,
+    })
+    pagination.value = response.pagination
+    console.log('PatientsPage: fetchPatients success', response)
+  } catch (e) {
+    error.value = e
+    console.error('PatientsPage: fetchPatients error', e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchPatients()
+})
+
+watch(
+  filters,
+  () => {
+    pagination.value.page = 1
+    fetchPatients()
+  },
+  { deep: true },
+)
+
+const patients = computed(() => patientsStore.items)
 
 
 const doShowEditPatientModal = ref(false)
 const patientToEdit = ref<Patient | null>(null)
 
 const showEditPatientModal = (patient: Patient) => {
+  console.log('PatientsPage: showEditPatientModal', patient)
   patientToEdit.value = patient
   doShowEditPatientModal.value = true
 }
 
 const showAddPatientModal = () => {
+  console.log('PatientsPage: showAddPatientModal')
   patientToEdit.value = null
   doShowEditPatientModal.value = true
 }
 
 const { init: notify } = useToast()
 
-if (error.value) {
-  notify({
-    message: error.value.message,
-    color: 'danger',
-  })
-}
+watch(error, (val) => {
+  if (val) {
+    notify({
+      message: val.message,
+      color: 'danger',
+    })
+  }
+})
 
 const onPatientSaved = async (patient: Patient) => {
-
-
-  if (patientToEdit.value) {
-    await usersApi.update(patient)
-    notify({ message: `${patient.name} has been updated`, color: 'success' })
-  } else {
-    await usersApi.add(patient)
-    notify({ message: `${patient.name} has been created`, color: 'success' })
+  console.log('PatientsPage: onPatientSaved', patient)
+  isLoading.value = true
+  try {
+    if (patientToEdit.value) {
+      await patientsStore.update(patient)
+      notify({ message: `${patient.name} has been updated`, color: 'success' })
+    } else {
+      await patientsStore.add(patient)
+      notify({ message: `${patient.name} has been created`, color: 'success' })
+    }
+    await fetchPatients()
+  } catch (e) {
+    error.value = e
+    console.error('PatientsPage: onPatientSaved error', e)
+  } finally {
+    isLoading.value = false
   }
 }
 
 const onPatientDelete = async (patient: Patient) => {
-  await usersApi.remove(patient)
-  notify({ message: `${patient.name} has been deleted`, color: 'success' })
+  console.log('PatientsPage: onPatientDelete', patient)
+  isLoading.value = true
+  try {
+    await patientsStore.remove(patient)
+    notify({ message: `${patient.name} has been deleted`, color: 'success' })
+    await fetchPatients()
+  } catch (e) {
+    error.value = e
+    console.error('PatientsPage: onPatientDelete error', e)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const { confirm } = useModal()
-
 const editFormRef = ref()
 
 const beforeEditFormModalClose = async (hide: () => unknown) => {

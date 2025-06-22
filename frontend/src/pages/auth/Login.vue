@@ -46,7 +46,7 @@
       </div>
 
       <div class="flex justify-center mt-4">
-        <VaButton class="w-full" @click="submit" :loading="isLoading"> Ingresar</VaButton>
+        <VaButton class="w-full" type="button" @click="submit" :loading="isLoading"> Ingresar</VaButton>
       </div>
     </VaForm>
   </div>
@@ -58,8 +58,11 @@ import { useRouter } from 'vue-router'
 import { useForm, useToast } from 'vuestic-ui'
 import { validators } from '../../services/utils'
 import { useAuthStore } from '../../stores/authStore'
+import { useLabStore } from '../../stores/labStore'
+
 
 const authStore = useAuthStore()
+const labStore = useLabStore()
 
 const { validate } = useForm('form')
 const { push } = useRouter()
@@ -96,7 +99,7 @@ const submit = async () => {
 
     // GUARDAR TOKEN Y LABORATORIOS EN STORE
     authStore.setToken(data.access_token)
-    authStore.setLabs(data.labs ? [...data.labs] : [])
+    await labStore.fetchLabs(data.access_token)
 
     init({
       message: `Login successful! Token: ${data.access_token.substring(0, 20)}...`,
