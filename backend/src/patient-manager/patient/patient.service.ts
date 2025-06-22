@@ -6,6 +6,7 @@ import { AuditService } from 'src/audit/audit.service';
 import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+import { Gender } from '@prisma/client-lab';
 
 @Injectable()
 export class PatientService {
@@ -91,6 +92,9 @@ export class PatientService {
           medicHistory: {
             select: { id: true }
           }
+        },
+        enumFields: {
+          gender: Gender,
         }
       };
   
