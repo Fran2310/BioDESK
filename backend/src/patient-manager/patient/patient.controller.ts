@@ -49,12 +49,14 @@ export class PatientController {
   @ApiQuery({
     name: 'limit',
     required: false,
-    type: String,
+    example: 20,
+    type: Number,
   })
   @ApiQuery({
     name: 'offset',
     required: false,
-    type: String,
+    example: 0,
+    type: Number,
   })
   @ApiQuery({
     name: 'all-data',
@@ -68,7 +70,11 @@ export class PatientController {
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
-    return this.patientService.getAllPatients(+labId, limit, offset, all_data);
+    return this.patientService.getAllPatients(
+      +labId, 
+      limit, 
+      offset, 
+      all_data);
   }
 
   @Get(':patientId')

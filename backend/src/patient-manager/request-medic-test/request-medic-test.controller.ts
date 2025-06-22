@@ -60,12 +60,12 @@ import {
     @ApiQuery({
       name: 'limit',
       required: false,
-      type: String,
+      type: Number,
     })
     @ApiQuery({
       name: 'offset',
       required: false,
-      type: String,
+      type: Number,
     })
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
     @ApiParam({ name: 'medicHistoryId', required: true, type: Number, description: 'ID del paciente para buscar su historial activo' })
@@ -92,12 +92,12 @@ import {
     @ApiQuery({
       name: 'limit',
       required: false,
-      type: String,
+      type: Number,
     })
     @ApiQuery({
       name: 'offset',
       required: false,
-      type: String,
+      type: Number,
     })
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
     getAllFromAll(

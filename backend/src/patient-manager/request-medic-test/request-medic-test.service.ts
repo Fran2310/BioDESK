@@ -105,19 +105,29 @@ export class RequestMedicTestService {
         observation: !all_data,
       }
 
-      return await labPrisma.medicHistory.findFirst({
-        where,
-        include: {
-          requestMedicTests: {
-            omit: selectFieldsToOmitInMedicTests,
-            skip: offset,          // Paginación: salta los primeros 'offset' registros
-            take: limit,           // Paginación: limita a 'limit' registros
-            orderBy: {            // Ordenamiento recomendado para paginación consistente
-              requestedAt: 'desc' // o 'id' si prefieres
-            }
-          },
-        }
-      }) 
+      const [total, data] = await Promise.all([
+        await labPrisma.medicHistory.count(),
+        await labPrisma.medicHistory.findFirst({
+          where,
+          include: {
+            requestMedicTests: {
+              omit: selectFieldsToOmitInMedicTests,
+              skip: offset,          // Paginación: salta los primeros 'offset' registros
+              take: limit,           // Paginación: limita a 'limit' registros
+              orderBy: {            // Ordenamiento recomendado para paginación consistente
+                requestedAt: 'desc' // o 'id' si prefieres
+              }
+            },
+          }
+        })  
+      ])
+
+      return {
+        total,
+        offset,
+        limit,
+        data,
+      };  
 
     } catch (error) {
       this.logger.error(`Error al obtener los examenes del paciente: ${error.message}`);
@@ -138,18 +148,28 @@ export class RequestMedicTestService {
         observation: !all_data,
       }
 
-      return await labPrisma.medicHistory.findMany({
-        include: {
-          requestMedicTests: {
-            omit: selectFieldsToOmitInMedicTests,
-            skip: offset,          // Paginación: salta los primeros 'offset' registros
-            take: limit,           // Paginación: limita a 'limit' registros
-            orderBy: {            // Ordenamiento recomendado para paginación consistente
-              requestedAt: 'desc' // o 'id' si prefieres
-            }
-          },
-        }
-      }) 
+      const [total, data] = await Promise.all([
+        await labPrisma.medicHistory.count(),
+        await labPrisma.medicHistory.findMany({
+          include: {
+            requestMedicTests: {
+              omit: selectFieldsToOmitInMedicTests,
+              skip: offset,          // Paginación: salta los primeros 'offset' registros
+              take: limit,           // Paginación: limita a 'limit' registros
+              orderBy: {            // Ordenamiento recomendado para paginación consistente
+                requestedAt: 'desc' // o 'id' si prefieres
+              }
+            },
+          }
+        }) 
+      ])
+
+      return {
+        total,
+        offset,
+        limit,
+        data,
+      };  
 
     } catch (error) {
       this.logger.error(`Error al obtener los examenes del paciente: ${error.message}`);

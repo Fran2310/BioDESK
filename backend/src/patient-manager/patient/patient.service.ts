@@ -65,18 +65,28 @@ export class PatientService {
         dir: !all_data, 
       }
 
-      return await labPrisma.patient.findMany({
-        skip: offset,
-        take: limit,
-        omit: selectFieldsToOmit,
-        include: {
-          medicHistory: { // Devolvemos también el id del historial médico de ese usuario
-            select: {
-              id: true
+      const [total, data] = await Promise.all([
+        await labPrisma.patient.count(),
+        await labPrisma.patient.findMany({
+          skip: offset,
+          take: limit,
+          omit: selectFieldsToOmit,
+          include: {
+            medicHistory: { // Devolvemos también el id del historial médico de ese usuario
+              select: {
+                id: true
+              }
             }
           }
-        }
-      })
+        })
+      ])
+
+      return {
+        total,
+        offset,
+        limit,
+        data,
+      }; 
 
     } catch (error) {
       this.logger.error(`Error al obtener pacientes: ${error.message}`);
