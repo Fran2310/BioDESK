@@ -5,6 +5,8 @@ import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 
+import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+
 @Injectable()
 export class PatientService {
   private readonly logger = new Logger(PatientService.name);
@@ -54,40 +56,64 @@ export class PatientService {
     }
   }
 
-  async getAllPatients(labId: number, limit: number, offset: number, all_data: boolean) {
+  async getAllPatients(
+    labId: number,
+    limit: number,
+    offset: number,
+    all_data: boolean,
+    searchTerm?: string,
+    searchFields?: string[]
+  ) {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
-
+  
       const selectFieldsToOmit = {
         secondName: !all_data,
         secondLastName: !all_data,
         phoneNums: !all_data,
         dir: !all_data, 
-      }
-
-      const [total, data] = await Promise.all([
-        await labPrisma.patient.count(),
-        await labPrisma.patient.findMany({
-          skip: offset,
-          take: limit,
-          omit: selectFieldsToOmit,
-          include: {
-            medicHistory: { // Devolvemos también el id del historial médico de ese usuario
-              select: {
-                id: true
-              }
-            }
+      };
+  
+      // Campos por defecto para búsqueda si no se especifican
+      const defaultSearchFields = [
+        'ci',
+        'email',
+        'name',
+        'lastName',
+      ];
+  
+      // Opciones para intelligentSearch
+      const searchOptions = {
+        skip: offset,
+        take: limit,
+        omit: selectFieldsToOmit,
+        include: {
+          medicHistory: {
+            select: { id: true }
           }
-        })
-      ])
-
+        }
+      };
+  
+      // Usar intelligentSearch o la búsqueda normal según si hay searchTerm
+      const { results: data, total } = searchTerm 
+        ? await intelligentSearch(
+            labPrisma.patient,
+            searchTerm,
+            searchFields || defaultSearchFields,
+            searchOptions
+          )
+        : {
+            results: await labPrisma.patient.findMany(searchOptions),
+            total: await labPrisma.patient.count()
+          };
+  
       return {
         total,
         offset,
         limit,
         data,
       }; 
-
+  
     } catch (error) {
       this.logger.error(`Error al obtener pacientes: ${error.message}`);
       throw new NotFoundException(`${error.message}`);

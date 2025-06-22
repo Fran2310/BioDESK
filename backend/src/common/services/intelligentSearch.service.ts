@@ -13,43 +13,41 @@ export async function intelligentSearch<T>(
   model: {
     count: (args?: any) => Promise<number>;
     findMany: (args?: any) => Promise<T[]>;
-    $name: string;
   },
   searchTerm: string,
   searchFields: string[],
+  // Cambiamos 'limit' y 'offset' por 'take' y 'skip' para ser consistentes con Prisma
   options: {
-    limit?: number;
-    offset?: number;
+    take?: number;
+    skip?: number;
     where?: Prisma.Args<T, 'findMany'>['where'];
     select?: Prisma.Args<T, 'findMany'>['select'];
     include?: Prisma.Args<T, 'findMany'>['include'];
     omit?: Record<string, boolean>;
   } = {}
 ): Promise<{ results: T[]; total: number }> {
-  if (!searchTerm || searchTerm.trim() === '') {
-    // Si no hay término de búsqueda, devolver todos los resultados
-    const [total, results] = await Promise.all([
-      model.count({ where: options.where }),
-      model.findMany({
-        where: options.where,
-        skip: options.offset,
-        take: options.limit,
-        select: options.select,
-        include: options.include,
-        omit: options.omit,
-      }),
-    ]);
-    return { results, total };
+  const { take = 20, skip = 0, where, ...restOptions } = options;
+
+  if (!searchTerm || searchTerm.trim() === '' || searchFields.length === 0) {
+    // Si no hay término de búsqueda O NO HAY CAMPOS DONDE BUSCAR, devuelve una lista vacía
+    return { results: [], total: 0 };
   }
 
   // Normalizar el término de búsqueda
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const searchWords = normalizedSearchTerm.split(/\s+/).filter(Boolean);
 
-  // Construir condiciones de búsqueda para cada palabra en cada campo
-  const searchConditions = [] as any[];
-
+  // Construir condiciones de búsqueda
+  const searchConditions: any[] = [];
   for (const field of searchFields) {
+    // Coincidencia exacta (mayor prioridad)
+    searchConditions.push({
+      [field]: {
+        equals: normalizedSearchTerm,
+        mode: 'insensitive',
+      },
+    });
+
     for (const word of searchWords) {
       searchConditions.push({
         [field]: {
@@ -57,50 +55,33 @@ export async function intelligentSearch<T>(
           mode: 'insensitive',
         },
       });
-
-      // Condiciones adicionales para campos de texto
-      searchConditions.push({
-        [field]: {
-          startsWith: word,
-          mode: 'insensitive',
-        },
-      });
     }
-
-    // Condición para coincidencia exacta
-    searchConditions.push({
-      [field]: {
-        equals: normalizedSearchTerm,
-        mode: 'insensitive',
-      },
-    });
   }
 
-  // Consulta para obtener resultados
   const whereClause: Prisma.Args<T, 'findMany'>['where'] = {
     AND: [
-      options.where || {},
+      where || {},
       { OR: searchConditions },
     ],
   };
 
-  const [total, results] = await Promise.all([
-    model.count({ where: whereClause }),
-    model.findMany({
-      where: whereClause,
-      skip: options.offset,
-      take: options.limit,
-      select: options.select,
-      include: options.include,
-      omit: options.omit,
-    }),
-  ]);
+  // 1. Obtener TODOS los resultados que coinciden con el criterio
+  const allMatchingResults = await model.findMany({
+    where: whereClause,
+    ...restOptions, // Aplicar select, include, omit
+  });
 
-  // Ordenar resultados por relevancia
-  const sortedResults = sortByRelevance(results, searchFields, normalizedSearchTerm);
+  // 2. Obtener el conteo total para la paginación
+  const total = allMatchingResults.length;
+
+  // 3. Ordenar TODOS los resultados por relevancia
+  const sortedResults = sortByRelevance(allMatchingResults, searchFields, normalizedSearchTerm);
+
+  // 4. Aplicar la paginación (skip/take) a la lista YA ORDENADA
+  const paginatedResults = sortedResults.slice(skip, skip + take);
 
   return {
-    results: sortedResults,
+    results: paginatedResults,
     total,
   };
 }

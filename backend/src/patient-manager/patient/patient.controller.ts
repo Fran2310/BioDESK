@@ -11,6 +11,7 @@ import {
   Query,
   ParseIntPipe,
   ParseBoolPipe,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { PatientService } from './patient.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
@@ -47,6 +48,21 @@ export class PatientController {
   @CheckAbility({ actions: 'read', subject: 'Patient' })
   @ApiOperation({ summary: 'Obtiene los datos de pacientes de un laboratorio' })
   @ApiQuery({
+    name: 'search-term',
+    required: false,
+    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    example: 'Miguel',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search-fields',
+    required: false,
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve [] la respuesta',
+    type: [String], // Esto indica que es un array de strings
+    isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+    example: ['name', 'gender', 'email'], // Ejemplo con valores
+  })
+  @ApiQuery({
     name: 'limit',
     required: false,
     example: 20,
@@ -64,6 +80,12 @@ export class PatientController {
     type: Boolean,
   })
   getDataPatients(
+    @Query('search-term') searchTerm,
+    @Query('search-fields', new ParseArrayPipe({ 
+      optional: true,
+      items: String,
+      separator: ','
+    })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
     @Query('all-data', ParseBoolPipe) all_data = false,
@@ -74,7 +96,10 @@ export class PatientController {
       +labId, 
       limit, 
       offset, 
-      all_data);
+      all_data,
+      searchTerm,
+      searchFields,
+    );
   }
 
   @Get(':patientId')
