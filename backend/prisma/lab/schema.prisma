@@ -67,8 +67,8 @@ model Patient {
 
 model MedicHistory {
   id          Int        @id @default(autoincrement())
-  allergies   String?   
-  pathologies String?   
+  allergies   String[] @default([])  
+  pathologies String[] @default([]) 
 
   patientId   Int        @unique
   patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -97,7 +97,7 @@ model MedicTestCatalog {
   name        String               @unique
   description String?
   price       Float
-  supplies        String[] @default([""])
+  supplies    String[] @default([""])
 
   properties  MedicTestProperty[]
   requestMedicTests RequestMedicTest[]
