@@ -1,5 +1,7 @@
 // @fileoverview Utility functions for handling authentication data in local storage.
-import { useToast} from '../composables/useToast';
+import {useToast } from 'vuestic-ui'
+const { init } = useToast()
+
 
 export function getAuthData() {
   return {
@@ -9,16 +11,14 @@ export function getAuthData() {
 }
 
 
-const { init: showToast } = useToast();
-
 export function ensureAuthContext(labId: string | null, token: string | null): boolean {
   if (!labId) {
-    showToast({ message: 'Debes seleccionar un laboratorio.', color: 'error' });
+    init({ message: 'Debes seleccionar un laboratorio.', color: 'danger' });
     return false;
   }
 
   if (!token) {
-    showToast({ message: 'Tu sesión ha expirado o es inválida.', color: 'error' });
+    init({ message: 'Tu sesión ha expirado o es inválida.', color: 'danger' });
     return false;
   }
 

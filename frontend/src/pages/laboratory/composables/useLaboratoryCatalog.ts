@@ -1,24 +1,39 @@
-import { ref, computed } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { fetchMedicTests, addMedicTest, updateMedicTest, deleteMedicTest } from '../../../services/api';
 import  { MedicTestCatalog, NewExam } from '../types';
 import { useAuthStore } from '../../../stores/authStore';
 import { getAuthData } from '../../../utils/auth';
+import { ReferenceVariation } from '../types';
+import { ReferenceProperty } from '../types';
+import { RemoveVariationFn } from '../types';
+import { useReferenceModal } from './useReferenceModal';
+import { getEmptyExam } from '../helpers/laboratoryCatalogHelpers';
 
 export function useLaboratoryCatalog() {
-    const loading = ref(false)
-    const newSupplie = ref('') //New Medical Supply
-    const supplies = ref<string[]>([]); // Lista de supplies
-    const search = ref('')
-    const exams = ref<MedicTestCatalog[]>([])
-    const showAddModal = ref(false)
-    const isEditing = ref(false)
-    const editingExamId = ref<number | null>(null)
-    const propertiesError = ref('')
-    const { labId, token } = getAuthData();
+    // Agrupa los refs del formulario y modal de examen
+    const examForm = reactive({
+        newExam: getEmptyExam(),
+        newSupplie: '',
+        supplies: [] as string[],
+        propertiesPairs: [] as { key: string; value: string }[],
+        propertiesError: '',
+        isEditing: false,
+        editingExamId: null as number | null,
+        showAddModal: false
+    });
 
+    // Agrupa los refs de la tabla y búsqueda
+    const tableState = reactive({
+        search: '',
+        exams: [] as MedicTestCatalog[],
+        loading: false
+    });
+
+    // Modal de referencias
+    const referenceModal = useReferenceModal();
+
+    const { labId, token } = getAuthData();
     const authStore = useAuthStore();
-    
-    
 
     //para el manejo de referencias
     const referenceValues = ref([
@@ -28,228 +43,189 @@ export function useLaboratoryCatalog() {
 
 
     const addSupplies = () => {
-    if (newSupplie.value && supplies.value.length < 10) {
-        supplies.value.push(newSupplie.value.trim());
-        newSupplie.value = "";
-    }
-    }
+        if (examForm.newSupplie && examForm.supplies.length < 10) {
+            examForm.supplies.push(examForm.newSupplie.trim());
+            examForm.newSupplie = '';
+        }
+    };
 
-    const removeInsumo = () => (index: number) => {
-    supplies.value.splice(index, 1);
-    }
+    const removeInsumo = (index: number) => {
+        examForm.supplies.splice(index, 1);
+    };
 
     const columns = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'name', label: 'Nombre', sortable: true },
-    { key: 'description', label: 'Descripción' },
-    { key: 'price', label: 'Precio', sortable: true },
-    { key: 'actions', label: 'Acciones' },
-    ]
+        { key: 'id', label: 'ID', sortable: true },
+        { key: 'name', label: 'Nombre', sortable: true },
+        { key: 'description', label: 'Descripción' },
+        { key: 'price', label: 'Precio', sortable: true },
+        { key: 'actions', label: 'Acciones' },
+    ];
 
     const filteredExams = computed(() => {
-    if (!search.value) return exams.value
-    return exams.value.filter(e =>
-        e.name.toLowerCase().includes(search.value.toLowerCase()) ||
-        (e.description && e.description.toLowerCase().includes(search.value.toLowerCase()))
-    )
-    })
-
-
-    const propertiesPairs = ref<{ key: string; value: string }[]>([])
+        if (!tableState.search) return tableState.exams;
+        return tableState.exams.filter(e =>
+            e.name.toLowerCase().includes(tableState.search.toLowerCase()) ||
+            (e.description && e.description.toLowerCase().includes(tableState.search.toLowerCase()))
+        );
+    });
 
     const addProperty = () => {
-    propertiesPairs.value.push({ key: '', value: '' })
-    }
+        examForm.propertiesPairs.push({ key: '', value: '' });
+    };
 
-    const removeProperty = (idx: number)=> {
-    propertiesPairs.value.splice(idx, 1)
-    }
-
-    function propertiesFromPairs() {
-    const obj: Record<string, any> = {}
-    for (const { key, value } of propertiesPairs.value) {
-        if (key.trim()) obj[key.trim()] = value
-    }
-    return Object.keys(obj).length ? obj : undefined
-    }
-
-    function pairsFromProperties(obj: any) {
-    if (!obj || typeof obj !== 'object') return []
-    return Object.entries(obj).map(([key, value]) => ({
-        key,
-        value: typeof value === 'object' ? JSON.stringify(value) : String(value),
-    }))
-    }
-
-    const getEmptyExam = (): NewExam => ({
-        name: '',
-        description: '',
-        suppliesText: '',
-        price: 0,
-        propertiesText: ''
-    })
-
-    const newExam = ref<NewExam>(getEmptyExam());// Close Modal
+    const removeProperty = (idx: number) => {
+        examForm.propertiesPairs.splice(idx, 1);
+    };
 
     const closeModal = () => {
-    showAddModal.value = false
-    isEditing.value = false
-    editingExamId.value = null
-    propertiesError.value = ''
-    newExam.value = getEmptyExam();
-    propertiesPairs.value = []
-    supplies.value = [] // Limpia la lista de supplies
-    }
+        examForm.showAddModal = false;
+        examForm.isEditing = false;
+        examForm.editingExamId = null;
+        examForm.propertiesError = '';
+        examForm.newExam = getEmptyExam();
+        examForm.propertiesPairs = [];
+        examForm.supplies = [];
+    };
 
     const fetchExams = async () => {
-    if (!authData.labId || !authData.token) {
-        console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
-        return;
-    }
-
-    loading.value = true;
-    try {
-        exams.value = await fetchMedicTests(labId, token);
-    } catch (error) {
-        console.error(error);
-        showError('Ocurrió un error al obtener los exámenes.');
-    } finally {
-        loading.value = false;
-    }
+        if (!labId || !token) {
+            console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
+            return;
+        }
+        tableState.loading = true;
+        try {
+            tableState.exams = await fetchMedicTests(labId, token);
+        } catch (error) {
+            console.error(error);
+            showError('Ocurrió un error al obtener los exámenes.');
+        } finally {
+            tableState.loading = false;
+        }
     };
 
     const addExam = async () => {
-    if (!labId || !token) {
-        console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
-        return;
-    }
-
-    const test = {
-        name: newExam.value.name.trim(),
-        description: newExam.value.description.trim(),
-        price: newExam.value.price,
-        supplies: supplies.value.map((insumo) => insumo.trim()),
-        properties: referenceData.value.map((ref) => ({
-        name: ref.name.trim(),
-        unit: ref.unit.trim(),
-        valuesRef: ref.variations.map((variation) => ({
-            range: variation.range.trim(),
-            gender: variation.gender.trim(),
-            ageGroup: variation.ageGroup.trim(),
-        })),
-        })),
+        if (!labId || !token) {
+            console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
+            return;
+        }
+        const test = {
+            name: examForm.newExam.name.trim(),
+            description: examForm.newExam.description.trim(),
+            price: examForm.newExam.price,
+            supplies: examForm.supplies.map((insumo) => insumo.trim()),
+            properties: referenceModal.referenceData.value.map((ref) => ({
+                name: ref.name.trim(),
+                unit: ref.unit.trim(),
+                valuesRef: ref.variations.map((variation) => ({
+                    range: variation.range.trim(),
+                    gender: variation.gender.trim(),
+                    ageGroup: variation.ageGroup.trim(),
+                })),
+            })),
+        };
+        console.log('Objeto enviado al backend:', test);
+        try {
+            await addMedicTest(labId, test, token);
+            await fetchExams();
+            closeModal();
+        } catch (error) {
+            console.error('Error al agregar el examen:', error);
+            showError('Ocurrió un error al agregar el examen.');
+        }
     };
-
-    console.log('Objeto enviado al backend:', test);
-
-    try {
-        await addMedicTest(labId, test, token); // Pasa el ID del laboratorio y el token
-        await fetchExams(); // Refresca la lista de exámenes
-        closeModal(); // Cierra el modal
-    } catch (error) {
-        console.error('Error al agregar el examen:', error);
-        showError('Ocurrió un error al agregar el examen.');
-    }
-    };
-
 
     function editExam(row: any) {
-    console.log('Editando examen:', row); // Para depuración
-    isEditing.value = true;
-    editingExamId.value = row.rowData.id; // Accede al ID desde rowData
-    newExam.value = {
-        name: row.rowData.name,
-        description: row.rowData.description || '',
-        price: row.rowData.price,
-    };
-    supplies.value = [...row.rowData.supplies]; // Inicializa la lista de supplies correctamente
-    referenceData.value = row.rowData.properties.map(prop => ({
-        name: prop.name,
-        unit: prop.unit,
-        variations: prop.valuesRef.map(valueRef => ({
-        range: valueRef.range,
-        gender: valueRef.gender,
-        ageGroup: valueRef.ageGroup,
-        })),
-    }));
-    showAddModal.value = true;
+        examForm.isEditing = true;
+        examForm.editingExamId = row.rowData.id;
+        examForm.newExam = {
+            ...getEmptyExam(),
+            name: row.rowData.name,
+            description: row.rowData.description || '',
+            price: row.rowData.price
+        };
+        examForm.supplies = [...row.rowData.supplies];
+        referenceModal.referenceData.value = (row.rowData.properties as ReferenceProperty[]).map((prop) => ({
+            name: prop.name,
+            unit: prop.unit,
+            variations: prop.variations.map((valueRef: ReferenceVariation) => ({
+                range: valueRef.range,
+                gender: valueRef.gender,
+                ageGroup: valueRef.ageGroup
+            }))
+        }));
+        examForm.showAddModal = true;
     }
 
-        const updateExam = async () => {
-        if (!labId || editingExamId.value === null) {
+    const updateExam = async () => {
+        if (!labId || examForm.editingExamId === null) {
             console.error('No se ha seleccionado un laboratorio o no hay examen para editar.');
             return;
         }
-
         const test = {
-            name: newExam.value.name,
-            description: newExam.value.description,
-            price: newExam.value.price,
-            supplies: [...supplies.value],
-            properties: referenceData.value.map(ref => ({
-            name: ref.name,
-            unit: ref.unit,
-            valuesRef: ref.variations.map(variation => ({
-                range: variation.range,
-                gender: variation.gender,
-                ageGroup: variation.ageGroup,
-            })),
+            name: examForm.newExam.name,
+            description: examForm.newExam.description,
+            price: examForm.newExam.price,
+            supplies: [...examForm.supplies],
+            properties: referenceModal.referenceData.value.map(ref => ({
+                name: ref.name,
+                unit: ref.unit,
+                valuesRef: ref.variations.map(variation => ({
+                    range: variation.range,
+                    gender: variation.gender,
+                    ageGroup: variation.ageGroup,
+                })),
             })),
         };
-
         try {
-            await updateMedicTest(labId, editingExamId.value, test); // Pasa el ID del laboratorio y el examen
-            await fetchExams(); // Refresca la lista
+            await updateMedicTest(labId, examForm.editingExamId, test, token);
+            await fetchExams();
             closeModal();
         } catch (error) {
             console.error('Error al actualizar el examen:', error);
             showError('Ocurrió un error al actualizar el examen.');
         }
-        };
+    };
 
-
-        const deleteExam = async (row: any) => {
-    if (!labId) {
-        console.error('No se ha seleccionado un laboratorio.');
-        return;
-    }
-
-    try {
-        await deleteMedicTest(labId, row.rowData.id); // Pasa el ID del laboratorio y el examen
-        await fetchExams(); // Refresca la lista
-    } catch (error) {
-        console.error('Error al eliminar el examen:', error);
-        showError('Ocurrió un error al eliminar el examen.');
-    }
+    const deleteExam = async (row: any) => {
+        if (!labId) {
+            console.error('No se ha seleccionado un laboratorio.');
+            return;
+        }
+        try {
+            await deleteMedicTest(labId, row.rowData.id, token);
+            await fetchExams();
+        } catch (error) {
+            console.error('Error al eliminar el examen:', error);
+            showError('Ocurrió un error al eliminar el examen.');
+        }
     };
 
     function viewDetails(row: MedicTestCatalog) {
-    // Aquí puedes abrir un modal o navegar a una página de detalles
-    alert(`Detalles de: ${row.name}`)
+        alert(`Detalles de: ${row.name}`);
     }
 
     //modal para agregar valores de referencia
+    const {
+    showModal,
+    showVariationModal,
+    referenceData,
+    selectedReference,
+    isEditingReference,
+    selectedReferenceIndex,
+    selectedVariation,
+    selectedVariationIndex,
+    isEditingVariation
+    } = useReferenceModal();
 
-    const showModal = ref(false);
-    const showVariationModal = ref(false);
-    const isEditingReference = ref(false);
-    const isEditingVariation = ref(false);
-    const referenceData = ref([]);
-    const selectedReference = ref({ name: "", unit: "", variations: [] });
-    const selectedVariation = ref({ ageGroup: "", gender: "", range: "" });
-    const selectedReferenceIndex = ref(null);
-    const selectedVariationIndex = ref(null);
-
-    const ageGroups = ["CHILD", "ADULT", "ANY"];
-    const genderOptions = ["MALE", "FEMALE", "ANY"];
 
     const showError = (message: string) => {
     alert(message); 
     };
 
-    function removeVariation(referenceIndex, variationIndex) {
-    referenceData.value[referenceIndex].variations.splice(variationIndex, 1);
-    }
+
+    const removeVariation: RemoveVariationFn = (referenceIndex, variationIndex) => {
+        referenceData.value[referenceIndex].variations.splice(variationIndex, 1);
+    };
 
     function openModalForNewReference() {
     selectedReference.value = { name: "", unit: "", variations: [] };
@@ -257,47 +233,36 @@ export function useLaboratoryCatalog() {
     showModal.value = true;
     }
 
-    function editReference(index) {
-    selectedReferenceIndex.value = index;
-    selectedReference.value = { ...referenceData.value[index] };
-    isEditingReference.value = true;
-    showModal.value = true;
+
+    function openModalForNewVariation(referenceIndex: number) {
+        selectedReferenceIndex.value = referenceIndex;
+        selectedVariation.value = { ageGroup: "", gender: "", range: "" };
+        isEditingVariation.value = false;
+        showVariationModal.value = true;
     }
 
-    function saveReference() {
-    if (isEditingReference.value) {
-        referenceData.value[selectedReferenceIndex.value] = { ...selectedReference.value };
-    } else {
-        referenceData.value.push({ ...selectedReference.value });
-    }
-    showModal.value = false;
-    }
-
-    function removeReference(index) {
-    referenceData.value.splice(index, 1);
-    }
-
-    function openModalForNewVariation(referenceIndex) {
-    selectedReferenceIndex.value = referenceIndex;
-    selectedVariation.value = { ageGroup: "", gender: "", range: "" };
-    isEditingVariation.value = false;
-    showVariationModal.value = true;
-    }
-
-    function editVariation(referenceIndex, variationIndex) {
-    selectedReferenceIndex.value = referenceIndex;
-    selectedVariationIndex.value = variationIndex;
-    selectedVariation.value = { ...referenceData.value[referenceIndex].variations[variationIndex] };
-    isEditingVariation.value = true;
-    showVariationModal.value = true;
+    function editVariation(referenceIndex: number, variationIndex: number) {
+        selectedReferenceIndex.value = referenceIndex;
+        selectedVariationIndex.value = variationIndex;
+        selectedVariation.value = { ...referenceData.value[referenceIndex].variations[variationIndex] };
+        isEditingVariation.value = true;
+        showVariationModal.value = true;
     }
 
     function saveVariation() {
+    const referenceIdx = selectedReferenceIndex.value;
+    const variationIdx = selectedVariationIndex.value;
+
+    if (referenceIdx === null) return; // No se puede guardar si no hay referencia seleccionada
+
     if (isEditingVariation.value) {
-        referenceData.value[selectedReferenceIndex.value].variations[selectedVariationIndex.value] = { ...selectedVariation.value };
+        if (variationIdx !== null) {
+        referenceData.value[referenceIdx].variations[variationIdx] = { ...selectedVariation.value };
+        }
     } else {
-        referenceData.value[selectedReferenceIndex.value].variations.push({ ...selectedVariation.value });
+        referenceData.value[referenceIdx].variations.push({ ...selectedVariation.value });
     }
+
     showVariationModal.value = false;
     }
 
@@ -309,4 +274,32 @@ export function useLaboratoryCatalog() {
     console.log('ID del laboratorio actual:', labId);
     }
 
+    return {
+        examForm,
+        tableState,
+        referenceModal,
+        columns,
+        filteredExams,
+        addSupplies,
+        removeInsumo,
+        addProperty,
+        removeProperty,
+        removeVariation,
+        saveVariation,
+        fetchExams,
+        addExam,
+        editExam,
+        updateExam,
+        deleteExam,
+        closeModal,
+        viewDetails,
+        showError,
+        openModalForNewReference,
+        openModalForNewVariation,
+        editVariation,
+        printLabId,
+        // ...otros helpers y refs
+    };
 }
+
+// Helper para obtener un objeto NewExam vacío

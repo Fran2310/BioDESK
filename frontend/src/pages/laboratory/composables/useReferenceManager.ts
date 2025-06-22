@@ -1,4 +1,4 @@
-    //modal for managing references and variations
+//modal for managing references and variations
 import { useReferenceModal } from './useReferenceModal';
 
 const {
@@ -25,13 +25,13 @@ export function saveReference() {
     showModal.value = false;
 }
 
-function editReference(index:number) {
+export function editReference(index:number) {
     selectedReferenceIndex.value = index;
     selectedReference.value = { ...referenceData.value[index] };
     isEditingReference.value = true;
     showModal.value = true;
 }
 
-function removeReference(index:number) {
+export function removeReference(index:number) {
     referenceData.value.splice(index, 1);
 }
