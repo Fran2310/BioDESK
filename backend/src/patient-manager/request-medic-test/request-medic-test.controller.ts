@@ -85,7 +85,6 @@ import {
       example: 0,
       type: Number,
     })
-    
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
     @ApiParam({ name: 'medicHistoryId', required: true, type: Number, description: 'ID del paciente para buscar su historial activo' })
     getAllFromOne(
@@ -117,6 +116,21 @@ import {
     @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de todos los pacientes' })
     @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
     @ApiQuery({
+      name: 'search-term',
+      required: false,
+      description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+      example: 'Miguel',
+      type: String,
+    })
+    @ApiQuery({
+      name: 'search-fields',
+      required: false,
+      description: 'Campos donde buscar (array de strings) si existe un search-term. Si no está vacío devuelve la lista paginada sin búsqueda',
+      type: [String], // Esto indica que es un array de strings
+      isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+      example: ['state', 'priority', 'observation'], // Ejemplo con valores
+    })
+    @ApiQuery({
       name: 'limit',
       required: false,
       example: 20,
@@ -131,6 +145,12 @@ import {
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
     getAllFromAll(
       @Request() req,
+      @Query('search-term') searchTerm,
+      @Query('search-fields', new ParseArrayPipe({ 
+        optional: true,
+        items: String,
+        separator: ','
+      })) searchFields: string[] = [],
       @Query('limit', ParseIntPipe) limit = 20,
       @Query('offset', ParseIntPipe) offset = 0,
       @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
@@ -141,6 +161,8 @@ import {
         limit,
         offset,
         all_data,
+        searchTerm,
+        searchFields,
       );
     }
   

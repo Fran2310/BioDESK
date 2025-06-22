@@ -150,40 +150,72 @@ export class RequestMedicTestService {
     labId: number,
     limit: number,
     offset: number,
-    all_data: boolean) {
+    all_data: boolean,
+    searchTerm?: string,
+    searchFields?: string[],
+  ) {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
-      const selectFieldsToOmitInMedicTests = {
+  
+      // El modelo principal para la búsqueda es 'requestMedicTest', no 'medicHistory'
+      const requestMedicTestModel = labPrisma.requestMedicTest;
+  
+      // Opciones para omitir campos según el parámetro 'all_data'
+      const omitFields = {
         resultProperties: !all_data,
         observation: !all_data,
-      }
-
-      const [total, data] = await Promise.all([
-        await labPrisma.medicHistory.count(),
-        await labPrisma.medicHistory.findMany({
-          include: {
-            requestMedicTests: {
-              omit: selectFieldsToOmitInMedicTests,
-              skip: offset,          // Paginación: salta los primeros 'offset' registros
-              take: limit,           // Paginación: limita a 'limit' registros
-              orderBy: {            // Ordenamiento recomendado para paginación consistente
-                requestedAt: 'desc' // o 'id' si prefieres
-              }
-            },
-          }
-        }) 
-      ])
-
+      };
+  
+      // Campos de búsqueda por defecto para los exámenes médicos
+      // AJUSTA ESTOS CAMPOS según tu esquema en el modelo RequestMedicTest
+      // Puedes incluir campos como 'state', 'priority', o incluso campos relacionados si intelligentSearch los soporta.
+      const defaultSearchFields = [
+        'state',
+        'priority',
+        // Agrega más campos relevantes para la búsqueda en RequestMedicTest
+        // 'id', 'requestedAt', etc. (asegúrate de que sean de tipo String o que intelligentSearch los maneje)
+      ];
+  
+      // Construimos el objeto de opciones para la búsqueda inteligente
+      const searchOptions = {
+        skip: offset,
+        take: limit,
+        omit: omitFields,
+        orderBy: {
+          requestedAt: 'desc', // O 'id' si prefieres, para una paginación consistente
+        },
+        // Si tienes enums en tu modelo RequestMedicTest y quieres que intelligentSearch los maneje:
+        enumFields: {
+          state: State,
+          priority: Priority,
+        }
+      };
+  
+      // Lógica principal: usar intelligentSearch
+      // Esta función ahora buscará directamente en el modelo requestMedicTest
+      // sin el filtro de medicHistoryId específico.
+      const { results: data, total } = await intelligentSearch(
+        requestMedicTestModel, // 1. El modelo a buscar (requestMedicTest directamente)
+        searchTerm,           // 2. El término de búsqueda
+        searchFields || defaultSearchFields, // 3. Los campos donde buscar
+        searchOptions         // 4. Las opciones (skip, take, omit, orderBy, enumFields)
+      );
+  
       return {
         total,
         offset,
         limit,
         data,
-      };  
-
+      };
+  
     } catch (error) {
-      this.logger.error(`Error al obtener los examenes del paciente: ${error.message}`);
-      throw new NotFoundException(`${error.message}`);
+      this.logger.error(`Error al obtener todos los exámenes médicos: ${error.message}`);
+      // Lanza la excepción original si ya es una de las nuestras
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        throw error;
+      }
+      // Envuelve otros errores en un NotFoundException genérico
+      throw new NotFoundException(`Error al obtener todos los exámenes médicos: ${error.message}`);
     }
   }
 
