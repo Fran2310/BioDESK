@@ -13,6 +13,7 @@ import { UpdateMedicTestDto } from '../dto/update-medic-test.dto';
 import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
 import { UpdateValueReferenceDto } from '../dto/update-value-ref.dto';
 import { ValueReferenceDto } from '../dto/value-ref.dto';
+import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
 
 @Injectable()
 export class CatalogLabService {
@@ -101,35 +102,64 @@ export class CatalogLabService {
    */
   async getAllMedicTestCatalog(
     labId: number,
-    options: { offset?: number; limit?: number; includeData?: boolean },
+    options: { offset?: number; limit?: number; includeData?: boolean; searchTerm?: string; searchFields?: string[] },
   ) {
-    const { offset = 0, limit = 20, includeData = false } = options;
-
-    const prisma = await this.labDbManageService.genInstanceLabDB(labId);
-
-    const [total, data] = await Promise.all([
-      prisma.medicTestCatalog.count(),
-      prisma.medicTestCatalog.findMany({
+    try {
+      const { offset = 0, limit = 20, includeData = false, searchTerm, searchFields } = options;
+  
+      const prisma = await this.labDbManageService.genInstanceLabDB(labId);
+  
+      // El modelo principal para la búsqueda es 'medicTestCatalog'
+      const medicTestCatalogModel = prisma.medicTestCatalog;
+  
+      const defaultSearchFields = [
+        'name', // Ejemplo: buscar por nombre del examen
+        'price', // Ejemplo: buscar por código del examen
+      ];
+  
+      // Opciones para incluir datos relacionados si includeData es true
+      const includeOptions = includeData
+        ? {
+            properties: {
+              include: {
+                valueReferences: true,
+              },
+            },
+          }
+        : undefined;
+  
+      // Construimos el objeto de opciones para la búsqueda inteligente
+      const searchOptions = {
         skip: offset,
         take: limit,
-        include: includeData
-          ? {
-              properties: {
-                include: {
-                  valueReferences: true,
-                },
-              },
-            }
-          : undefined,
-      }),
-    ]);
-
-    return {
-      total,
-      offset,
-      limit,
-      data,
-    };
+        include: includeOptions, // Pasamos las opciones de inclusión
+        orderBy: {
+          name: 'asc', // O 'id' o cualquier otro campo relevante para ordenar el catálogo
+        },
+      };
+  
+      // Lógica principal: usar intelligentSearch
+      const { results: data, total } = await intelligentSearch(
+        medicTestCatalogModel, // 1. El modelo a buscar (MedicTestCatalog)
+        searchTerm,           // 2. El término de búsqueda
+        searchFields || defaultSearchFields, // 3. Los campos donde buscar
+        searchOptions         // 4. Las opciones (skip, take, include, orderBy)
+      );
+  
+      return {
+        total,
+        offset,
+        limit,
+        data,
+      };
+  
+    } catch (error) {
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        throw error;
+      }
+      // Envuelve otros errores en un NotFoundException genérico
+      throw new NotFoundException(`Error al obtener el catálogo de exámenes médicos: ${error.message}`);
+    }
   }
 
   /**

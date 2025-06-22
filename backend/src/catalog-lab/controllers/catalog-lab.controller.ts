@@ -12,6 +12,7 @@ import {
   Patch,
   Delete,
   Param,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -72,11 +73,32 @@ export class CatalogLabController {
     description:
       'Permite obtener exámenes con paginación y opcionalmente incluir sus propiedades',
   })
+  @ApiQuery({
+    name: 'search-term',
+    required: false,
+    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    example: 'Miguel',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search-fields',
+    required: false,
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si no está vacío devuelve la lista paginada sin búsqueda',
+    type: [String], // Esto indica que es un array de strings
+    isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+    example: ['name', 'price', 'description'], // Ejemplo con valores
+  })
   @ApiQuery({ name: 'offset', required: false, example: 0, type: Number })
   @ApiQuery({ name: 'limit', required: false, example: 20, type: Number })
   @ApiQuery({ name: 'includeData', required: false, type: Boolean })
   async getCatalogTests(
     @Request() req,
+    @Query('search-term') searchTerm,
+    @Query('search-fields', new ParseArrayPipe({ 
+      optional: true,
+      items: String,
+      separator: ','
+    })) searchFields: string[] = [],
     @Query('offset', ParseIntPipe) offset = 0,
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('includeData') includeData: boolean = false,
@@ -86,6 +108,8 @@ export class CatalogLabController {
       offset,
       limit,
       includeData,
+      searchTerm,
+      searchFields,
     });
   }
 
