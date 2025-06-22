@@ -75,24 +75,14 @@ export class RequestMedicTestService {
     limit: number,
     offset: number,
     all_data: boolean, 
-    medicHistoryId?: number, 
-    patientId?: number) {
+    medicHistoryId: number) {
     try {
-
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       
-      // Si no tenemos medicHistoryId pero tenemos patientId, intentamos obtenerlo
-    if (!medicHistoryId && patientId) {
-        const medicHistory = await this.medicHistory.getMedicHistory(labId, false, patientId);
-        if (medicHistory) {
-          medicHistoryId = medicHistory.id;
-        }
-      }
-  
       // Validamos que al menos tengamos uno de los dos identificadores
-      if (!medicHistoryId && !patientId) {
+      if (!medicHistoryId) {
         throw new ConflictException(
-          'Debes proporcionar al menos uno: medicHistoryId o patientId.',
+          'Debes proporcionar al menos uno: medicHistoryId.',
         );
       }
 
@@ -141,7 +131,6 @@ export class RequestMedicTestService {
     offset: number,
     all_data: boolean) {
     try {
-
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const selectFieldsToOmitInMedicTests = {
         resultProperties: !all_data,

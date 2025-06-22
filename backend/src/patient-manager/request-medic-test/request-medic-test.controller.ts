@@ -31,7 +31,7 @@ import {
   @ApiBearerAuth()
   @ApiTags('Peticiones de Exámenes Médicos')
   @ApiHeaders([X_LAB_ID_HEADER])
-  @Controller('patients/')
+  @Controller('')
   export class RequestMedicTestController {
     constructor(
       private readonly requestMedicTestService: RequestMedicTestService,
@@ -60,11 +60,13 @@ import {
     @ApiQuery({
       name: 'limit',
       required: false,
+      example: 20,
       type: Number,
     })
     @ApiQuery({
       name: 'offset',
       required: false,
+      example: 0,
       type: Number,
     })
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
@@ -92,11 +94,13 @@ import {
     @ApiQuery({
       name: 'limit',
       required: false,
+      example: 20,
       type: Number,
     })
     @ApiQuery({
       name: 'offset',
       required: false,
+      example: 0,
       type: Number,
     })
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
