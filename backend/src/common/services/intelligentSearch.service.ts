@@ -14,9 +14,8 @@ export async function intelligentSearch<T>(
     count: (args?: any) => Promise<number>;
     findMany: (args?: any) => Promise<T[]>;
   },
-  searchTerm: string,
-  searchFields: string[],
-  // Cambiamos 'limit' y 'offset' por 'take' y 'skip' para ser consistentes con Prisma
+  searchTerm?: string,
+  searchFields?: string[],
   options: {
     take?: number;
     skip?: number;
@@ -24,60 +23,92 @@ export async function intelligentSearch<T>(
     select?: Prisma.Args<T, 'findMany'>['select'];
     include?: Prisma.Args<T, 'findMany'>['include'];
     omit?: Record<string, boolean>;
+    enumFields?: { [fieldName: string]: object };
   } = {}
 ): Promise<{ results: T[]; total: number }> {
-  const { take = 20, skip = 0, where, ...restOptions } = options;
+  const { take = 20, skip = 0, where, enumFields, ...restOptions } = options;
 
-  if (!searchTerm || searchTerm.trim() === '' || searchFields.length === 0) {
-    // Si no hay término de búsqueda O NO HAY CAMPOS DONDE BUSCAR, devuelve una lista vacía
-    return { results: [], total: 0 };
+  if (!searchTerm || searchTerm.trim() === '' || !searchFields || searchFields.length === 0) {
+    // Si no hay término de búsqueda O NO HAY CAMPOS DONDE BUSCAR, usar paginación normal
+    const [total, results] = await Promise.all([
+      model.count({ where }),
+      model.findMany({
+        where,
+        skip,
+        take,
+        ...restOptions,
+      }),
+    ]);
+    return { results, total };
   }
 
-  // Normalizar el término de búsqueda
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const searchWords = normalizedSearchTerm.split(/\s+/).filter(Boolean);
 
-  // Construir condiciones de búsqueda
   const searchConditions: any[] = [];
-  for (const field of searchFields) {
-    // Coincidencia exacta (mayor prioridad)
-    searchConditions.push({
-      [field]: {
-        equals: normalizedSearchTerm,
-        mode: 'insensitive',
-      },
-    });
 
-    for (const word of searchWords) {
+  for (const field of searchFields) {
+    const enumType = enumFields?.[field];
+
+    // LÓGICA CONDICIONAL: ¿Es un campo enum o un string normal?
+    if (enumType) {
+      // ===== LÓGICA PARA ENUMS =====
+
+      // Para enums, solo buscamos coincidencias exactas del término completo.
+      // Buscamos una clave en el objeto enum (ej: 'PENDING') que coincida con el término de búsqueda.
+      const matchingEnumKey = Object.keys(enumType).find(
+        (key) => key.toLowerCase() === normalizedSearchTerm
+      );
+
+      if (matchingEnumKey) {
+        // Si encontramos una coincidencia (ej: "pending" -> "PENDING"), usamos el valor real del enum.
+        const enumValue = (enumType as any)[matchingEnumKey];
+        searchConditions.push({
+          [field]: {
+            equals: enumValue,
+          },
+        });
+      }
+    } else {
+      // ===== LÓGICA PARA STRINGS (comportamiento anterior) =====
+
+      // Coincidencia exacta (mayor prioridad)
       searchConditions.push({
         [field]: {
-          contains: word,
+          equals: normalizedSearchTerm,
           mode: 'insensitive',
         },
       });
+
+      // Coincidencia por palabras individuales
+      for (const word of searchWords) {
+        searchConditions.push({
+          [field]: {
+            contains: word,
+            mode: 'insensitive',
+          },
+        });
+      }
     }
   }
 
+  // Si después de todo, no se pudo generar ninguna condición válida, regresamos vacío.
+  if (searchConditions.length === 0) {
+    return { results: [], total: 0 };
+  }
+
   const whereClause: Prisma.Args<T, 'findMany'>['where'] = {
-    AND: [
-      where || {},
-      { OR: searchConditions },
-    ],
+    AND: [where || {}, { OR: searchConditions }],
   };
 
-  // 1. Obtener TODOS los resultados que coinciden con el criterio
+  // El resto de la función permanece igual...
   const allMatchingResults = await model.findMany({
     where: whereClause,
-    ...restOptions, // Aplicar select, include, omit
+    ...restOptions,
   });
 
-  // 2. Obtener el conteo total para la paginación
   const total = allMatchingResults.length;
-
-  // 3. Ordenar TODOS los resultados por relevancia
   const sortedResults = sortByRelevance(allMatchingResults, searchFields, normalizedSearchTerm);
-
-  // 4. Aplicar la paginación (skip/take) a la lista YA ORDENADA
   const paginatedResults = sortedResults.slice(skip, skip + take);
 
   return {
@@ -85,6 +116,8 @@ export async function intelligentSearch<T>(
     total,
   };
 }
+
+// Las funciones sortByRelevance, calculateRelevanceScore y levenshteinDistance no necesitan cambios.
 
 /**
  * Ordena los resultados por relevancia

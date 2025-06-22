@@ -6,6 +6,8 @@ import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
 import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
 import { MedicHistoryService } from '../medic-history/medic-history.service';
 import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+import { Priority, State } from '@prisma/client-lab';
 
 @Injectable()
 export class RequestMedicTestService {
@@ -74,54 +76,73 @@ export class RequestMedicTestService {
     labId: number,
     limit: number,
     offset: number,
-    all_data: boolean, 
-    medicHistoryId: number) {
+    all_data: boolean,
+    medicHistoryId: number,
+    searchTerm?: string,
+    searchFields?: string[],
+  ) {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
-      
-      // Validamos que al menos tengamos uno de los dos identificadores
+
+      // La validación del medicHistoryId sigue siendo crucial
       if (!medicHistoryId) {
-        throw new ConflictException(
-          'Debes proporcionar al menos uno: medicHistoryId.',
-        );
+        throw new ConflictException('El ID del historial médico (medicHistoryId) es requerido.');
       }
 
-      const where = {
-        ...(medicHistoryId && { id: medicHistoryId }),
-      };
+      // El modelo sobre el que vamos a buscar es 'requestMedicTest'
+      const requestMedicTest = labPrisma.requestMedicTest;
 
-      const selectFieldsToOmitInMedicTests = {
+      // Opciones para omitir campos según el parámetro 'all_data'
+      const omitFields = {
         resultProperties: !all_data,
         observation: !all_data,
-      }
+      };
 
-      const [total, data] = await Promise.all([
-        await labPrisma.medicHistory.count(),
-        await labPrisma.medicHistory.findFirst({
-          where,
-          include: {
-            requestMedicTests: {
-              omit: selectFieldsToOmitInMedicTests,
-              skip: offset,          // Paginación: salta los primeros 'offset' registros
-              take: limit,           // Paginación: limita a 'limit' registros
-              orderBy: {            // Ordenamiento recomendado para paginación consistente
-                requestedAt: 'desc' // o 'id' si prefieres
-              }
-            },
-          }
-        })  
-      ])
+      // Campos de búsqueda por defecto para los exámenes médicos
+      // AJUSTA ESTOS CAMPOS según tu esquema en el modelo RequestMedicTest
+      const defaultSearchFields = [
+        'state',
+        'priority', 
+      ];
+
+      // Construimos el objeto de opciones para la búsqueda
+      const searchOptions = {
+        skip: offset,
+        take: limit,
+        omit: omitFields,
+        // Este 'where' es fundamental para filtrar solo los exámenes de un historial médico
+        where: {
+          medicHistoryId: medicHistoryId,
+        },
+        enumFields: {
+          state: State,
+          priority: Priority,
+        }
+      };
+
+      // Lógica principal: usar intelligentSearch si hay un término de búsqueda
+      const { results: data, total } = await intelligentSearch(
+          requestMedicTest, // 1. El modelo a buscar
+            searchTerm,  // 2. El término de búsqueda
+            searchFields || defaultSearchFields, // 3. Los campos donde buscar
+            searchOptions // 4. Las opciones (where, skip, take, omit, etc.)
+      )
 
       return {
         total,
         offset,
         limit,
         data,
-      };  
+      };
 
     } catch (error) {
-      this.logger.error(`Error al obtener los examenes del paciente: ${error.message}`);
-      throw new NotFoundException(`${error.message}`);
+      this.logger.error(`Error al obtener los exámenes del paciente: ${error.message}`);
+      // Lanza la excepción original si ya es una de las nuestras (ej: ConflictException)
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        throw error;
+      }
+      // Envuelve otros errores en un NotFoundException genérico
+      throw new NotFoundException(`Error al obtener los exámenes: ${error.message}`);
     }
   }
 

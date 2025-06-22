@@ -10,6 +10,7 @@ import {
     Query,
     ParseIntPipe,
     ParseBoolPipe,
+    ParseArrayPipe,
   } from '@nestjs/common';
   import { RequestMedicTestService } from './request-medic-test.service';
   import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
@@ -58,6 +59,21 @@ import {
     @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de un historial médico' })
     @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
     @ApiQuery({
+      name: 'search-term',
+      required: false,
+      description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+      example: 'Miguel',
+      type: String,
+    })
+    @ApiQuery({
+      name: 'search-fields',
+      required: false,
+      description: 'Campos donde buscar (array de strings) si existe un search-term. Si no está vacío devuelve la lista paginada sin búsqueda',
+      type: [String], // Esto indica que es un array de strings
+      isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+      example: ['state', 'priority', 'observation'], // Ejemplo con valores
+    })
+    @ApiQuery({
       name: 'limit',
       required: false,
       example: 20,
@@ -69,10 +85,17 @@ import {
       example: 0,
       type: Number,
     })
+    
     @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
     @ApiParam({ name: 'medicHistoryId', required: true, type: Number, description: 'ID del paciente para buscar su historial activo' })
     getAllFromOne(
       @Request() req,
+      @Query('search-term') searchTerm,
+      @Query('search-fields', new ParseArrayPipe({ 
+        optional: true,
+        items: String,
+        separator: ','
+      })) searchFields: string[] = [],
       @Query('limit', ParseIntPipe) limit = 20,
       @Query('offset', ParseIntPipe) offset = 0,
       @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
@@ -85,6 +108,8 @@ import {
         offset,
         all_data,
         medicHistoryId,
+        searchTerm,
+        searchFields,
       );
     }
 

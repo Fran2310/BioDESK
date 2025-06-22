@@ -95,18 +95,13 @@ export class PatientService {
       };
   
       // Usar intelligentSearch o la búsqueda normal según si hay searchTerm
-      const { results: data, total } = searchTerm 
-        ? await intelligentSearch(
+      const { results: data, total } = await intelligentSearch(
             labPrisma.patient,
             searchTerm,
             searchFields || defaultSearchFields,
             searchOptions
-          )
-        : {
-            results: await labPrisma.patient.findMany(searchOptions),
-            total: await labPrisma.patient.count()
-          };
-  
+      )
+
       return {
         total,
         offset,
