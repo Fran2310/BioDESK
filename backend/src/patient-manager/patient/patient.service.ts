@@ -187,7 +187,6 @@ export class PatientService {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
       
-
       // Primero obtenemos los datos para auditoría
       const patientWithRelations = await labPrisma.patient.findUnique({
         where: { id: Number(patientId) },
