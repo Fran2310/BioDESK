@@ -83,7 +83,7 @@ export class CatalogLabController {
   @ApiQuery({
     name: 'search-fields',
     required: false,
-    description: 'Campos donde buscar (array de strings) si existe un search-term. Si no está vacío devuelve la lista paginada sin búsqueda',
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
     type: [String], // Esto indica que es un array de strings
     isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
     example: ['name', 'price', 'description'], // Ejemplo con valores
