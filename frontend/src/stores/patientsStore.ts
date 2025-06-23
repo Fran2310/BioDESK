@@ -122,14 +122,14 @@ export const usePatientsStore = defineStore('patients', {
         throw new Error(errorMsg);
       }
 
-      const data = await response.json()
+      /* const data = await response.json()
       const newPatient = data.data // Use the correct key from backend
       this.items.unshift(newPatient)
       this.pagination.total++
-      return newPatient
+      return newPatient */
     },
 
-    async update(updatedPatient: Patient): Promise<Patient> {
+    async update(updatedPatient: Patient){
       const authStore = useAuthStore()
       const labStore = useLabStore()
       const token = authStore.token
@@ -166,13 +166,13 @@ export const usePatientsStore = defineStore('patients', {
         throw new Error('Failed to update patient')
       }
 
-      const data = await response.json()
+     /*  const data = await response.json()
       const patient = data.data // Use the correct key from backend
       const index = this.items.findIndex(p => p.id === patient.id)
       if (index !== -1) {
         this.items[index] = patient
       }
-      return patient
+      return patient */
     },
 
     async remove(patient: Patient) {
@@ -198,9 +198,9 @@ export const usePatientsStore = defineStore('patients', {
         throw new Error('Failed to delete patient')
       }
 
-      this.items = this.items.filter(p => p.id !== patient.id)
+      /* this.items = this.items.filter(p => p.id !== patient.id)
       this.pagination.total--
-      return true
+      return true */
     },
 
     async uploadAvatar(formData: FormData) {
