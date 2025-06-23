@@ -1,23 +1,44 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-
+import { createRouter, createWebHistory } from 'vue-router';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import Login from '@/views/auth/Login.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '/auth',
+      component: AuthLayout,
+      children: [
+        {
+          path: 'login',
+          name: 'Login',
+          component: Login, // Carga estatica
+        },
+        {
+          path: 'signup',
+          name: 'SignUp',
+          // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
+          component: () => import('@/views/auth/SignUp.vue'),
+        },
+        {
+          path: 'forgot-password',
+          name: 'ForgotPassword',
+          // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
+          component: () => import('@/views/auth/ForgotPassword.vue'),
+        },
+        // Aquí se agregan mas hijos de auth layout
+      ],
     },
+    // Redirección de la raíz a /auth/login
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/',
+      redirect: '/auth/login',
+    },
+    // Redirección para cualquier ruta no definida
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/auth/login',
     },
   ],
-})
+});
 
-export default router
+export default router;

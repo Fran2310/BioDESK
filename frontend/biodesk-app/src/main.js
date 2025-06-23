@@ -1,19 +1,50 @@
-import { createVuesticEssential, VaButton, VaIcon, VaCard, VaCardTitle, VaCardContent } from 'vuestic-ui'
-import 'vuestic-ui/styles/essential.css'
-import 'vuestic-ui/styles/typography.css'
-import './assets/main.css'
+import {
+  createVuesticEssential,
+  VaButton,
+  VaIcon,
+  VaCard,
+  VaCardTitle,
+  VaCardContent,
+  VaLayout,
+  VaSwitch,
+  VaForm,
+  VaInput,
+  VaValue,
+  VaCheckbox,
+} from 'vuestic-ui';
+import 'vuestic-ui/styles/essential.css';
+import 'vuestic-ui/styles/typography.css';
+import './assets/main.css';
+import 'tailwindcss/tailwind.css';
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 
-import App from './App.vue'
-import router from './router'
+import App from './App.vue';
+import router from './router';
+import vuesticGlobalConfig from '@/services/vuestic-ui/global-config';
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(createPinia())
-app.use(router)
+app.use(createPinia());
+app.use(router);
 
-
-app.use(createVuesticEssential({ components: { VaButton, VaIcon, VaCard, VaCardTitle, VaCardContent } }));
-app.mount('#app')
+app.use(
+  createVuesticEssential({
+    config: vuesticGlobalConfig,
+    components: {
+      VaButton,
+      VaSwitch,
+      VaCard,
+      VaCardTitle,
+      VaCardContent,
+      VaLayout,
+      VaForm,
+      VaInput,
+      VaIcon,
+      VaValue,
+      VaCheckbox,
+    },
+  })
+);
+app.mount('#app');
