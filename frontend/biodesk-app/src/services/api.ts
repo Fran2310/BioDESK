@@ -9,11 +9,11 @@ export const api = axios.create({
 
 // Servicio de autenticación
 export const authApi = {
-  register(data) {
+  register(data: any) {
     // data: { ci, name, lastName, email, password }
     return api.post('/auth/register', data);
   },
-  login(data) {
+  login(data: any) {
     // data: { email, password }
     return api.post('/auth/login', data);
   },

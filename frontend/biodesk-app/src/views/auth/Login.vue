@@ -92,7 +92,7 @@
     </div>
   </Transition>
 </template>
-<script setup>
+<script setup lang="ts">
   import { ref, onMounted, reactive, computed } from 'vue';
   import { useBreakpoint } from 'vuestic-ui';
   import { validator } from '@/services/utils.js';

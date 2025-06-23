@@ -38,11 +38,11 @@
   </span>
 </template>
 
-<script setup>
+<script setup lang="ts">
   // Props:
   //   height: Altura del logo (por defecto '9rem').
   //   color: Color para sobrescribir el color del SVG (opcional).
-  const props = defineProps({
+  defineProps({
     height: {
       type: String,
       default: '9rem',

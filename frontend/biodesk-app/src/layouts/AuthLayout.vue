@@ -36,7 +36,7 @@
   </VaLayout>
 </template>
 
-<script setup>
+<script lang="ts" setup>
   import { useBreakpoint } from 'vuestic-ui';
   import Logo from '@/components/Logo.vue';
 

@@ -1,17 +1,3 @@
-import {
-  createVuesticEssential,
-  VaButton,
-  VaIcon,
-  VaCard,
-  VaCardTitle,
-  VaCardContent,
-  VaLayout,
-  VaSwitch,
-  VaForm,
-  VaInput,
-  VaValue,
-  VaCheckbox,
-} from 'vuestic-ui';
 import { createVuestic } from 'vuestic-ui';
 import 'vuestic-ui/styles/essential.css';
 import 'vuestic-ui/styles/typography.css';
