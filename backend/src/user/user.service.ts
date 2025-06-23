@@ -201,8 +201,9 @@ export class UserService {
       };
     } catch (error) {
       this.logger.error(
-        `❌ Error al crear el usuario`,
+        `❌ Error al crear el usuario ${error}`,
       );
+      throw error;
     }
   }
 
