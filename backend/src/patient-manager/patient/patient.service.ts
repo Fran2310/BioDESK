@@ -143,17 +143,15 @@ export class PatientService {
     return patient;
   }
 
-  async updatePatient(labId: number, patientId: number, dto: UpdatePatientDto, performedByUserUuid) {
+  async updatePatient(labId: number, patientId: number, dto: UpdatePatientDto, performedByUserUuid: string) {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
 
       const before = await this.getPatient(labId, patientId); // Verifica si existe
 
-      if (dto.ci) {
-        if (dto.email) {
-          await this.validateUniquePatient(labId, dto.ci, dto.email)
-        }
+      if (before.ci != dto.ci || before.email != dto.email) {
+        await this.validateUniquePatient(labId, dto.ci, dto.email)
       }
 
       const updated = await labPrisma.patient.update({
@@ -236,7 +234,7 @@ export class PatientService {
 
   // ============ HELPER METHODS ============
 
-  private async validateUniquePatient(labId: number, ci: string | undefined, email: string | undefined) {
+  private async validateUniquePatient(labId: number, ci?: string | undefined, email?: string | undefined) {
     const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
     const patient = await labPrisma.patient.findFirst({

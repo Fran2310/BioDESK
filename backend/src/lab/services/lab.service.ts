@@ -96,7 +96,7 @@ export class LabService {
         users: {
           some: {
             // Busca si "alguno" de los usuarios relacionados
-            uuid: uuid, // tiene este uuid.
+            uuid, // tiene este uuid.
           },
         },
       },
