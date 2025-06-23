@@ -3,7 +3,7 @@ import {
   Controller,
   Delete,
   ParseIntPipe,
-  Put,
+  Patch,
   Post,
   Query,
   Request,
@@ -67,7 +67,7 @@ export class ValueRefController {
     );
   }
 
-  @Put('update')
+  @Patch('update')
   @ApiOperation({
     summary: 'Actualizar un valor de referencia',
     description:

@@ -5,7 +5,7 @@ import {
   Body,
   Param,
   Delete,
-  Put,
+  Patch,
   Headers,
   Request,
   Query,
@@ -118,7 +118,7 @@ export class PatientController {
     return this.patientService.getPatient(+labId, +patientId);
   }
 
-  @Put(':patientId') // Cambia la ruta para incluir el parámetro de path
+  @Patch(':patientId') // Cambia la ruta para incluir el parámetro de path
   @ApiOperation({
     summary: 'Actualizar datos de un paciente de un laboratorio',
   })
