@@ -12,6 +12,7 @@ import {
   VaValue,
   VaCheckbox,
 } from 'vuestic-ui';
+import { createVuestic } from 'vuestic-ui';
 import 'vuestic-ui/styles/essential.css';
 import 'vuestic-ui/styles/typography.css';
 import './assets/main.css';
@@ -28,7 +29,7 @@ const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
-
+/*
 app.use(
   createVuesticEssential({
     config: vuesticGlobalConfig,
@@ -47,4 +48,6 @@ app.use(
     },
   })
 );
+*/
+app.use(createVuestic({ config: vuesticGlobalConfig }));
 app.mount('#app');

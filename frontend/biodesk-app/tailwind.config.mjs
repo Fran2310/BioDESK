@@ -27,6 +27,15 @@ export default {
         backgroundDarkSecondary: 'var(--va-background-dark-secondary)', // fondo secundario oscuro (dark-mode)
         darkBase: 'var(--va-dark-base)', // base tema oscuro
       },
+      height: {
+        screen: '100dvh',
+      },
+      minHeight: {
+        screen: '100dvh',
+      },
+      maxHeight: {
+        screen: '100dvh',
+      },
     },
     screens: {
       xs: '0px',

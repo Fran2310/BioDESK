@@ -1,5 +1,5 @@
 <template>
-  <Transition name="slide-fade">
+  <Transition :name="transitionName">
     <div
       v-if="showAnimate"
       class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full max-w-xl border-4 border-secondary"
@@ -93,7 +93,8 @@
   </Transition>
 </template>
 <script setup>
-  import { ref, onMounted, reactive } from 'vue';
+  import { ref, onMounted, reactive, computed } from 'vue';
+  import { useBreakpoint } from 'vuestic-ui';
   import { validator } from '@/services/utils.js';
 
   // Se usa para animar la entrada del componente
@@ -101,6 +102,14 @@
   onMounted(() => {
     showAnimate.value = true;
   });
+
+  /**PARA: Transition
+   * evaluar el tamaño de la pantalla para determinar si desplaza en x o en y
+   */
+  const breakpoint = useBreakpoint();
+  const transitionName = computed(() =>
+    breakpoint.lgUp ? 'slide-fade-x' : 'slide-fade-y'
+  );
 
   const formData = reactive({
     email: '',
@@ -115,23 +124,44 @@
   };
 </script>
 <style scoped>
-  .slide-fade-enter-active {
-    /** Animaciones
+  /** Animaciones
     cubic-bezier(0.23, 1, 0.32, 1)
     ease-in-out
     cubic-bezier(0.4, 0, 0.2, 1)
     cubic-bezier(0.22, 1, 0.36, 1)
     */
+  /**PARA: Transition */
+  .slide-fade-x-enter-active,
+  .slide-fade-x-leave-active {
     transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .slide-fade-enter-from {
+  .slide-fade-x-enter-from,
+  .slide-fade-x-leave-to {
     opacity: 0;
     transform: translateX(200px);
     filter: blur(1px);
   }
-  .slide-fade-enter-to {
+  .slide-fade-x-enter-to,
+  .slide-fade-x-leave-from {
     opacity: 1;
     transform: translateX(0);
+    filter: blur(0);
+  }
+
+  .slide-fade-y-enter-active,
+  .slide-fade-y-leave-active {
+    transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .slide-fade-y-enter-from,
+  .slide-fade-y-leave-to {
+    opacity: 0;
+    transform: translateY(200px);
+    filter: blur(1px);
+  }
+  .slide-fade-y-enter-to,
+  .slide-fade-y-leave-from {
+    opacity: 1;
+    transform: translateY(0);
     filter: blur(0);
   }
 

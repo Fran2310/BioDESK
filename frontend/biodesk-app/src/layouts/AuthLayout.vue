@@ -14,7 +14,7 @@
     </template>
     <template #content>
       <main
-        class="h-full min-h-screen bg-base flex items-center justify-center"
+        class="bg-base h-full min-h-screen flex items-center justify-center"
         style="max-width: 65dvw"
       >
         <RouterView />
@@ -23,11 +23,17 @@
   </VaLayout>
 
   <VaLayout v-else>
-    <p>
-      Current breakpoint is:
-      <strong>{{ breakpoint.lgUp ? 'Es large' : 'es otro' }}</strong>
-    </p></VaLayout
-  >
+    <template #content>
+      <main
+        class="bg-base h-full min-h-screen flex items-center justify-center mx-5"
+      >
+        <div class="flex flex-col items-center gap-5">
+          <Logo :height="'9rem'" />
+          <RouterView />
+        </div>
+      </main>
+    </template>
+  </VaLayout>
 </template>
 
 <script setup>
