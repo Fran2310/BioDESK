@@ -73,7 +73,8 @@ export const usePatientsStore = defineStore('patients', {
       }
     },
 
-    async add(patient: Patient): Promise<Patient> {
+    async add(patient: Patient) {
+      console.log('patientsStore.ts add called', patient);
       const authStore = useAuthStore()
       const labStore = useLabStore()
       const token = authStore.token
@@ -83,19 +84,42 @@ export const usePatientsStore = defineStore('patients', {
         throw new Error('Missing authentication token or selected lab')
       }
 
+      // Only send fields required by backend
+      const patientPayload = {
+        ci: patient.ci,
+        name: patient.name,
+        lastName: patient.lastName,
+        secondName: patient.secondName,
+        secondLastName: patient.secondLastName,
+        gender: patient.gender,
+        email: patient.email,
+        dir: patient.dir,
+        phoneNums: patient.phoneNums,
+        birthDate: patient.birthDate,
+      };
+      console.log('Sending patient payload:', patientPayload)
+      const headers = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'x-lab-id': labId.toString(),
+      };
       const response = await fetch('https://biodesk.onrender.com/api/patients', {
         method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'x-lab-id': labId.toString(),
-        },
-        body: JSON.stringify(patient),
+        headers,
+        body: JSON.stringify(patientPayload),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to add patient')
+        let errorMsg = 'Failed to add patient';
+        try {
+          const errorData = await response.json();
+          errorMsg += ': ' + JSON.stringify(errorData);
+          console.error('Backend error response:', errorData);
+        } catch (e) {
+          console.error('Failed to parse backend error response');
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await response.json()
@@ -115,15 +139,27 @@ export const usePatientsStore = defineStore('patients', {
         throw new Error('Missing authentication token or selected lab')
       }
 
+      const patientPayload = {
+        ci: updatedPatient.ci,
+        name: updatedPatient.name,
+        lastName: updatedPatient.lastName,
+        secondName: updatedPatient.secondName,
+        secondLastName: updatedPatient.secondLastName,
+        gender: updatedPatient.gender,
+        email: updatedPatient.email,
+        dir: updatedPatient.dir,
+        phoneNums: updatedPatient.phoneNums,
+        birthDate: updatedPatient.birthDate,
+      };
       const response = await fetch(`https://biodesk.onrender.com/api/patients/${updatedPatient.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'accept': 'application/json',
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'x-lab-id': labId.toString(),
         },
-        body: JSON.stringify(updatedPatient),
+        body: JSON.stringify(patientPayload),
       })
 
       if (!response.ok) {

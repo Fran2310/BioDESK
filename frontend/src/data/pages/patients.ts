@@ -65,7 +65,7 @@ export const updatePatient = async (patient: Patient) => {
   const headers = new Headers()
   headers.append('Content-Type', 'application/json')
 
-  const result = await fetch(api.patient(patient.id), { method: 'PUT', body: JSON.stringify(patient), headers }).then((r) =>
+  const result = await fetch(api.patient(patient.id), { method: 'PATCH', body: JSON.stringify(patient), headers }).then((r) =>
     r.json(),
   )
 

@@ -64,15 +64,21 @@ const patients = computed(() => patientsStore.items)
 
 const doShowEditPatientModal = ref(false)
 const patientToEdit = ref<Patient | null>(null)
+const formKey = ref(0)
 
 const showEditPatientModal = (patient: Patient) => {
   console.log('PatientsPage: showEditPatientModal', patient)
+  formKey.value += 1
   patientToEdit.value = patient
   doShowEditPatientModal.value = true
 }
 
 const showAddPatientModal = () => {
   console.log('PatientsPage: showAddPatientModal')
+  if (editFormRef.value && typeof editFormRef.value.resetForm === 'function') {
+    editFormRef.value.resetForm();
+  }
+  formKey.value += 1
   patientToEdit.value = null
   doShowEditPatientModal.value = true
 }
@@ -90,6 +96,15 @@ watch(error, (val) => {
 
 const onPatientSaved = async (patient: Patient) => {
   console.log('PatientsPage: onPatientSaved', patient)
+  console.log('Stringified', JSON.stringify(patient))
+  console.log('Test for access:', patient.name)
+console.log('onPatientSaved called');
+console.log('patientToEdit:', patientToEdit);
+console.log('patientToEdit.value:', patientToEdit.value);
+console.log('typeof patientToEdit.value:', typeof patientToEdit.value);
+console.log('patient:', patient);
+
+
   isLoading.value = true
   try {
     if (patientToEdit.value) {
@@ -195,6 +210,7 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
     >
       <h1 class="va-h5">{{ patientToEdit ? t('form.editPatient') : t('form.addPatient') }}</h1>
       <PatientsForm
+        :key="formKey"
         ref="editFormRef"
         :patient="patientToEdit"
         :save-button-label="patientToEdit ? t('form.save') : t('form.add')"

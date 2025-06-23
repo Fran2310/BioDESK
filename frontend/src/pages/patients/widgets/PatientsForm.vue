@@ -25,7 +25,7 @@ const defaultNewPatient = {
   lastName: '',
   secondName: '',
   secondLastName: '',
-  gender:'',
+  gender:'ANY',
   email: '',
   phoneNums: [''],
   dir: '',
@@ -49,6 +49,9 @@ const isFormHasUnsavedChanges = computed(() => {
 
 defineExpose({
   isFormHasUnsavedChanges,
+  resetForm: () => {
+    newUser.value = { ...defaultNewPatient } as Patient
+  },
 })
 
 
@@ -56,8 +59,10 @@ defineExpose({
 watch(
   [() => props.patient],
   () => {
+    console.log('Watcher fired! props.patient:', props.patient)
     if (!props.patient) {
       newUser.value = { ...defaultNewPatient } as Patient
+      console.log('newUser reset to default:', newUser.value)
       return
     }
 
@@ -66,6 +71,7 @@ watch(
       ...props.patient,
       phoneNums: props.patient?.phoneNums?.length ? [...props.patient.phoneNums] : ['']
     } as Patient
+    console.log('newUser set to patient:', newUser.value)
   },
   { immediate: true }
 )
@@ -76,7 +82,24 @@ const form = useForm('add-patient-form')
 const emit = defineEmits(['close', 'save'])
 
 const onSave = () => {
+  console.log('onSave called, newUser.value:', newUser.value)
   if (form.validate()) {
+    // Ensure birthDate is in ISO 8601 UTC format
+    if (newUser.value.birthDate) {
+      let iso = '';
+      if (newUser.value.birthDate instanceof Date) {
+        iso = newUser.value.birthDate.toISOString();
+      } else if (typeof newUser.value.birthDate === 'string') {
+        const d = new Date(newUser.value.birthDate);
+        if (!isNaN(d.getTime())) {
+          iso = d.toISOString();
+        }
+      }
+      // Remove milliseconds: 2025-06-15T14:30:00.000Z -> 2025-06-15T14:30:00Z
+      if (iso) {
+        newUser.value.birthDate = iso.replace(/\.\d{3}Z$/, 'Z');
+      }
+    }
     emit('save', newUser.value)
   }
 }
@@ -137,6 +160,8 @@ const removePhone = (index: number) => {
           />
         </div>
 
+        
+
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaInput
             v-model="newUser.secondName"
@@ -154,12 +179,23 @@ const removePhone = (index: number) => {
 
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaInput
+            v-model="newUser.email"
+            label="Email"
+            class="w-full sm:w-1/2"
+            :rules="[validators.required, validators.email]"
+            name="email"
+            type="email"
+          />
+          <VaInput
             v-model="newUser.ci"
             label="CI"
             class="w-full sm:w-1/2"
             :rules="[validators.required]"
             name="ci"
           />
+        </div>
+
+        <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaDateInput
             v-model="newUser.birthDate"
             label="Birth Date"
@@ -167,6 +203,13 @@ const removePhone = (index: number) => {
             name="birthDate"
             clearable
             manual-input
+          />
+          <VaSelect
+            v-model="newUser.gender"
+            label="Gender"
+            class="w-full sm:w-1/2"
+            :options="['ANY', 'MALE', 'FEMALE', 'OTHER']"
+            name="gender"
           />
         </div>
 
