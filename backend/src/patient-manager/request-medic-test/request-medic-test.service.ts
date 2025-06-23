@@ -262,7 +262,7 @@ export class RequestMedicTestService {
         action: 'update',
         entity: 'requestMedicTest',
         recordEntityId: updated.id.toString(),
-        details: `El usuario ${systemUser.name} ${systemUser.lastName} actualizó el historial médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} actualizó un examen médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
         operationData: {
           before: requestWithPatient,
           after: updated,
@@ -327,6 +327,63 @@ export class RequestMedicTestService {
       }
       this.logger.error(`Error al eliminar examen: ${error.message}`);
       throw new ConflictException('Error al eliminar el examen');
+    }
+  }
+
+  async changeStateRequestMedicTest(
+    labId: number, 
+    requestMedicTestId: number,
+    state: State,
+    performedByUserUuid: string
+  ) {
+    try {
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+      const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+  
+      // Obtener el request incluyendo el paciente relacionado
+      const requestWithPatient = await labPrisma.requestMedicTest.findUnique({
+        where: { id: requestMedicTestId },
+        include: {
+          medicHistory: {
+            include: {
+              patient: true // Trae todos los datos del paciente
+            }
+          }
+        }
+      });
+  
+      if (!requestWithPatient) {
+        throw new NotFoundException(`Examen médico con ID ${requestMedicTestId} no encontrado`);
+      }
+  
+      const patient = requestWithPatient.medicHistory.patient;
+      // Actualización del request
+      const updated = await labPrisma.requestMedicTest.update({
+        where: { id: requestMedicTestId },
+        data: {
+          state
+        } 
+      });
+      
+      // Auditoría
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'update',
+        entity: 'requestMedicTest',
+        recordEntityId: updated.id.toString(),
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} cambió el estado de un examen médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
+        operationData: {
+          before: requestWithPatient.state,
+          after: updated.state,
+        },
+      });
+  
+      return updated;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Error al actualizar examen médico: ${error.message}`);
+      throw new ConflictException(`${error.message}`);
     }
   }
 }
