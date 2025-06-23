@@ -5,7 +5,7 @@ import {
     Body,
     Param,
     Delete,
-    Patch,
+    Put,
     Request,
     Query,
     ParseIntPipe,
@@ -183,7 +183,7 @@ import { State } from 'src/casl/dto/test-state.dto';
     );
   }
 
-  @Patch('request-medic-tests/:requestMedicTestId')
+  @Put('request-medic-tests/:requestMedicTestId')
   @ApiOperation({ summary: 'Actualizar una petición de examen médico' })
   @CheckAbility({ actions: 'update', subject: 'RequestMedicTest' })
   update(
@@ -219,7 +219,7 @@ import { State } from 'src/casl/dto/test-state.dto';
     );
   }
 
-  @Patch('request-medic-tests/:requestMedicTestId/:state')
+  @Put('request-medic-tests/:requestMedicTestId/:state')
   @ApiOperation({ summary: 'Cambiar el estado de una petición de examen médico' })
   @ApiParam({
     name: 'state',

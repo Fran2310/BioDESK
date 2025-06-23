@@ -9,7 +9,7 @@ import {
   Query,
   Get,
   ParseBoolPipe,
-  Patch,
+  Put,
   Delete,
   Param,
   ParseArrayPipe,
@@ -130,7 +130,7 @@ export class CatalogLabController {
     );
   }
 
-  @Patch(':medicTestCatalogId')
+  @Put(':medicTestCatalogId')
   @CheckAbility({ actions: 'update', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Actualizar un  examen en el catálogo del laboratorio',

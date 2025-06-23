@@ -3,7 +3,7 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
+  Put,
   Body,
   Query,
   Request,
@@ -216,7 +216,7 @@ export class RoleController {
     );
   }
 
-  @Patch(':roleId')
+  @Put(':roleId')
   @CheckAbility({
     actions: 'update',
     subject: 'Role',

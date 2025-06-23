@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseBoolPipe, ParseIntPipe, Patch, Post, Query, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseBoolPipe, ParseIntPipe, Put, Post, Query, Request } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeaders, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { MedicHistoryService } from './medic-history.service';
@@ -49,7 +49,7 @@ export class MedicHistoryController {
     return this.medicHistoryService.getMedicHistory(+labId, all_data, patientId);
   }
 
-  @Patch(':patientId/medic-history')
+  @Put(':patientId/medic-history')
   @ApiOperation({
     summary: 'Actualizar historial médico de un paciente de un laboratorio',
   })

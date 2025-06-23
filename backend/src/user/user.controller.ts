@@ -8,7 +8,7 @@ import {
   ParseIntPipe,
   Get,
   ParseBoolPipe,
-  Patch,
+  Put,
   ParseUUIDPipe,
   Delete,
 } from '@nestjs/common';
@@ -209,7 +209,7 @@ export class UserController {
     return this.userService.assignExistUserToLab(labId, dto, req.user.sub);
   }
 
-  @Patch('system')
+  @Put('system')
   @CheckAbility({
     actions: 'update',
     subject: 'SystemUser',
@@ -239,7 +239,7 @@ export class UserController {
     );
   }
 
-  @Patch('lab/assign-role')
+  @Put('lab/assign-role')
   @CheckAbility({
     actions: 'update',
     subject: 'LabUser',

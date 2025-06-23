@@ -1,7 +1,7 @@
 import {
   Controller,
   Post,
-  Patch,
+  Put,
   Delete,
   Body,
   Query,
@@ -49,7 +49,7 @@ export class MedicTestPropertyController {
     return this.propertyService.createMedicTestProperty(prisma, catalogId, dto);
   }
 
-  @Patch('update')
+  @Put('update')
   @ApiOperation({
     summary: 'Actualizar una propiedad de un examen del catálogo',
   })
