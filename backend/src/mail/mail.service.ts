@@ -1,12 +1,12 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as Handlebars from 'handlebars';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
 import { Resend } from 'resend';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 import { LabService } from 'src/lab/services/lab.service';
+import { RegisterDto } from 'src/auth/dto/register.dto';
 
 @Injectable()
 export class MailService {
@@ -39,29 +39,35 @@ export class MailService {
     return result.html;
   }
 
-  async sendWelcomeEmail(email: string) {
-    const user = await this.systemUserService.getSystemUser({
-      email,
-    });
+  async sendWelcomeEmail(email: string, userDto: RegisterDto) {
 
-    if (user) {
+    if (userDto) {
       const html = await this.templateToHTML('welcome.mjml', {
-        name: `${user.name} ${user.lastName}`,
+        name: `${userDto.name} ${userDto.lastName}`,
         year: new Date().getFullYear(),
       });
 
       try {
-        await this.resend.emails.send({
+        const emailResponse = await this.resend.emails.send({
           from: this.ourEmail,
           to: [email],
           subject: '¡Bienvenido a BioDESK!',
           html: html,
         });
+
+        if (emailResponse.data?.id) {
+          this.logger.log(`Correo de bienvenida enviado a ${email}`);
+        } else {
+          // TODO: Quitar cuando se coloque producción, hay que dejarlo así para desarrollo
+          //throw new BadRequestException(
+          //  'El correo no es válido o no existe',
+          //);
+        }
+
       } catch (error) {
         this.logger.log(error);
+        throw error;
       }
-
-      this.logger.log(`Correo de bienvenida enviado a ${email}`);
     }
   }
 

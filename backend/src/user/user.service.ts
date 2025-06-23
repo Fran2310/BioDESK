@@ -189,13 +189,11 @@ export class UserService {
     const userDto = dto;
 
     try {
-      // ✅ Primero creas el usuario y ya tienes el UUID
-      const user = await this.systemUserService.createSystemUser(
+      await this.mailService.sendWelcomeEmail(userDto.email, userDto); // Colocar esto de primero si se quiere hacer la verificación por correo
+      const user = await this.systemUserService.createSystemUser( // ✅ Primero creas el usuario y ya tienes el UUID
         userDto,
       );
-
-      await this.mailService.sendWelcomeEmail(user.email)
-
+      
       return {
         uuid: user.uuid,
       };
