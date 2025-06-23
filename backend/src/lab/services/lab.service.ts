@@ -114,7 +114,7 @@ export class LabService {
           where: { id: userLab.id },
         });
         if (permissions) {
-          this.sharedCacheService.setUser(uuid, labId, permissions);
+          await this.sharedCacheService.setUser(uuid, labId, permissions);
         }
       }
     } else {

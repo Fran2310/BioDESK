@@ -9,6 +9,8 @@ import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
 import { Priority, State } from '@prisma/client-lab';
 
+import { STATE_TRANSITIONS } from 'src/casl/helper/transition.helper';
+
 @Injectable()
 export class RequestMedicTestService {
   private readonly logger = new Logger(RequestMedicTestService.name);
@@ -351,9 +353,18 @@ export class RequestMedicTestService {
           }
         }
       });
-  
+
       if (!requestWithPatient) {
         throw new NotFoundException(`Examen médico con ID ${requestMedicTestId} no encontrado`);
+      }
+
+      // Verificar si la transción es válida
+      for (const [currentState, possibleTransitions] of Object.entries(STATE_TRANSITIONS)) { 
+        if (currentState === requestWithPatient?.state) {
+          if (!possibleTransitions.includes(state as State)) {
+            throw new ForbiddenException(`No se puede cambiar el estado de ${currentState} a ${state}`);
+          } 
+        }
       }
   
       const patient = requestWithPatient.medicHistory.patient;
