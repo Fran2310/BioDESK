@@ -61,7 +61,7 @@ export class PatientService {
     labId: number,
     limit: number,
     offset: number,
-    all_data: boolean,
+    includeData: boolean,
     searchTerm?: string,
     searchFields?: string[]
   ) {
@@ -69,10 +69,10 @@ export class PatientService {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
   
       const selectFieldsToOmit = {
-        secondName: !all_data,
-        secondLastName: !all_data,
-        phoneNums: !all_data,
-        dir: !all_data, 
+        secondName: !includeData,
+        secondLastName: !includeData,
+        phoneNums: !includeData,
+        dir: !includeData, 
       };
   
       // Opciones para intelligentSearch

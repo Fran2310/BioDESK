@@ -87,7 +87,7 @@ import { State } from 'src/casl/dto/test-state.dto';
     example: 0,
     type: Number,
   })
-  @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
+  @ApiQuery({ name: 'includeData', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
   @ApiParam({ name: 'medicHistoryId', required: true, type: Number, description: 'ID del paciente para buscar su historial activo' })
   getAllFromOne(
     @Request() req,
@@ -99,7 +99,7 @@ import { State } from 'src/casl/dto/test-state.dto';
     })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
-    @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
+    @Query('includeData', new ParseBoolPipe({ optional: true })) includeData = false,
     @Param('medicHistoryId', new ParseIntPipe({ optional: true })) medicHistoryId: number,
   ) {
     const labId = Number(req.headers['x-lab-id']);
@@ -107,7 +107,7 @@ import { State } from 'src/casl/dto/test-state.dto';
       labId,
       limit,
       offset,
-      all_data,
+      includeData,
       medicHistoryId,
       searchTerm,
       searchFields,
@@ -144,7 +144,7 @@ import { State } from 'src/casl/dto/test-state.dto';
     example: 0,
     type: Number,
   })
-  @ApiQuery({ name: 'all-data', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
+  @ApiQuery({ name: 'includeData', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
   getAllFromAll(
     @Request() req,
     @Query('search-term') searchTerm,
@@ -155,14 +155,14 @@ import { State } from 'src/casl/dto/test-state.dto';
     })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
-    @Query('all-data', new ParseBoolPipe({ optional: true })) all_data = false,
+    @Query('includeData', new ParseBoolPipe({ optional: true })) includeData = false,
   ) {
     const labId = Number(req.headers['x-lab-id']);
     return this.requestMedicTestService.getAllRequestsMedicTestFromAll(
       labId,
       limit,
       offset,
-      all_data,
+      includeData,
       searchTerm,
       searchFields,
     );

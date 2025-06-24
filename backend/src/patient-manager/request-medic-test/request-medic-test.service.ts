@@ -78,7 +78,7 @@ export class RequestMedicTestService {
     labId: number,
     limit: number,
     offset: number,
-    all_data: boolean,
+    includeData: boolean,
     medicHistoryId: number,
     searchTerm?: string,
     searchFields?: string[],
@@ -94,10 +94,10 @@ export class RequestMedicTestService {
       // El modelo sobre el que vamos a buscar es 'requestMedicTest'
       const requestMedicTest = labPrisma.requestMedicTest;
 
-      // Opciones para omitir campos según el parámetro 'all_data'
+      // Opciones para omitir campos según el parámetro 'includeData'
       const omitFields = {
-        resultProperties: !all_data,
-        observation: !all_data,
+        resultProperties: !includeData,
+        observation: !includeData,
       };
 
       // Construimos el objeto de opciones para la búsqueda
@@ -145,7 +145,7 @@ export class RequestMedicTestService {
     labId: number,
     limit: number,
     offset: number,
-    all_data: boolean,
+    includeData: boolean,
     searchTerm?: string,
     searchFields?: string[],
   ) {
@@ -155,10 +155,10 @@ export class RequestMedicTestService {
       // El modelo principal para la búsqueda es 'requestMedicTest', no 'medicHistory'
       const requestMedicTestModel = labPrisma.requestMedicTest;
   
-      // Opciones para omitir campos según el parámetro 'all_data'
+      // Opciones para omitir campos según el parámetro 'includeData'
       const omitFields = {
-        resultProperties: !all_data,
-        observation: !all_data,
+        resultProperties: !includeData,
+        observation: !includeData,
       };
 
   

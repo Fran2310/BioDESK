@@ -75,7 +75,7 @@ export class PatientController {
     type: Number,
   })
   @ApiQuery({
-    name: 'all-data',
+    name: 'includeData',
     required: false,
     type: Boolean,
   })
@@ -88,7 +88,7 @@ export class PatientController {
     })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
-    @Query('all-data', ParseBoolPipe) all_data = false,
+    @Query('includeData', ParseBoolPipe) includeData = false,
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
@@ -96,7 +96,7 @@ export class PatientController {
       +labId, 
       limit, 
       offset, 
-      all_data,
+      includeData,
       searchTerm,
       searchFields,
     );

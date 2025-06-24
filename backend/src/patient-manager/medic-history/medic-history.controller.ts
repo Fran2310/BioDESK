@@ -35,18 +35,18 @@ export class MedicHistoryController {
     type: Number,
   })
   @ApiQuery({
-    name: 'all-data',
+    name: 'includeData',
     required: false,
     type: Boolean,
   })
   @CheckAbility({ actions: 'read', subject: 'medicHistory' })
   getMedicHistory(
     @Param('patientId', ParseIntPipe) patientId: number,
-    @Query('all-data', ParseBoolPipe) all_data = false,
+    @Query('includeData', ParseBoolPipe) includeData = false,
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
-    return this.medicHistoryService.getMedicHistory(+labId, all_data, patientId);
+    return this.medicHistoryService.getMedicHistory(+labId, includeData, patientId);
   }
 
   @Patch(':patientId/medic-history')

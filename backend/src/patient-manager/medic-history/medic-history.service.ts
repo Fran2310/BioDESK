@@ -92,7 +92,7 @@ export class MedicHistoryService {
     }
   }
 
-  async getMedicHistory(labId: number, all_data: boolean, patientId?: number, medicHistoryId?: number) {
+  async getMedicHistory(labId: number, includeData: boolean, patientId?: number, medicHistoryId?: number) {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
@@ -103,8 +103,8 @@ export class MedicHistoryService {
       }
 
       const selectFieldsToOmitInMedicTests = {
-        resultProperties: !all_data,
-        observation: !all_data,
+        resultProperties: !includeData,
+        observation: !includeData,
       }
   
       const where = {
