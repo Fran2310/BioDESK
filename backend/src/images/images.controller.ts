@@ -8,7 +8,13 @@ export class ImagesController {
 
   @Public()
   @Get(':filename')
-  getImage(@Param('filename') filename: string) {
+  async getImage(@Param('filename') filename: string) {
     return this.imagesService.getImage(filename);
+  }
+
+  @Public()
+  @Get('list/structure')
+  async getStructure() {
+    return this.imagesService.getDirectoryStructure();
   }
 }
