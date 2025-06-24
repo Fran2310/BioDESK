@@ -10,9 +10,11 @@ import { useAuthStore } from '@/stores/authStore';
 import { sessionNotFoundToast, labNotFoundToast } from '@/views/auth/toast';
 import router from '@/router';
 import { useLabStore } from '@/stores/labStore';
-import type { GetBaseQuerys } from './interfaces/global';
+import type { GetBaseQuerys, GetExtendQuerys } from './interfaces/global';
 import type { CreateRoleData } from './interfaces/role';
 import { mapPermissionsFormat, validateLogoFile } from './utils';
+import type { PatientData } from './interfaces/patient';
+import type { MedicHistoryData } from './interfaces/medicHistory';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API_PROD, // Cambia según el backend en uso
@@ -166,7 +168,15 @@ export const labApi = {
   },
 };
 
-export const userApi = {};
+export const userApi = {
+  /**
+   * Obtiene los datos del usuario actual logueado
+   * @returns Promesa de la respuesta del backend.
+   */
+  getMe() {
+    return api.get(`/users/me`, headerLabId());
+  },
+};
 
 /**
  * roleApi
@@ -252,8 +262,115 @@ export const auditApi = {};
 
 export const medicTestCatalogApi = {};
 
-export const medicHistoryApi = {};
+export const medicHistoryApi = {
+  /**
+   * Obtiene el historial médico de un paciente específico.
+   * @param patientId ID del paciente.
+   * @param includeData Si se debe incluir datos de los request de examenes del paciente o no (obligatorio).
+   * @returns Promesa de la respuesta del backend.
+   */
+  getMedicHistory(patientId: string, includeData: boolean) {
+    return api.get(`/patients/${patientId}/medic-history`, {
+      ...headerLabId(),
+      params: { includeData },
+    });
+  },
 
-export const patientApi = {};
+  /**
+   * Actualiza el historial médico de un paciente específico. se mandan solo los campos a actualizar, pero el campo a actualizar debe mandarse todos los datos nuevos, ya que re escribe el campo entero
+   * @param patientId ID del paciente.
+   * @param data Objeto con los campos array de string a actualizar: { allergies?, pathologies? }
+   * @returns Promesa de la respuesta del backend.
+   */
+  updateMedicHistory(patientId: string, data: MedicHistoryData) {
+    return api.patch(
+      `/patients/${patientId}/medic-history`,
+      data,
+      headerLabId()
+    );
+  },
+};
+
+export const patientApi = {
+  /**
+   * Obtiene los datos de un paciente específico por su id.
+   * @param id ID del paciente.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getPatientById(id: string) {
+    return api.get(`/patients/${id}`, headerLabId());
+  },
+
+  /**
+   * Obtiene los datos completos de un paciente incluyendo su historial médico detallado.
+   * @param patientId ID del paciente.
+   * @param includeData Si se debe incluir datos extendidos en el historial médico.
+   * @returns Promesa con los datos del paciente y su historial médico completo integrado.
+   */
+  async getPatientWithMedicHistory(patientId: string, includeData: boolean) {
+    try {
+      // Peticiones en paralelo para mejor rendimiento
+      const [patientResponse, medicHistoryResponse] = await Promise.all([
+        this.getPatientById(patientId),
+        medicHistoryApi.getMedicHistory(patientId, includeData),
+      ]);
+
+      const patientData = patientResponse.data;
+      const medicHistoryData = medicHistoryResponse.data;
+
+      // Remover el patientId del historial médico para evitar redundancia
+      const { patientId: _, ...cleanMedicHistory } = medicHistoryData;
+
+      // Integrar el historial médico completo en los datos del paciente
+      return {
+        ...patientData,
+        medicHistory: cleanMedicHistory,
+      };
+    } catch (error) {
+      // Re-lanza el error para que sea manejado por el componente que llama la funcion
+      throw error;
+    }
+  },
+
+  /**
+   * Obtiene la lista de pacientes del laboratorio.
+   * @param query Parámetros de búsqueda, paginación y el flag includeData.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getPatients(query: GetExtendQuerys) {
+    return api.get('/patients', {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+  /**
+   * Crea un nuevo paciente.
+   * @param data Objeto con los datos del paciente a registrar.
+   * @returns Promesa de la respuesta del backend.
+   */
+  createPatient(data: PatientData) {
+    return api.post('/patients', data, headerLabId());
+  },
+
+  /**
+   * Actualiza los datos de un paciente específico.
+   * @param id ID del paciente a actualizar.
+   * @param data Campos a actualizar (todos opcionales).
+   * @returns Promesa de la respuesta del backend.
+   */
+  updatePatient(id: string, data: Partial<PatientData>) {
+    return api.patch(`/patients/${id}`, data, headerLabId());
+  },
+
+  /**
+   * Elimina un paciente específico por su id.
+   * @param id ID del paciente a eliminar.
+   * @returns Promesa de la respuesta del backend.
+   * @warning Este metodo elimina directamente el historial medico * entero del paciente con todos sus requests de medic tests. Se * le debe notificar al usuario que esta operacion es peligrosa
+   */
+  deletePatient(id: string) {
+    return api.delete(`/patients/${id}`, headerLabId());
+  },
+};
 
 export const medicTestRequestApi = {};

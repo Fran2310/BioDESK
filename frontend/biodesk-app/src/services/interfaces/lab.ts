@@ -1,7 +1,9 @@
+import type { Status } from '../types/global.type';
+
 export interface LabData {
   id: number;
   name: string;
-  status: 'active' | 'inactive';
+  status: Status;
   rif: string;
 }
 

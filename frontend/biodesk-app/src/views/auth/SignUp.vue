@@ -19,15 +19,23 @@
     <VaButton @click="uploadLogo" :disabled="!logoFiles.length"
       >Subir Logo</VaButton
     >
-    <VaButton @click="testGetDataLab"> Probar </VaButton>
+    <VaButton @click="testGetPatientWithMedicHistory"> Probar </VaButton>
   </div>
 </template>
 
 <script setup lang="ts">
   import { ref } from 'vue';
   import { useLabStore } from '@/stores/labStore';
-  import { labApi, roleApi } from '@/services/api';
+  import {
+    labApi,
+    medicHistoryApi,
+    patientApi,
+    roleApi,
+    userApi,
+  } from '@/services/api';
   import type { CreateRoleData } from '@/services/interfaces/role';
+  import type { MedicHistoryData } from '@/services/interfaces/medicHistory';
+  import type { PatientData } from '@/services/interfaces/patient';
 
   const labIdInput = ref('');
   const logoFiles = ref<File[]>([]);
@@ -158,6 +166,130 @@
     } catch (error: any) {
       alert(
         'Error consultar datos del lab actual: ' + (error.message || error)
+      );
+      console.error(error);
+    }
+  }
+
+  async function testCreatePatient() {
+    try {
+      const data: PatientData = {
+        ci: 'v22345678',
+        name: 'pepillo',
+        lastName: 'Ripper',
+        secondName: 'Pedrolo',
+        secondLastName: 'Pa',
+        gender: 'MALE',
+        email: 'pepillo@example.com',
+        dir: 'Av. Principal #123',
+        phoneNums: ['04121234567', '02121234567'],
+        birthDate: new Date().toISOString(), // Fecha actual en formato ISO 8601
+      };
+      const response = await patientApi.createPatient(data);
+      alert('Paciente creado correctamente');
+      console.log('Respuesta:', response.data);
+    } catch (error: any) {
+      alert('Error al crear paciente: ' + (error.message || error));
+      console.error(error);
+    }
+  }
+
+  async function testGetPatientById() {
+    try {
+      // Cambia el ID por uno válido en tu base de datos
+      const response = await patientApi.getPatientById('10');
+      console.log('Paciente encontrado:', response.data);
+      alert('Consulta exitosa, revisa la consola.');
+    } catch (error: any) {
+      alert('Error al obtener paciente por ID: ' + (error.message || error));
+      console.error(error);
+    }
+  }
+
+  async function testGetPatients() {
+    try {
+      const response = await patientApi.getPatients({
+        offset: 0,
+        limit: 10,
+        includeData: false, // Obligatorio
+      });
+      console.log('Pacientes encontrados:', response.data);
+      alert('Consulta exitosa, revisa la consola.');
+    } catch (error: any) {
+      alert('Error al obtener pacientes: ' + (error.message || error));
+      console.error(error);
+    }
+  }
+
+  async function testUpdatePatient() {
+    try {
+      // Cambia el ID por uno válido y los campos que quieras actualizar
+      const response = await patientApi.updatePatient('11', {
+        name: 'pepillote',
+        email: 'nuevopepillote@example.com',
+      });
+      alert('Paciente actualizado correctamente');
+      console.log('Respuesta:', response.data);
+    } catch (error: any) {
+      alert('Error al actualizar paciente: ' + (error.message || error));
+      console.error(error);
+    }
+  }
+
+  async function testDeletePatient() {
+    try {
+      // Cambia el ID por uno válido
+      const response = await patientApi.deletePatient('11');
+      alert('Paciente eliminado correctamente');
+      console.log('Respuesta:', response.data);
+    } catch (error: any) {
+      alert('Error al eliminar paciente: ' + (error.message || error));
+      console.error(error);
+    }
+  }
+
+  async function testUpdateMedicHistory() {
+    try {
+      const data: MedicHistoryData = {
+        allergies: ['penicilina', 'acetaminofen'],
+      };
+      const response = await medicHistoryApi.updateMedicHistory('10', data);
+      alert(
+        'Revisar consola para datos del historial medico del paciente actualizado'
+      );
+      console.log('Respuesta:', response.data);
+    } catch (error: any) {
+      alert(
+        'Error al actualizar datos del historial medico del paciente' +
+          (error.message || error)
+      );
+      console.error(error);
+    }
+  }
+
+  async function testGetPatientWithMedicHistory() {
+    try {
+      const response = await patientApi.getPatientWithMedicHistory('10', true);
+      alert('Revisar consola para datos del paciente con historial medico');
+      console.log('Respuesta:', response);
+    } catch (error: any) {
+      alert(
+        'Error al consultar datos del paciente con historial medico' +
+          (error.message || error)
+      );
+      console.error(error);
+    }
+  }
+
+  async function testgetMe() {
+    try {
+      const response = await userApi.getMe();
+      alert('Revisar consola para datos del usuario actual');
+      console.log('Respuesta:', response.data);
+    } catch (error: any) {
+      alert(
+        'Error al consultar datos del usuario actual, inicie sesion: ' +
+          (error.message || error)
       );
       console.error(error);
     }

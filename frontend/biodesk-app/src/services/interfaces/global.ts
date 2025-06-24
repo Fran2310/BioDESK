@@ -4,3 +4,7 @@ export interface GetBaseQuerys {
   offset: number;
   limit: number;
 }
+
+export interface GetExtendQuerys extends GetBaseQuerys {
+  includeData: boolean;
+}
