@@ -11,6 +11,7 @@ import {
   Patch,
   ParseUUIDPipe,
   Delete,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './system-user/dto/create-user.dto';
@@ -66,6 +67,21 @@ export class UserController {
       'Devuelve una lista paginada de usuarios de laboratorio, con su UUID y datos de rol (si existe).',
   })
   @ApiQuery({
+    name: 'search-term',
+    required: false,
+    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    example: '',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search-fields',
+    required: false,
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    type: [String], // Esto indica que es un array de strings
+    isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+    example: ['ci', 'name', 'email'], // Ejemplo con valores
+  })
+  @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
@@ -88,6 +104,12 @@ export class UserController {
       'Indica si se deben incluir los permisos del rol en la respuesta',
   })
   async getDataLabUsers(
+    @Query('search-term') searchTerm,
+    @Query('search-fields', new ParseArrayPipe({ 
+      optional: true,
+      items: String,
+      separator: ','  
+    })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
     @Query('includePermissions', ParseBoolPipe) includePermissions = false,
@@ -99,6 +121,8 @@ export class UserController {
       includePermissions,
       offset,
       limit,
+      searchTerm,
+      searchFields,
     );
   }
 

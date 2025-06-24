@@ -98,9 +98,9 @@ export class RoleService {
     // Usar intelligentSearch o la búsqueda normal según si hay searchTerm
     const { results: data, total } = await intelligentSearch(
       prisma.role,
+      searchOptions,
       searchTerm,
       searchFields,
-      searchOptions
     )
 
     return {
@@ -138,9 +138,9 @@ export class RoleService {
   
     const { results: dataFromIntelligentSearch, total } = await intelligentSearch(
       prisma.labUser,
+      searchOptions,
       searchTerm,
       searchFields,
-      searchOptions
     );
   
     if (dataFromIntelligentSearch.length === 0) {

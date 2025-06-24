@@ -141,9 +141,9 @@ export class CatalogLabService {
       // Lógica principal: usar intelligentSearch
       const { results: data, total } = await intelligentSearch(
         medicTestCatalogModel, // 1. El modelo a buscar (MedicTestCatalog)
-        searchTerm,           // 2. El término de búsqueda
-        searchFields || defaultSearchFields, // 3. Los campos donde buscar
-        searchOptions         // 4. Las opciones (skip, take, include, orderBy)
+        searchOptions,         
+        searchTerm,           
+        searchFields || defaultSearchFields, 
       );
   
       return {

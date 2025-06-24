@@ -52,9 +52,9 @@ export class AuditService {
   
     const { results: partialLogs, total } = await intelligentSearch(
       prisma.actionHistory,
+      baseOptions,
       searchTerm,
       searchFields,
-      baseOptions
     );
   
     // Segundo: Cargar relaciones para los resultados

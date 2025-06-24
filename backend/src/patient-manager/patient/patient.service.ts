@@ -93,9 +93,9 @@ export class PatientService {
       // Usar intelligentSearch o la búsqueda normal según si hay searchTerm
       const { results: data, total } = await intelligentSearch(
             labPrisma.patient,
+            searchOptions,
             searchTerm,
             searchFields,
-            searchOptions
       )
 
       return {

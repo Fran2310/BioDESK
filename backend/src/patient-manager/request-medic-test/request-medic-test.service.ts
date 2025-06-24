@@ -118,9 +118,9 @@ export class RequestMedicTestService {
       // Lógica principal: usar intelligentSearch si hay un término de búsqueda
       const { results: data, total } = await intelligentSearch(
           requestMedicTest, // 1. El modelo a buscar
-            searchTerm,  // 2. El término de búsqueda
-            searchFields, // 3. Los campos donde buscar
-            searchOptions // 4. Las opciones (where, skip, take, omit, etc.)
+            searchOptions,  // 2. El término de búsqueda
+            searchTerm, // 3. Los campos donde buscar
+            searchFields // 4. Las opciones (where, skip, take, omit, etc.)
       )
 
       return {
@@ -182,9 +182,9 @@ export class RequestMedicTestService {
       // sin el filtro de medicHistoryId específico.
       const { results: data, total } = await intelligentSearch(
         requestMedicTestModel, // 1. El modelo a buscar (requestMedicTest directamente)
-        searchTerm,           // 2. El término de búsqueda
-        searchFields, // 3. Los campos donde buscar
-        searchOptions         // 4. Las opciones (skip, take, omit, orderBy, enumFields)
+        searchOptions,         // 2. El término de búsqueda 
+        searchTerm,            // 3. Los campos donde buscar
+        searchFields,          // 4. Las opciones (skip, take, omit, orderBy, enumFields)
       );
   
       return {

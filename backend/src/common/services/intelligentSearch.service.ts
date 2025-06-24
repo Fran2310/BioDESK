@@ -14,8 +14,6 @@ export async function intelligentSearch<T>(
     count: (args?: any) => Promise<number>;
     findMany: (args?: any) => Promise<T[]>;
   },
-  searchTerm?: string,
-  searchFields?: string[],
   options: {
     take?: number;
     skip?: number;
@@ -24,7 +22,9 @@ export async function intelligentSearch<T>(
     include?: Prisma.Args<T, 'findMany'>['include'];
     omit?: Record<string, boolean>;
     enumFields?: { [fieldName: string]: object };
-  } = {}
+  } = {},
+  searchTerm?: string,
+  searchFields?: string[],
 ): Promise<{ results: T[]; total: number }> {
   const { take = 20, skip = 0, where, enumFields, ...restOptions } = options;
 

@@ -15,6 +15,9 @@ import { SystemUserService } from './system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 import { MailService } from 'src/mail/mail.service';
+import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
 
 @Injectable()
 export class UserService {
@@ -28,6 +31,8 @@ export class UserService {
     private readonly mailService: MailService,
     private readonly roleService: RoleService,
     private readonly auditService: AuditService,
+    private readonly labDbManageService: LabDbManageService,
+    private readonly systemPrisma: SystemPrismaService,
   ) {}
 
   /**
@@ -51,41 +56,103 @@ export class UserService {
     includePermissions = false,
     offset = 0,
     limit = 20,
+    searchTerm?: string,
+    searchFields?: string[],
   ) {
-    const labUsers = await this.labUserService.getLabUsers(
-      labId,
-      includePermissions,
-      offset,
-      limit,
+    const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+    // ALERTA FUNCIÓN TOCHA Y DIFICIL DE MANTENER
+
+    // Opciones para intelligentSearch en labUserService
+    const labUsersSearchOptions = {
+      skip: offset,
+      take: limit,
+      omit: {
+        roleId: true
+      },
+      include: {
+        role: {
+          select: {
+            id: true,
+            role: true,
+            description: true,
+            ...(includePermissions ? { permissions: true } : {}),
+          },
+        },
+      },
+    };
+
+    // Obtener usuarios del laboratorio con filtro inteligente
+    const { results: labUsersResults } = await intelligentSearch(
+      labPrisma.labUser,
+      labUsersSearchOptions,
     );
 
-    const systemUsersMap =
-      await this.systemUserService.getAllSystemUsersByLabId(
-        labId,
+    // Obtener UUIDs de los usuarios del sistema encontrados
+    const systemUserUuids = labUsersResults.map(item => item.systemUserUuid);
+
+    // Si no hay usuarios en el laboratorio, devolver respuesta vacía
+    if (systemUserUuids.length === 0) {
+      return {
+        total: 0,
         offset,
         limit,
-      );
-
-    // Enriquecer datos
-    const enrichedData = labUsers.data.map((item) => {
-      const user = systemUsersMap.data[item.systemUserUuid];
-
-      return {
-        userData: user
-          ? {
-              ci: user.ci,
-              name: user.name,
-              lastName: user.lastName,
-              email: user.email,
-            }
-          : undefined,
-        ...item,
+        data: [],
       };
-    });
+    }
+
+    // Opciones para intelligentSearch en systemUserService
+    const systemUsersSearchOptions = {
+      skip: 0, // No necesitamos paginación aquí ya que filtramos por UUIDs
+      take: systemUserUuids.length,
+      where: {
+        uuid: { in: systemUserUuids },
+      }
+    };
+
+    // Obtener usuarios del sistema con filtro inteligente
+    const { results: systemUsersResults } = await intelligentSearch(
+      this.systemPrisma.systemUser,
+      systemUsersSearchOptions,
+      searchTerm,
+      searchFields,
+    );
+
+    // Crear mapa de usuarios del sistema para enriquecimiento
+    const systemUsersMap = systemUsersResults.reduce((acc, user) => {
+      acc[user.uuid] = user;
+      return acc;
+    }, {});
+
+    // Filtrar y enriquecer datos
+    const enrichedData = labUsersResults.map((labUser) => {
+      const systemUser = systemUsersMap[labUser.systemUserUuid];
+      
+      if (!systemUser) return null; // Filtrar usuarios sin systemUser
+
+      return { // Devuelve los dos users de las dos tablas diferentes
+        systemUser: { // Acá filtramos para no devolver datos sensibles
+          id: systemUser.id,
+          uuid: systemUser.uuid,
+          ci: systemUser.ci,
+          name: systemUser.name,
+          lastName: systemUser.lastName,
+          email: systemUser.email,
+          isActive: systemUser.isActive,
+          lastAccess: systemUser.lastAccess
+        },
+        labUser,
+      };
+    })
+    .filter(item => item !== null); // Eliminar nulls del array
+
+    // Actualizar el total real (puede ser menor si filtramos algunos registros)
+    const filteredTotal = enrichedData.length;
 
     return {
-      ...labUsers,
-      data: enrichedData,
+      total: filteredTotal,
+      offset,
+      limit,
+      data: enrichedData, // Ahora devolvemos los datos combinados
     };
   }
 
