@@ -105,6 +105,7 @@ export class MedicHistoryService {
       const selectFieldsToOmitInMedicTests = {
         resultProperties: true,
         observation: true,
+        medicHistoryId: true,
       }
   
       const where = {
