@@ -129,20 +129,28 @@ export const authApi = {
  */
 export const labApi = {
   /**
+   * Obtiene la lista de laboratorios asociados al usuario autenticado.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getUserLabs() {
+    return api.get('/labs');
+  },
+
+  /**
+   * Obtiene los datos del laboratorio actual, usa el labStorage.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getDataLab() {
+    return api.get('/labs/this', headerLabId());
+  },
+
+  /**
    * Crea un nuevo laboratorio.
    * @param data Objeto con los datos del laboratorio a registrar.
    * @returns Promesa de la respuesta del backend.
    */
   createLab(data: RegisterLabData) {
     return api.post('/labs', data);
-  },
-
-  /**
-   * Obtiene la lista de laboratorios asociados al usuario autenticado.
-   * @returns Promesa de la respuesta del backend.
-   */
-  getUserLabs() {
-    return api.get('/labs');
   },
 
   /**
@@ -244,7 +252,7 @@ export const auditApi = {};
 
 export const medicTestCatalogApi = {};
 
-export const medicHistorygApi = {};
+export const medicHistoryApi = {};
 
 export const patientApi = {};
 

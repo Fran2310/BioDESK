@@ -19,7 +19,7 @@
     <VaButton @click="uploadLogo" :disabled="!logoFiles.length"
       >Subir Logo</VaButton
     >
-    <VaButton @click="testGetRoleUsers"> Probar </VaButton>
+    <VaButton @click="testGetDataLab"> Probar </VaButton>
   </div>
 </template>
 
@@ -147,6 +147,18 @@
       console.log('usuarios con el rol:', response.data);
     } catch (error: any) {
       alert('Error consultar usuarios con el rol: ' + (error.message || error));
+      console.error(error);
+    }
+  }
+
+  async function testGetDataLab() {
+    try {
+      const response = await labApi.getDataLab();
+      console.log('datos del lab actual:', response.data);
+    } catch (error: any) {
+      alert(
+        'Error consultar datos del lab actual: ' + (error.message || error)
+      );
       console.error(error);
     }
   }
