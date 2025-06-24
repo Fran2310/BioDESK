@@ -16,6 +16,7 @@
         <!-- EMAIL -->
         <VaInput
           v-model="formData.email"
+          autocomplete="email"
           placeholder="xample@xample.com"
           :rules="[validator.required, validator.email]"
           class="mb-5 w-full"
@@ -29,16 +30,14 @@
         </VaInput>
 
         <!-- CONTRASEÑA -->
+        <!--  validator.hasUppercase,
+              validator.hasNumber,
+              validator.minLength,      -->
         <VaValue v-slot="isPasswordVisible" :default-value="false">
           <VaInput
             v-model="formData.password"
             placeholder="securePass123!"
-            :rules="[
-              validator.required,
-              validator.hasUppercase,
-              validator.hasNumber,
-              validator.minLength,
-            ]"
+            :rules="[validator.required]"
             :type="isPasswordVisible.value ? 'text' : 'password'"
             color="primary"
             class="mb-4 w-full"
@@ -93,34 +92,100 @@
   </Transition>
 </template>
 <script setup lang="ts">
-  import { ref, onMounted, reactive, computed } from 'vue';
-  import { useBreakpoint } from 'vuestic-ui';
-  import { validator } from '@/services/utils.js';
-
-  // Se usa para animar la entrada del componente
-  const showAnimate = ref(false);
-  onMounted(() => {
-    showAnimate.value = true;
-  });
-
-  /**PARA: Transition
-   * evaluar el tamaño de la pantalla para determinar si desplaza en x o en y
+  /**
+   * Login.vue
+   * Vista de inicio de sesión para BioDESK.
+   * - Permite al usuario autenticarse.
+   * - Si el usuario marca "Recordarme en este dispositivo", el email se guarda en localStorage para autocompletar en futuros inicios.
+   * - Utiliza animaciones de transición según el tamaño de pantalla.
+   * - Muestra notificaciones (toast) según el resultado del login.
    */
-  const breakpoint = useBreakpoint();
-  const transitionName = computed(() =>
-    breakpoint.lgUp ? 'slide-fade-x' : 'slide-fade-y'
-  );
+  import { ref, onMounted, reactive, computed } from 'vue';
+  import { useBreakpoint, useForm } from 'vuestic-ui';
+  import { validator } from '@/services/utils.js';
+  import { authApi } from '@/services/api';
+  import {
+    warningFieldsToast,
+    successLoginToast,
+    failedLoginToast,
+  } from './toast';
+  import { useAuthStore } from '@/stores/authStore';
 
+  // Store de autenticación global
+  const authStore = useAuthStore();
+
+  // Estado para animar la entrada del formulario
+  const showAnimate = ref(false);
+
+  // Estado reactivo para los datos del formulario
   const formData = reactive({
     email: '',
     password: '',
     keepLoggedIn: false,
   });
 
+  // Estado para mostrar el botón de carga
   const isLoading = ref(false);
 
+  // Validación del formulario
+  const { validate } = useForm('form');
+
+  // Breakpoint para animaciones responsivas
+  const breakpoint = useBreakpoint();
+  const transitionName = computed(() =>
+    breakpoint.lgUp ? 'slide-fade-x' : 'slide-fade-y'
+  );
+
+  /**
+   * Al montar el componente:
+   * - Activa la animación de entrada.
+   * - Si hay un email guardado en localStorage (por "Recordarme"), lo autocompleta.
+   */
+  onMounted(() => {
+    showAnimate.value = true;
+    const biodeskEmail = localStorage.getItem('biodeskEmail');
+    if (biodeskEmail) {
+      formData.email = biodeskEmail;
+      formData.keepLoggedIn = true;
+    }
+  });
+
+  /**
+   * Envía el formulario de login.
+   * - Valida los campos.
+   * - Llama al endpoint de login.
+   * - Guarda el token en la store.
+   * - Si "Recordarme" está activo, guarda el email en localStorage.
+   * - Muestra toasts según el resultado.
+   */
   const submit = async () => {
-    console.log('formulario enviado');
+    if (!validate()) {
+      // Bloquea el envío si hay errores y muestra un toast de advertencia
+      warningFieldsToast();
+      return;
+    }
+
+    isLoading.value = true;
+
+    try {
+      const response = await authApi.login({
+        email: formData.email,
+        password: formData.password,
+      });
+      successLoginToast();
+      authStore.setToken(response.data.access_token);
+
+      // Guardar email si keepLoggedIn está activo
+      if (formData.keepLoggedIn) {
+        localStorage.setItem('biodeskEmail', formData.email);
+      } else {
+        localStorage.removeItem('biodeskEmail');
+      }
+    } catch (error: any) {
+      failedLoginToast(error.message);
+    } finally {
+      isLoading.value = false;
+    }
   };
 </script>
 <style scoped>
