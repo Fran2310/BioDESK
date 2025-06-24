@@ -146,7 +146,7 @@ export class CatalogLabController {
   })
   @ApiBody({ type: UpdateMedicTestDto })
   async updateMedicTestCatalog(
-    @Query('medicTestCatalogId', ParseIntPipe) medicTestCatalogId: number,
+    @Param('medicTestCatalogId', ParseIntPipe) medicTestCatalogId: number,
     @Body() dto: UpdateMedicTestDto,
     @Request() req,
   ) {
@@ -168,7 +168,7 @@ export class CatalogLabController {
     description:
       'Elimina un examen del catálogo y todas sus propiedades y valores de referencia asociados en cascada. El ID del examen se pasa como parámetro de consulta.',
   })
-  @ApiQuery({
+  @ApiParam({
     name: 'medicTestCatalogId',
     description: 'ID del examen a eliminar',
     required: true,
@@ -176,7 +176,7 @@ export class CatalogLabController {
     example: 1,
   })
   async deleteMedicTestCatalog(
-    @Query('medicTestCatalogId', ParseIntPipe) medicTestCatalogId: number,
+    @Param('medicTestCatalogId', ParseIntPipe) medicTestCatalogId: number,
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']);
