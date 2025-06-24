@@ -39,6 +39,13 @@ export class UserService {
    * @param limit Límite de usuarios a retornar. Valor por defecto: 20.
    * @returns Un objeto con los usuarios del laboratorio y sus datos enriquecidos.
    */
+
+  async getDataUserMe(performedByUserUuid: string) {
+    const user = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+    const { password, salt, ...userWithoutSensitiveData } = user;
+    return userWithoutSensitiveData;
+  }
+
   async getDataLabUsers(
     labId: number,
     includePermissions = false,

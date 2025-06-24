@@ -30,6 +30,7 @@ import { CreateUserWithRoleIdDto } from './dto/create-user-with-role-id.dto';
 import { UpdateSystemUserDto } from './system-user/dto/update-system-user.dto';
 import { SystemUserDto } from './dto/system-user.dto';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
+import { SkipLabIdCheck } from 'src/auth/decorators/skip-lab-id-check.decorator';
 
 @ApiBearerAuth()
 @ApiTags('User')
@@ -37,6 +38,22 @@ import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('me')
+  @SkipLabIdCheck()
+  @ApiOperation({
+    summary: 'Obtener datos del usuario que hace la consulta',
+    description:
+      'Devuelve los datos del usuario propetario del token JWT',
+  })
+  async getDataUserMe(
+    @Request() req,
+  ) {
+    const performedByUserUuid = req.user.sub;
+    return this.userService.getDataUserMe(
+      performedByUserUuid
+    );
+  }
 
   @Get('mix')
   @CheckAbility(
