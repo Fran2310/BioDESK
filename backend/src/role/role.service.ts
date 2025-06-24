@@ -325,15 +325,11 @@ export class RoleService {
    */
   async deleteRoleById(
     prisma: LabPrismaService,
-    roleId: number,
     labId: number,
+    roleId: number,
     performedByUserUuid: string,
   ): Promise<{ message: string }> {
-    const role = await prisma.role.findUnique({ where: { id: roleId } });
-
-    if (!role) {
-      throw new NotFoundException(`Rol con ID ${roleId} no existe`);
-    }
+    const role = await this.validateRoleExists(labId, roleId)
 
     if (role.role === 'admin' || roleId === 1) {
       throw new BadRequestException('No puedes eliminar el rol "admin"');

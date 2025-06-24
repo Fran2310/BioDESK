@@ -258,10 +258,18 @@ export class RoleController {
     required: true,
     description: 'ID del rol a eliminar',
   })
-  async deleteRole(@Query('roleId', ParseIntPipe) roleId: number, @Request() req) {
+  async deleteRole(
+    @Param('roleId') roleId: number, 
+    @Request() req
+  ) {
     const labId = Number(req.headers['x-lab-id']);
     const prisma = await this.getPrismaClientFromLabId(labId);
 
-    return this.roleService.deleteRoleById(prisma, roleId, labId, req.user.sub);
+    return this.roleService.deleteRoleById(
+      prisma, 
+      labId, 
+      roleId, 
+      req.user.sub
+    );
   }
 }

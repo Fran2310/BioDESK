@@ -45,7 +45,7 @@ export class UserController {
   @ApiOperation({
     summary: 'Obtener datos del usuario que hace la consulta',
     description:
-      'Devuelve los datos del usuario propetario del token JWT',
+      'Devuelve los datos del usuario propetario del token JWT, el x-lab-id no hace falta',
   })
   async getDataUserMe(
     @Request() req,
