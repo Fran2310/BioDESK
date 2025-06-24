@@ -103,8 +103,8 @@ export class MedicHistoryService {
       }
 
       const selectFieldsToOmitInMedicTests = {
-        resultProperties: !includeData,
-        observation: !includeData,
+        resultProperties: true,
+        observation: true,
       }
   
       const where = {
@@ -115,9 +115,9 @@ export class MedicHistoryService {
       return await labPrisma.medicHistory.findFirst({
         where,
         include: {
-          requestMedicTests: {
+          requestMedicTests: includeData ? {
             omit: selectFieldsToOmitInMedicTests
-          },
+          } : false
         }
       })
 
