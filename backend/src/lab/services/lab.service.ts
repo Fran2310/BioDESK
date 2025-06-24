@@ -175,6 +175,30 @@ export class LabService {
         throw new InternalServerErrorException('Error al validar laboratorio');
       }
     }
+    async getThisLabById(labId: number) { // Esta función se puede pasar a otro lado
+      try {
+        const lab = await this.systemPrisma.lab.findUnique({
+          where: { 
+            id: Number(labId) 
+          },
+          omit: {
+            dbName: true,
+            logoPath: true,
+          }
+        });
+  
+        if (!lab) {
+          throw new NotFoundException(`Lab with ID ${labId} not found`);
+        }
+        return lab;
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw error;
+        }
+        this.logger.error(`Error al validar laboratorio: ${error.message}`);
+        throw new InternalServerErrorException('Error al validar laboratorio');
+      }
+    }
 
   /**
    * Revierte la creación de un laboratorio eliminando el registro correspondiente y borrando la base de datos asociada.

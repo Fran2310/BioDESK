@@ -24,11 +24,13 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
+import { LabService } from './services/lab.service';
 
 @Controller('labs')
 export class LabController {
   constructor(
     private readonly userService: UserService,
+    private readonly labService: LabService,
     private readonly manageLogoLabService: ManageLogoLabService,
   ) {}
 
@@ -75,6 +77,17 @@ export class LabController {
   async listLabs(@Request() req) {
     const performedByUserUuid = req.user.sub;
     return this.userService.getLabList(performedByUserUuid);
+  }
+
+  @Get('this')
+  @ApiBearerAuth()
+  @ApiHeaders([X_LAB_ID_HEADER])
+  @ApiOperation({ summary: 'Datos del laboratorio dado un x-lab-id' })
+  async getThisLabData(
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.labService.getThisLabById(labId);
   }
 
   @Post('logo')
