@@ -4,7 +4,7 @@ import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateMedicHistoryDto {
   @ApiProperty({
-    example: '',
+    example: ["ejemplo"],
     description: 'Alergias del paciente',
   })
   @IsString({ each: true })
@@ -12,7 +12,7 @@ export class CreateMedicHistoryDto {
   allergies: string[];
 
   @ApiProperty({
-    example: '',
+    example: ["ejemplo"],
     description: 'Patologías del paciente',
   })
   @IsString({ each: true })
