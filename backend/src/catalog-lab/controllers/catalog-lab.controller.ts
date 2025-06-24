@@ -13,6 +13,7 @@ import {
   Delete,
   Param,
   ParseArrayPipe,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -130,7 +131,7 @@ export class CatalogLabController {
     );
   }
 
-  @Patch(':medicTestCatalogId')
+  @Put(':medicTestCatalogId')
   @CheckAbility({ actions: 'update', subject: 'MedicTestCatalog' })
   @ApiOperation({
     summary: 'Actualizar un  examen en el catálogo del laboratorio',
