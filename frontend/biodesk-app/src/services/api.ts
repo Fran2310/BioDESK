@@ -169,6 +169,7 @@ export const labApi = {
   },
 };
 
+// en construccion, todavia faltan endpoints
 export const userApi = {
   /**
    * Obtiene los datos del usuario actual logueado
@@ -261,6 +262,17 @@ export const roleApi = {
 
 export const auditApi = {};
 
+/**
+ * medicTestCatalogApi
+ * Servicio para la gestión del catálogo de exámenes médicos del laboratorio.
+ *
+ * Métodos:
+ * - getMedicTestCatalogById: Obtiene un examen médico específico del catálogo por su ID.
+ * - getMedicTestCatalog: Obtiene el catálogo general de pruebas médicas del laboratorio, con soporte para queries de búsqueda y paginación.
+ * - createMedicTestCatalog: Crea un nuevo examen médico en el catálogo del laboratorio.
+ * - deleteMedicTestCatalog: Elimina un examen médico del catálogo por su ID.
+ * - putMedicTestCatalog: Actualiza un examen médico existente en el catálogo del laboratorio (re-escribe todos los campos).
+ */
 export const medicTestCatalogApi = {
   /**
    * Obtiene un examen médico específico del catálogo por su ID.
@@ -319,6 +331,14 @@ export const medicTestCatalogApi = {
   },
 };
 
+/**
+ * medicHistoryApi
+ * Servicio para la gestión del historial médico de los pacientes.
+ *
+ * Métodos:
+ * - getMedicHistory: Obtiene el historial médico de un paciente específico.
+ * - updateMedicHistory: Actualiza el historial médico de un paciente (re-escribe el campo completo).
+ */
 export const medicHistoryApi = {
   /**
    * Obtiene el historial médico de un paciente específico.
@@ -348,6 +368,18 @@ export const medicHistoryApi = {
   },
 };
 
+/**
+ * patientApi
+ * Servicio para la gestión de pacientes del laboratorio.
+ *
+ * Métodos:
+ * - getPatientById: Obtiene los datos de un paciente específico por su id.
+ * - getPatientWithMedicHistory: Obtiene los datos completos de un paciente, incluyendo su historial médico detallado.
+ * - getPatients: Obtiene la lista de pacientes del laboratorio, con soporte para queries de búsqueda y paginación.
+ * - createPatient: Crea un nuevo paciente en el laboratorio.
+ * - updatePatient: Actualiza los datos de un paciente específico.
+ * - deletePatient: Elimina un paciente específico por su id (incluye advertencia sobre la eliminación de historial médico y requests asociados).
+ */
 export const patientApi = {
   /**
    * Obtiene los datos de un paciente específico por su id.
