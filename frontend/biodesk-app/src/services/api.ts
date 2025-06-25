@@ -260,7 +260,26 @@ export const roleApi = {
   },
 };
 
-export const auditApi = {};
+/**
+ * auditApi
+ * Servicio para la consulta de logs de auditoría del laboratorio.
+ *
+ * Métodos:
+ * - getAuditLogs: Obtiene los logs de auditoría del laboratorio, con soporte para queries de búsqueda y paginación.
+ */
+export const auditApi = {
+  /**
+   * Obtiene los logs de auditoría del laboratorio.
+   * @param query Parámetros de búsqueda, paginación y el flag includeData.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getAuditLogs(query: GetExtendQuerys) {
+    return api.get('/audit/logs', {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+};
 
 /**
  * medicTestCatalogApi
