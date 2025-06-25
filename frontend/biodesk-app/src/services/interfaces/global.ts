@@ -10,3 +10,7 @@ export interface GetBaseQuerys {
 export interface GetExtendQuerys extends GetBaseQuerys {
   includeData: boolean;
 }
+
+export interface GetWithPermissionsQuerys extends GetBaseQuerys {
+  includePermissions: boolean;
+}

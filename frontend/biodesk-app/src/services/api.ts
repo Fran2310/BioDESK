@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { initToast } from './toast';
+import { sessionNotFoundToast, labNotFoundToast } from '@/views/auth/toasts';
 import type {
   RegisterData,
   LoginData,
@@ -7,15 +9,27 @@ import type {
 } from './interfaces/auth';
 import type { RegisterLabData } from './interfaces/lab';
 import { useAuthStore } from '@/stores/authStore';
-import { sessionNotFoundToast, labNotFoundToast } from '@/views/auth/toast';
+
 import router from '@/router';
 import { useLabStore } from '@/stores/labStore';
-import type { GetBaseQuerys, GetExtendQuerys } from './interfaces/global';
+import type {
+  GetBaseQuerys,
+  GetExtendQuerys,
+  GetWithPermissionsQuerys,
+} from './interfaces/global';
 import type { CreateRoleData } from './interfaces/role';
 import { mapPermissionsFormat, validateLogoFile } from './utils';
 import type { PatientData } from './interfaces/patient';
 import type { MedicHistoryData } from './interfaces/medicHistory';
 import type { CreateMedicTestCatalogData } from './interfaces/medicTestCatalog';
+import type {
+  AssignRoleToUserQuery,
+  AssignUserToLabData,
+  CreateUserWithRoleData,
+  CreateUserWithRoleIdData,
+  GetUserQuerys,
+  UpdateSystemUserData,
+} from './interfaces/user';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API_PROD, // Cambia según el backend en uso
@@ -169,7 +183,22 @@ export const labApi = {
   },
 };
 
-// en construccion, todavia faltan endpoints
+/**
+ * userApi
+ * Servicio para la gestión y consulta de usuarios del laboratorio y del sistema central.
+ *
+ * Métodos:
+ * - getMe: Obtiene los datos del usuario actualmente logueado.
+ * - getUsersMix: Obtiene la lista de usuarios con soporte para búsqueda, paginación y permisos.
+ * - getSystemUser: Obtiene un usuario del sistema por uuid, email o ci (al menos uno requerido).
+ * - createUserWithRole: Crea un nuevo usuario junto con un rol personalizado en el laboratorio.
+ * - createUserWithRoleId: Crea un nuevo usuario y lo asocia a un rol existente por su roleId.
+ * - assignUserToLab: Asigna un usuario existente a un laboratorio con un rol específico (requiere al menos uuid, email o ci).
+ * - assignRoleToUser: Asigna un nuevo rol a un usuario existente en el laboratorio.
+ * - updateSystemUser: Actualiza los datos de un usuario del sistema por su uuid (solo los campos enviados en el body).
+ * - deleteSoftUser: Elimina (soft delete) un usuario del laboratorio por su UUID.
+ * - deleteHardUser: Elimina (hard delete) un usuario del laboratorio y del sistema central por su UUID.
+ */
 export const userApi = {
   /**
    * Obtiene los datos del usuario actual logueado
@@ -177,6 +206,125 @@ export const userApi = {
    */
   getMe() {
     return api.get(`/users/me`, headerLabId());
+  },
+
+  /**
+   * Obtiene la lista de usuarios con soporte para búsqueda, paginación y permisos.
+   * @param query Parámetros de búsqueda, paginación y permisos.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getUsersMix(query: GetWithPermissionsQuerys) {
+    return api.get('/users/mix', {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+
+  /**
+   * Obtiene un usuario del sistema por uuid, email o ci (al menos uno requerido).
+   * @param query Objeto con al menos uno de los campos: uuid, email o ci.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getSystemUser(query: GetUserQuerys) {
+    // Validación: al menos uno de los campos debe estar presente
+    if (!query.uuid && !query.email && !query.ci) {
+      const title = 'Error de busqueda';
+      const message =
+        'Debes proporcionar al menos uno de los siguientes campos: uuid, email o ci';
+      const color = 'warning';
+      initToast(title, message, color);
+      return;
+    }
+    return api.get('/users/system', {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+
+  /**
+   * Crea un nuevo usuario junto con un rol personalizado en el laboratorio.
+   * @param data Objeto con los datos del usuario y del rol a crear.
+   * @returns Promesa de la respuesta del backend.
+   */
+  createUserWithRole(data: CreateUserWithRoleData) {
+    return api.post('/users/mix/create-with-role', data, headerLabId());
+  },
+
+  /**
+   * Crea un nuevo usuario y lo asocia a un rol existente por su roleId.
+   * @param data Objeto con los datos del usuario y el roleId.
+   * @returns Promesa de la respuesta del backend.
+   */
+  createUserWithRoleId(data: CreateUserWithRoleIdData) {
+    return api.post('/users/mix/create-with-role-id', data, headerLabId());
+  },
+
+  /**
+   * Asigna un usuario existente a un laboratorio con un rol específico.
+   * Se debe enviar al menos uno de los siguientes campos: uuid, email o ci.
+   * @param data Objeto con los datos del usuario (uuid, email o ci) y el roleId.
+   * @returns Promesa de la respuesta del backend.
+   */
+  assignUserToLab(data: AssignUserToLabData) {
+    if (!data.uuid && !data.email && !data.ci) {
+      const title = 'Error de asignación';
+      const message =
+        'Debes proporcionar al menos uno de los siguientes campos: uuid, email o ci';
+      const color = 'warning';
+      initToast(title, message, color);
+      return;
+    }
+    return api.post('/users/lab/assign-user-to-lab', data, headerLabId());
+  },
+
+  /**
+   * Asigna un nuevo rol a un usuario existente en el laboratorio.
+   * @param query Objeto con uuid del usuario y roleId a asignar.
+   * @returns Promesa de la respuesta del backend.
+   */
+  assignRoleToUser(query: AssignRoleToUserQuery) {
+    return api.patch('/users/lab/assign-role', null, {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+
+  /**
+   * Actualiza los datos de un usuario del sistema por su uuid.
+   * Solo se actualizan los campos enviados en el body.
+   * @param uuid UUID del usuario a actualizar.
+   * @param data Campos a actualizar (todos opcionales).
+   * @returns Promesa de la respuesta del backend.
+   */
+  updateSystemUser(uuid: string, data: UpdateSystemUserData) {
+    return api.patch('/users/system', data, {
+      ...headerLabId(),
+      params: { uuid },
+    });
+  },
+
+  /**
+   * Elimina (soft delete) un usuario del laboratorio por su UUID.
+   * @param userUuid UUID del usuario a eliminar.
+   * @returns Promesa de la respuesta del backend.
+   */
+  deleteSoftUser(userUuid: string) {
+    return api.delete('/users/lab/soft-delete', {
+      ...headerLabId(),
+      params: { userUuid },
+    });
+  },
+
+  /**
+   * Elimina (hard delete) un usuario del laboratorio Y DEL SISTEMA CENTRAL por su UUID.
+   * @param userUuid UUID del usuario a eliminar.
+   * @returns Promesa de la respuesta del backend.
+   */
+  deleteHardUser(userUuid: string) {
+    return api.delete('/users/system/hard-delete', {
+      ...headerLabId(),
+      params: { userUuid },
+    });
   },
 };
 

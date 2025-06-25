@@ -1,4 +1,4 @@
-import { errorFileUploadToast } from '@/views/auth/toast';
+import { errorFileUploadToast } from '@/views/auth/toasts';
 
 export const validator = {
   email: (v: string) => {

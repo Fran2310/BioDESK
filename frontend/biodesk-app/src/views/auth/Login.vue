@@ -108,7 +108,7 @@
     warningFieldsToast,
     successLoginToast,
     failedLoginToast,
-  } from './toast';
+  } from './toasts';
   import { useAuthStore } from '@/stores/authStore';
 
   // Store de autenticación global
