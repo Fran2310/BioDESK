@@ -110,9 +110,13 @@
     failedLoginToast,
   } from './toasts';
   import { useAuthStore } from '@/stores/authStore';
+  import { useLabStore } from '@/stores/labStore';
 
   // Store de autenticación global
   const authStore = useAuthStore();
+
+  // Store de laboratorio global
+  const labStore = useLabStore();
 
   // Estado para animar la entrada del formulario
   const showAnimate = ref(false);

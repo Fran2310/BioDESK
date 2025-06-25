@@ -27,6 +27,12 @@ const router = createRouter({
           // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
           component: () => import('@/views/auth/ForgotPassword.vue'),
         },
+        {
+          path: 'select-lab',
+          name: 'SelectLab',
+          // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
+          component: () => import('@/views/auth/SelectLab.vue'),
+        },
         // Aquí se agregan mas hijos de auth layout
       ],
     },

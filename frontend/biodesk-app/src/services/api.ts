@@ -30,6 +30,11 @@ import type {
   GetUserQuerys,
   UpdateSystemUserData,
 } from './interfaces/user';
+import type {
+  CreateMedicTestRequestData,
+  PatchMedicTestRequestData,
+} from './interfaces/medicTestRequest';
+import type { State } from './types/global.type';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API_PROD, // Cambia según el backend en uso
@@ -629,4 +634,98 @@ export const patientApi = {
   },
 };
 
-export const medicTestRequestApi = {};
+/**
+ * medicTestRequestApi
+ * Servicio para la gestión de solicitudes de exámenes médicos del laboratorio.
+ *
+ * Métodos:
+ * - getMedicTestRequestById: Obtiene una solicitud de examen médico por su ID.
+ * - getMedicTestRequests: Obtiene la lista de solicitudes de exámenes médicos del laboratorio, con soporte para búsqueda, paginación y datos extendidos.
+ * - getMedicTestRequestsByMedicHistoryId: Obtiene la lista de solicitudes de exámenes médicos asociadas a un historial médico específico, con soporte para búsqueda y paginación.
+ * - createMedicTestRequest: Crea una nueva solicitud de examen médico en el laboratorio.
+ * - updateMedicTestRequest: Actualiza una solicitud de examen médico existente en el laboratorio (los campos enviados re-escriben completamente el valor correspondiente).
+ * - updateMedicTestRequestState: Actualiza el estado de una solicitud de examen médico.
+ * - deleteMedicTestRequest: Elimina una solicitud de examen médico por su ID.
+ */
+export const medicTestRequestApi = {
+  /**
+   * Obtiene una solicitud de examen médico por su ID.
+   * @param id ID de la solicitud de examen médico.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getMedicTestRequestById(id: string) {
+    return api.get(`/request-medic-tests/${id}`, headerLabId());
+  },
+
+  /**
+   * Obtiene la lista de solicitudes de exámenes médicos del laboratorio.
+   * @param query Parámetros de búsqueda, paginación y el flag includeData.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getMedicTestRequests(query: GetExtendQuerys) {
+    return api.get('/request-medic-tests', {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+
+  /**
+   * Obtiene la lista de solicitudes de exámenes médicos asociadas a un historial médico específico.
+   * @param medicHistoryId ID del historial médico.
+   * @param query Parámetros de búsqueda, paginación y el flag includeData.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getMedicTestRequestsByMedicHistoryId(
+    medicHistoryId: string,
+    query: GetExtendQuerys
+  ) {
+    return api.get(`/${medicHistoryId}/request-medic-tests/`, {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+
+  /**
+   * Crea una nueva solicitud de examen médico en el laboratorio.
+   * @param data Objeto con los datos de la solicitud de examen médico.
+   * @returns Promesa de la respuesta del backend.
+   */
+  createMedicTestRequest(data: CreateMedicTestRequestData) {
+    return api.post('/request-medic-tests', data, headerLabId());
+  },
+
+  /**
+   * Actualiza una solicitud de examen médico existente en el laboratorio.
+   * Los campos enviados en el body re-escriben completamente el valor del campo correspondiente en la base de datos.
+   * Por ejemplo, si se envía resultProperties, debe incluir todos los pares clave-valor que se desean conservar y/o actualizar, ya que los que no se incluyan serán re escritos.
+   * @param id ID de la solicitud de examen médico a actualizar.
+   * @param data Objeto con los campos a actualizar (todos opcionales, pero cada campo enviado re-escribe el valor completo).
+   * @returns Promesa de la respuesta del backend.
+   */
+  updateMedicTestRequest(id: string, data: PatchMedicTestRequestData) {
+    return api.patch(`/request-medic-tests/${id}`, data, headerLabId());
+  },
+
+  /**
+   * Actualiza el estado de una solicitud de examen médico.
+   * @param id ID de la solicitud de examen médico.
+   * @param state Nuevo estado a establecer (PENDING, IN_PROCESS, TO_VERIFY, CANCELED, COMPLETED).
+   * @returns Promesa de la respuesta del backend.
+   */
+  updateMedicTestRequestState(id: string, state: State) {
+    return api.patch(
+      `/request-medic-tests/${id}/${state}`,
+      null,
+      headerLabId()
+    );
+  },
+
+  /**
+   * Elimina una solicitud de examen médico por su ID.
+   * @param id ID de la solicitud de examen médico a eliminar.
+   * @returns Promesa de la respuesta del backend.
+   */
+  deleteMedicTestRequest(id: string) {
+    return api.delete(`/request-medic-tests/${id}`, headerLabId());
+  },
+};
