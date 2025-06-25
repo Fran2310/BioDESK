@@ -63,7 +63,7 @@ const fillForm = () => {
     form.value.supplies = props.exam.supplies || []
     suppliesInput.value = form.value.supplies.join(', ')
     form.value.propertiesArr = props.exam.properties
-      ? Object.entries(props.exam.properties).map(([key, value]) => ({ key, value }))
+      ? Object.entries(props.exam.properties).map(([key, value]) => ({ key, value: String(value) }))
       : [{ key: '', value: '' }]
   } else {
     form.value.name = ''

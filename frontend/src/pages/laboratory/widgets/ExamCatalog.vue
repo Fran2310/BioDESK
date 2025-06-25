@@ -31,9 +31,10 @@ const { exams, loadExams } = useExams()
 loadExams()
 
 const filteredExams = computed(() => {
-  if (!props.filter) return exams.value
+  const filter = props.filter?.toLowerCase() || ''
+  if (!filter) return exams.value
   return exams.value.filter(exam =>
-    exam.name.toLowerCase().includes(props.filter.toLowerCase())
+    exam.name.toLowerCase().includes(filter)
   )
 })
 </script>

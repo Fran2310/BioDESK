@@ -13,7 +13,7 @@
             clearable
           />
           <va-spacer />
-          <va-button color="success" @click="showAddModal = true">
+          <va-button color="success" @click="examForm.showAddModal = true">
             Agregar examen
           </va-button>
         </div>
@@ -55,13 +55,13 @@
     </va-card>
 
     <!-- Modal para agregar/editar examen -->
-    <va-modal v-model="showAddModal" hide-default-actions>
+    <va-modal v-model="examForm.showAddModal" hide-default-actions>
       <va-card>
         <va-card-title>
           {{ isEditing ? 'Editar examen' : 'Agregar nuevo examen' }}
         </va-card-title>
         <va-card-content>
-          <form @submit.prevent="isEditing ? updateExam() : addExam()">
+          <form @submit.prevent="isEditing ? updateExam(fetchExams,showError) : addExam(fetchExams,showError)">
             <va-input
               v-model="newExam.name"
               label="Nombre"
@@ -74,9 +74,9 @@
               class="mb-3"
             />
             
-            <div class="insumos-section">
+            <div class="supplies-section">
             <va-input 
-              v-model="newInsumo" 
+              v-model="examForm.newSupply" 
               label="Agregar Insumo"
               placeholder="Escribe un insumo y presiona agregar"
             />
@@ -84,7 +84,7 @@
             <va-button
               color="primary"
               size="small"
-              @click="addInsumo"
+              @click="addSupplies"
               class="custom-button"
               icon="add"
             >
@@ -93,13 +93,14 @@
 
             <!-- Lista de insumos -->
             <ul>
-              <li v-for="(insumo, index) in insumos" :key="index">
-                {{ insumo }}
+              <li v-for="(supply, index) in examForm.supplies" :key="index">
+                {{ supply }}
                 <va-button 
                   icon="close" 
                   color="danger" 
                   size="small" 
-                  @click="removeInsumo(index)" 
+                  @click="removeSupply(index)"
+                  type="button"
                 />
               </li>
             </ul>
@@ -149,7 +150,7 @@
               <va-button color="primary" size="small" @click="openModalForNewReference" class="custom-button" icon="add">
                 Agregar Propiedad
               </va-button>
-
+    
               <!-- Modal para ingresar/editar nombre y unidad -->
               <va-modal v-model="showModal" hide-default-actions>
                 <va-card>
@@ -161,8 +162,8 @@
                     </div>
                   </va-card-content>
                   <va-card-actions class="flex justify-end">
-                    <va-button color="secondary" @click="showModal = false">Cancelar</va-button>
-                    <va-button color="success" @click="saveReference">Guardar</va-button>
+                    <va-button color="secondary" @click="closeModal">Cancelar</va-button>
+                    <va-button color="success" @click="handleSaveReference">Guardar</va-button>
                   </va-card-actions>
                 </va-card>
               </va-modal>
@@ -180,7 +181,7 @@
                   </va-card-content>
                   <va-card-actions class="flex justify-end">
                     <va-button color="secondary" @click="showVariationModal = false">Cancelar</va-button>
-                    <va-button color="success" @click="saveVariation">Guardar</va-button>
+                    <va-button color="success" @click="saveVariation" type="submit">Guardar</va-button>
                   </va-card-actions>
                 </va-card>
               </va-modal>
@@ -206,332 +207,96 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { VaInput, VaDataTable, VaButton, VaModal, VaCard, VaCardTitle, VaCardContent, VaSpacer, VaTextarea } from 'vuestic-ui'
-import { fetchMedicTests, addMedicTest, updateMedicTest, deleteMedicTest } from '../../services/api';
-import { useAuthStore } from '../../stores/authStore';
+import { onMounted } from 'vue'
+import {
+  VaInput, VaDataTable, VaButton, VaModal, VaCard,
+  VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
+} from 'vuestic-ui'
 
-const authStore = useAuthStore();
-const labId = authStore.currentLabId;
-const token = authStore.token;
+import { computed } from 'vue'
 
-interface MedicTestCatalog {
-  id: number
-  name: string
-  description?: string
-  properties?: any
-  supplies: string[]
-  price: number
-}
+import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
+
+const {
+  // Tabla y búsqueda
+  columns,
+  filteredExams,
+  tableState,
+  // Modal y formulario de examen
+  examForm,
+  addExam,
+  editExam,
+  updateExam,
+  deleteExam,
+  labId,
+  token,
+  closeModal,
+  // Insumos
+  addSupplies,
+  removeSupply,
+  // Propiedades
+  addProperty,
+  removeProperty,
+  // Referencias y variaciones
+  referenceModal,
+  removeVariation,
+  saveVariation,
+  openModalForNewReference,
+  openModalForNewVariation,
+  saveReference,
+  removeReference,
+  editVariation,
+  // Otros
+  viewDetails,
+  showError,
+  printLabId,
+  fetchExams,
+} = useLaboratoryCatalog()
 
 
-//para el manejo de referencias
-const referenceValues = ref([
-  { ageGroup: "adult", sex: "any", value: "120-140" },
-]); // Lista de valores de referencia
 
 
+// Mapear los estados internos a los usados en el template
+const search = tableState.search
+const loading = tableState.loading
+const supplies = examForm.supplies
+const newSupply = examForm.newSupply
+const isEditing = examForm.isEditing
 
-const insumos = ref([]); // Lista de insumos
-const newInsumo = ref(""); // Nuevo insumo
-
-function addInsumo() {
-  if (newInsumo.value && insumos.value.length < 10) {
-    insumos.value.push(newInsumo.value.trim());
-    newInsumo.value = "";
-  }
-}
-
-function removeInsumo(index) {
-  insumos.value.splice(index, 1);
-}
-
-const search = ref('')
-const exams = ref<MedicTestCatalog[]>([])
-const loading = ref(false)
-const showAddModal = ref(false)
-const isEditing = ref(false)
-const editingExamId = ref<number | null>(null)
-
-const columns = [
-  { key: 'id', label: 'ID', sortable: true },
-  { key: 'name', label: 'Nombre', sortable: true },
-  { key: 'description', label: 'Descripción' },
-  { key: 'price', label: 'Precio', sortable: true },
-  { key: 'actions', label: 'Acciones' },
-]
-
-const filteredExams = computed(() => {
-  if (!search.value) return exams.value
-  return exams.value.filter(e =>
-    e.name.toLowerCase().includes(search.value.toLowerCase()) ||
-    (e.description && e.description.toLowerCase().includes(search.value.toLowerCase()))
-  )
+const newExam = computed({
+  get: () => examForm.newExam,
+  set: v => examForm.newExam = v
 })
 
-const propertiesError = ref('')
+// Referencias para modales y propiedades
+const referenceData = referenceModal.referenceData
+const showModal = referenceModal.showModal
+const showVariationModal = referenceModal.showVariationModal
+const selectedReference = referenceModal.selectedReference
+const isEditingReference = referenceModal.isEditingReference
+const selectedReferenceIndex = referenceModal.selectedReferenceIndex
+const selectedVariation = referenceModal.selectedVariation
+const selectedVariationIndex = referenceModal.selectedVariationIndex
+const isEditingVariation = referenceModal.isEditingVariation
+const ageGroups = ['CHILD', 'ADULT', 'ANY']
+const genderOptions = ['MALE', 'FEMALE', 'ANY']
 
-const newExam = ref({
-  name: '',
-  description: '',
-  suppliesText: '',
-  price: 0,
-  propertiesText: '',
+
+
+function handleSaveReference() {
+  const idx = saveReference()
+  if (typeof idx === 'number') {
+    // Espera a que el modal de referencia se cierre antes de abrir el de variación
+    setTimeout(() => {
+      openModalForNewVariation(idx)
+    }, 0)
+  }
+}
+
+onMounted(() => {
+  fetchExams()
 })
 
-const propertiesPairs = ref<{ key: string; value: string }[]>([])
-
-function addProperty() {
-  propertiesPairs.value.push({ key: '', value: '' })
-}
-
-function removeProperty(idx: number) {
-  propertiesPairs.value.splice(idx, 1)
-}
-
-function propertiesFromPairs() {
-  const obj: Record<string, any> = {}
-  for (const { key, value } of propertiesPairs.value) {
-    if (key.trim()) obj[key.trim()] = value
-  }
-  return Object.keys(obj).length ? obj : undefined
-}
-
-function pairsFromProperties(obj: any) {
-  if (!obj || typeof obj !== 'object') return []
-  return Object.entries(obj).map(([key, value]) => ({
-    key,
-    value: typeof value === 'object' ? JSON.stringify(value) : String(value),
-  }))
-}
-
-
-function closeModal() {
-  showAddModal.value = false
-  isEditing.value = false
-  editingExamId.value = null
-  propertiesError.value = ''
-  newExam.value = { name: '', description: '', suppliesText: '', price: 0, propertiesText: '' }
-  propertiesPairs.value = []
-  insumos.value = [] // Limpia la lista de insumos
-}
-
-const fetchExams = async () => {
-  if (!authData.labId || !authData.token) {
-    console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
-    return;
-  }
-
-  loading.value = true;
-  try {
-    exams.value = await fetchMedicTests(labId, token);
-  } catch (error) {
-    console.error(error);
-    showError('Ocurrió un error al obtener los exámenes.');
-  } finally {
-    loading.value = false;
-  }
-};
-
-const addExam = async () => {
-  if (!labId || !token) {
-    console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
-    return;
-  }
-
-  const test = {
-    name: newExam.value.name.trim(),
-    description: newExam.value.description.trim(),
-    price: newExam.value.price,
-    supplies: insumos.value.map((insumo) => insumo.trim()),
-    properties: referenceData.value.map((ref) => ({
-      name: ref.name.trim(),
-      unit: ref.unit.trim(),
-      valuesRef: ref.variations.map((variation) => ({
-        range: variation.range.trim(),
-        gender: variation.gender.trim(),
-        ageGroup: variation.ageGroup.trim(),
-      })),
-    })),
-  };
-
-  console.log('Objeto enviado al backend:', test);
-
-  try {
-    await addMedicTest(labId, test, token); // Pasa el ID del laboratorio y el token
-    await fetchExams(); // Refresca la lista de exámenes
-    closeModal(); // Cierra el modal
-  } catch (error) {
-    console.error('Error al agregar el examen:', error);
-    showError('Ocurrió un error al agregar el examen.');
-  }
-};
-
-
-function editExam(row: any) {
-  console.log('Editando examen:', row); // Para depuración
-  isEditing.value = true;
-  editingExamId.value = row.rowData.id; // Accede al ID desde rowData
-  newExam.value = {
-    name: row.rowData.name,
-    description: row.rowData.description || '',
-    price: row.rowData.price,
-  };
-  insumos.value = [...row.rowData.supplies]; // Inicializa la lista de insumos correctamente
-  referenceData.value = row.rowData.properties.map(prop => ({
-    name: prop.name,
-    unit: prop.unit,
-    variations: prop.valuesRef.map(valueRef => ({
-      range: valueRef.range,
-      gender: valueRef.gender,
-      ageGroup: valueRef.ageGroup,
-    })),
-  }));
-  showAddModal.value = true;
-}
-
-    const updateExam = async () => {
-      if (!labId || editingExamId.value === null) {
-        console.error('No se ha seleccionado un laboratorio o no hay examen para editar.');
-        return;
-      }
-
-      const test = {
-        name: newExam.value.name,
-        description: newExam.value.description,
-        price: newExam.value.price,
-        supplies: [...insumos.value],
-        properties: referenceData.value.map(ref => ({
-          name: ref.name,
-          unit: ref.unit,
-          valuesRef: ref.variations.map(variation => ({
-            range: variation.range,
-            gender: variation.gender,
-            ageGroup: variation.ageGroup,
-          })),
-        })),
-      };
-
-      try {
-        await updateMedicTest(labId, editingExamId.value, test); // Pasa el ID del laboratorio y el examen
-        await fetchExams(); // Refresca la lista
-        closeModal();
-      } catch (error) {
-        console.error('Error al actualizar el examen:', error);
-        showError('Ocurrió un error al actualizar el examen.');
-      }
-    };
-
-
-    const deleteExam = async (row: any) => {
-  if (!labId) {
-    console.error('No se ha seleccionado un laboratorio.');
-    return;
-  }
-
-  try {
-    await deleteMedicTest(labId, row.rowData.id); // Pasa el ID del laboratorio y el examen
-    await fetchExams(); // Refresca la lista
-  } catch (error) {
-    console.error('Error al eliminar el examen:', error);
-    showError('Ocurrió un error al eliminar el examen.');
-  }
-};
-
-function viewDetails(row: MedicTestCatalog) {
-  // Aquí puedes abrir un modal o navegar a una página de detalles
-  alert(`Detalles de: ${row.name}`)
-}
-
-//modal para agregar valores de referencia
-
-const showModal = ref(false);
-const showVariationModal = ref(false);
-const isEditingReference = ref(false);
-const isEditingVariation = ref(false);
-const referenceData = ref([]);
-const selectedReference = ref({ name: "", unit: "", variations: [] });
-const selectedVariation = ref({ ageGroup: "", gender: "", range: "" });
-const selectedReferenceIndex = ref(null);
-const selectedVariationIndex = ref(null);
-
-const ageGroups = ["CHILD", "ADULT", "ANY"];
-const genderOptions = ["MALE", "FEMALE", "ANY"];
-
-const showError = (message: string) => {
-  alert(message); 
-};
-
-function removeVariation(referenceIndex, variationIndex) {
-  referenceData.value[referenceIndex].variations.splice(variationIndex, 1);
-}
-
-function openModalForNewReference() {
-  selectedReference.value = { name: "", unit: "", variations: [] };
-  isEditingReference.value = false;
-  showModal.value = true;
-}
-
-function editReference(index) {
-  selectedReferenceIndex.value = index;
-  selectedReference.value = { ...referenceData.value[index] };
-  isEditingReference.value = true;
-  showModal.value = true;
-}
-
-function saveReference() {
-  if (isEditingReference.value) {
-    referenceData.value[selectedReferenceIndex.value] = { ...selectedReference.value };
-  } else {
-    referenceData.value.push({ ...selectedReference.value });
-  }
-  showModal.value = false;
-}
-
-function removeReference(index) {
-  referenceData.value.splice(index, 1);
-}
-
-function openModalForNewVariation(referenceIndex) {
-  selectedReferenceIndex.value = referenceIndex;
-  selectedVariation.value = { ageGroup: "", gender: "", range: "" };
-  isEditingVariation.value = false;
-  showVariationModal.value = true;
-}
-
-function editVariation(referenceIndex, variationIndex) {
-  selectedReferenceIndex.value = referenceIndex;
-  selectedVariationIndex.value = variationIndex;
-  selectedVariation.value = { ...referenceData.value[referenceIndex].variations[variationIndex] };
-  isEditingVariation.value = true;
-  showVariationModal.value = true;
-}
-
-function saveVariation() {
-  if (isEditingVariation.value) {
-    referenceData.value[selectedReferenceIndex.value].variations[selectedVariationIndex.value] = { ...selectedVariation.value };
-  } else {
-    referenceData.value[selectedReferenceIndex.value].variations.push({ ...selectedVariation.value });
-  }
-  showVariationModal.value = false;
-}
-
-function printLabId() {
-  if (!labId) {
-    console.error('No se ha seleccionado un laboratorio.');
-    return;
-  }
-  console.log('ID del laboratorio actual:', labId);
-}
-
-onMounted(fetchExams)
-
-function getAuthData() {
-  return {
-    labId: localStorage.getItem('Id'),
-    token: localStorage.getItem('token'),
-  };
-}
 </script>
 
 
