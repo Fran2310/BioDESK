@@ -1,5 +1,7 @@
+import type { SearchField } from '../types/searchFields.type';
+
 export interface GetBaseQuerys {
-  'search-fields'?: string;
+  'search-fields'?: SearchField[];
   'search-term'?: string;
   offset: number;
   limit: number;

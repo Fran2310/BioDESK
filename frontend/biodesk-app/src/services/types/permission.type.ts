@@ -1,3 +1,4 @@
+// @\services\types\permission.type.ts
 export type RoleAction =
   | 'create'
   | 'read'

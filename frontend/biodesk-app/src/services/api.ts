@@ -15,6 +15,7 @@ import type { CreateRoleData } from './interfaces/role';
 import { mapPermissionsFormat, validateLogoFile } from './utils';
 import type { PatientData } from './interfaces/patient';
 import type { MedicHistoryData } from './interfaces/medicHistory';
+import type { CreateMedicTestCatalogData } from './interfaces/medicTestCatalog';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API_PROD, // Cambia según el backend en uso
@@ -260,7 +261,63 @@ export const roleApi = {
 
 export const auditApi = {};
 
-export const medicTestCatalogApi = {};
+export const medicTestCatalogApi = {
+  /**
+   * Obtiene un examen médico específico del catálogo por su ID.
+   * @param id ID del examen médico.
+   * @param includeData Si se debe incluir datos extendidos en la respuesta.
+   * @returns Promesa de la respuesta del backend.
+   */
+  getMedicTestCatalogById(id: string, includeData: boolean) {
+    return api.get(`/medic-tests-catalog/${id}`, {
+      ...headerLabId(),
+      params: { includeData },
+    });
+  },
+
+  /**
+   * Obtiene el catálogo general de pruebas médicas para el alboratorio
+   * @param query - Parámetros de consulta extendidos (GetExtendQuerys)
+   * @returns Promise con la respuesta del API
+   */
+  getMedicTestCatalog(query: GetExtendQuerys) {
+    return api.get('/medic-tests-catalog/', {
+      ...headerLabId(),
+      params: query,
+    });
+  },
+
+  /**
+   * Crea un nuevo examen médico en el catálogo del laboratorio.
+   * @param data Objeto con los datos del examen médico a crear.
+   * @returns Promesa de la respuesta del backend.
+   */
+  createMedicTestCatalog(data: CreateMedicTestCatalogData) {
+    return api.post('/medic-tests-catalog/', data, headerLabId());
+  },
+
+  /**
+   * Elimina un examen médico del catálogo por su ID.
+   * @param id ID del examen médico a eliminar.
+   * @returns Promesa de la respuesta del backend.
+   */
+  deleteMedicTestCatalog(id: string) {
+    return api.delete(`/medic-tests-catalog/${id}`, headerLabId());
+  },
+
+  /**
+   * Actualiza un examen médico existente en el catálogo del laboratorio.
+   * El ID del examen se pasa como parámetro de consulta (?id=).
+   * Los campos que no se envían en el cuerpo de la solicitud no se actualizarán.
+   * Asegúrate de enviar todos los campos del catálogo, ya que la actualización re-escribe todo el examen.
+   * @param id ID del examen médico a actualizar.
+   * @param data Objeto con los datos completos del examen médico.
+   * @returns Promesa de la respuesta del backend.
+   */
+  putMedicTestCatalog(id: string, data: CreateMedicTestCatalogData) {
+    return api.put(`/medic-tests-catalog/${id}`, data, headerLabId());
+  },
+};
 
 export const medicHistoryApi = {
   /**
