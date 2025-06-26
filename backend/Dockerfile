@@ -4,10 +4,10 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm install --production && npm run prisma:generate:system && npm run prisma:generate:lab
+RUN npm install --production
 
 COPY . .
 
-RUN npm run build --webpack false && npm prune --production && rm -rf /root/.npm /root/.cache
+RUN npm run prisma:generate:system && npm run prisma:generate:lab && npm run build --webpack false && npm prune --production && rm -rf /root/.npm /root/.cache
 
 EXPOSE 3000
