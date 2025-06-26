@@ -3,7 +3,7 @@
     class="min-h-full flex flex-col items-center justify-center bg-Lightbase py-2"
   >
     <h1 class="font-semibold text-2xl">Selecciona un laboratorio</h1>
-    <div class="w-full max-w-4xl flex flex-col items-center">
+    <div class="w-full flex flex-col items-center">
       <AnimateBlock
         ref="animatedBlock"
         @after-leave="onAfterLeave"
@@ -13,7 +13,10 @@
         <!-- Contenedor con scroll solo si es necesario -->
         <component
           :is="needsScroll ? 'VaScrollContainer' : 'div'"
-          class="max-h-[55vh] overflow-y-auto p-3"
+          :class="[
+            'overflow-y-auto p-3',
+            breakpoint.lgUp ? 'max-h-[70vh]' : 'max-h-[55vh]',
+          ]"
           ref="scrollWrapper"
         >
           <div
@@ -122,7 +125,7 @@
       >
         <!-- Botón para registrar nuevo laboratorio -->
         <VaButton
-          class="my-4 max-w-7xl py-5 px-4 text-xl font-bold flex items-center justify-center shadow-xl transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95"
+          class="my-4 py-5 px-4 text-xl font-bold flex items-center justify-center shadow-xl transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95"
           gradient
           color="primary"
           @click="onRegisterLab"

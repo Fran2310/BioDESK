@@ -6,7 +6,7 @@
     leave-duration="1s"
   >
     <div
-      class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full max-w-xl border-4 border-secondary mt-12"
+      class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full border-4 border-secondary mt-12"
     >
       <h1 class="font-semibold text-4xl mb-4">Iniciar Sesión</h1>
       <p class="text-base mb-4 leading-5">
