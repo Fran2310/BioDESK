@@ -22,6 +22,7 @@ model LabUser {
   role           Role?    @relation(fields: [roleId], references: [id])
 
   actionHistory        ActionHistory[]
+  requestMedicTests     RequestMedicTest[]
 }
 
 model Role {
@@ -84,6 +85,9 @@ model RequestMedicTest {
   priority        Priority   @default(MEDIUM)
   resultProperties Json?
   observation     String?
+
+  byLabUserId     Int?
+  byLabUser       LabUser? @relation(fields: [byLabUserId], references: [id])
 
   medicHistoryId  Int
   medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id], onDelete: Cascade)
