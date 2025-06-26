@@ -183,7 +183,7 @@ export class LabService {
           },
           omit: {
             dbName: true,
-            logoPath: true,
+            logoPath: false, // Devolver la ruta del logo en Supabase
           }
         });
   

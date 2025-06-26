@@ -601,6 +601,7 @@ export class UserService {
         name: lab.name,
         status: lab.status,
         rif: lab.rif,
+        logoPath: lab.logoPath,
       })),
     };
   }
