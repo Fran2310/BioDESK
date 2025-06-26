@@ -5,6 +5,7 @@ export interface LabData {
   name: string;
   status: Status;
   rif: string;
+  logoPath: string;
 }
 
 export interface LabsUserData {

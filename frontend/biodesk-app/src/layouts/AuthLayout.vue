@@ -7,10 +7,10 @@
   >
     <template #left>
       <div
-        class="flex items-center justify-center h-full bg-backgroundLightPrimary"
+        class="flex items-center justify-center h-full bg-primary"
         style="width: 35dvw; max-width: 35dvw"
       >
-        <Logo :height="'9rem'" />
+        <Logo :height="'9rem'" :color="'#ffffff'" />
       </div>
     </template>
     <template #content>

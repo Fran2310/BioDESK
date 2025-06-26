@@ -1,7 +1,11 @@
 <template>
-  <Transition :name="transitionName" @after-leave="onAfterLeave">
+  <AnimateBlock
+    ref="animatedBlock"
+    @after-leave="onAfterLeave"
+    enter-duration="2s"
+    leave-duration="1s"
+  >
     <div
-      v-if="showAnimate"
       class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full max-w-xl border-4 border-secondary mt-12"
     >
       <h1 class="font-semibold text-4xl mb-4">Iniciar Sesión</h1>
@@ -83,13 +87,13 @@
 
         <!-- INGRESAR BUTTON -->
         <div class="flex justify-center mt-4">
-          <VaButton class="w-full" type="submit" :loading="isLoading">
+          <VaButton gradient class="w-full" type="submit" :loading="isLoading">
             Ingresar</VaButton
           >
         </div>
       </VaForm>
     </div>
-  </Transition>
+  </AnimateBlock>
 </template>
 <script setup lang="ts">
   /**
@@ -101,8 +105,8 @@
    * - Muestra notificaciones (toast) según el resultado del login.
    * - Anima la retirada del componente en cualquier navegación (router.push, RouterLink, botón atrás, etc).
    */
-  import { ref, onMounted, reactive, computed } from 'vue';
-  import { useBreakpoint, useForm } from 'vuestic-ui';
+  import { ref, onMounted, reactive } from 'vue';
+  import { useForm } from 'vuestic-ui';
   import { validator } from '@/services/utils.js';
   import { authApi, labApi } from '@/services/api';
   import {
@@ -113,6 +117,7 @@
   import { useAuthStore } from '@/stores/authStore';
   import { useLabStore } from '@/stores/labStore';
   import { useRouter, onBeforeRouteLeave } from 'vue-router';
+  import AnimateBlock from '@/components/AnimateBlock.vue';
 
   // Store de autenticación global
   const authStore = useAuthStore();
@@ -123,11 +128,10 @@
   // Router para navegar entre vistas
   const router = useRouter();
 
-  // Estado para animar la entrada/salida del formulario
-  const showAnimate = ref(false);
-
   // Estado para mostrar el botón de carga
   const isLoading = ref(false);
+
+  const animatedBlock = ref();
 
   // Para navegación interna (ej: submit)
   const pendingRoute = ref<null | { name: string }>(null);
@@ -144,19 +148,12 @@
   // Validación del formulario
   const { validate } = useForm('form');
 
-  // Breakpoint para animaciones responsivas
-  const breakpoint = useBreakpoint();
-  const transitionName = computed(() =>
-    breakpoint.lgUp ? 'slide-fade-x' : 'slide-fade-y'
-  );
-
   /**
    * Al montar el componente:
    * - Activa la animación de entrada.
    * - Si hay un email guardado en localStorage (por "Recordarme"), lo autocompleta.
    */
   onMounted(() => {
-    showAnimate.value = true;
     const biodeskEmail = localStorage.getItem('biodeskEmail');
     if (biodeskEmail) {
       formData.email = biodeskEmail;
@@ -171,13 +168,12 @@
    */
   onBeforeRouteLeave((to, from, next) => {
     // Si ya está animando la salida, permite la navegación inmediatamente
-    if (!showAnimate.value) {
+    if (!animatedBlock.value?.showAnimate) {
       next();
       return;
     }
-    // Guarda el callback para continuar la navegación después de la animación
     nextRoute.value = next;
-    showAnimate.value = false;
+    animatedBlock.value.hide();
   });
 
   /**
@@ -235,7 +231,7 @@
 
       // Animar la salida antes de navegar a SelectLab
       pendingRoute.value = { name: 'SelectLab' };
-      showAnimate.value = false;
+      animatedBlock.value.hide();
 
       //[NOTA] manejar el caso donde el usuario no tiene laboratorios para que dispare una modal donde le pregunte si quiere crear uno.
     } catch (error: any) {
@@ -246,55 +242,6 @@
   };
 </script>
 <style scoped>
-  /** Animaciones
-    cubic-bezier(0.23, 1, 0.32, 1)
-    ease-in-out
-    cubic-bezier(0.4, 0, 0.2, 1)
-    cubic-bezier(0.22, 1, 0.36, 1)
-    */
-  /**PARA: Transition */
-  .slide-fade-x-enter-active {
-    transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .slide-fade-x-leave-active {
-    transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .slide-fade-x-enter-from,
-  .slide-fade-x-leave-to {
-    opacity: 0;
-    transform: translateX(200px);
-    filter: blur(1px);
-  }
-  .slide-fade-x-enter-to,
-  .slide-fade-x-leave-from {
-    opacity: 1;
-    transform: translateX(0);
-    filter: blur(0);
-  }
-
-  .slide-fade-y-enter-active {
-    transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .slide-fade-y-leave-active {
-    transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .slide-fade-y-enter-from,
-  .slide-fade-y-leave-to {
-    opacity: 0;
-    transform: translateY(200px);
-    filter: blur(1px);
-  }
-  .slide-fade-y-enter-to,
-  .slide-fade-y-leave-from {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
-
   /**Formulario */
   ::v-deep(.va-input-wrapper__field::after) {
     border: solid 1px gray;
