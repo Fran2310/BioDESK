@@ -21,6 +21,7 @@ async function bootstrap() {
     .addTag('[Testing] SystemPrisma')
     .addTag('[Testing] LabPrisma')
     .addTag('[Testing] CASL')
+    .addTag('[Testing] Storage')
     .addTag('Auth', 'Autenticación')
     .addTag('Lab', 'Gestión de laboratorios')
     .addTag('User', 'Gestión de usuarios')

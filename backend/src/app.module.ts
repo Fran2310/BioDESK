@@ -23,6 +23,7 @@ import { CatalogLabModule } from './catalog-lab/catalog-lab.module';
 import { PatientManagerModule } from './patient-manager/patient-manager.module';
 import { ImagesModule } from './images/images.module';
 import { StorageModule } from './storage/storage.module';
+import { PdfModule } from './pdf/pdf.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { StorageModule } from './storage/storage.module';
     PatientManagerModule,
     ImagesModule,
     StorageModule,
+    PdfModule,
   ],
   controllers: [AppController],
   providers: [

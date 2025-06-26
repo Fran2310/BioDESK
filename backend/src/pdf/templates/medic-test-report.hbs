@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Examen Médico</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            margin: 2cm;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        .header p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .patient-info {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .patient-info h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 18px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .info-grid p {
+            margin: 5px 0;
+        }
+        .results h2 {
+            font-size: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .results-table th, .results-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .results-table th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 12px;
+            color: #777;
+            position: fixed;
+            bottom: 1cm;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Reporte de Examen Médico</h1>
+        <p>{{labName}}</p>
+    </div>
+
+    <div class="patient-info">
+        <h2>Información del Paciente</h2>
+        <div class="info-grid">
+            <p><strong>Nombre:</strong> {{patientName}}</p>
+            <p><strong>Cédula:</strong> {{patientId}}</p>
+            <p><strong>Fecha de Nacimiento:</strong> {{patientDob}}</p>
+            <p><strong>Edad:</strong> {{patientAge}} años</p>
+        </div>
+    </div>
+
+    <div class="exam-info">
+        <h2>Información del Examen</h2>
+        <div class="info-grid">
+            <p><strong>Tipo de Examen:</strong> {{examType}}</p>
+            <p><strong>Fecha del Examen:</strong> {{examDate}}</p>
+            <p><strong>Médico Tratante:</strong> Dr. {{doctorName}}</p>
+        </div>
+    </div>
+
+    <div class="results">
+        <h2>Resultados</h2>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Prueba</th>
+                    <th>Resultado</th>
+                    <th>Unidades</th>
+                    <th>Rango de Referencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each results}}
+                <tr>
+                    <td>{{this.test}}</td>
+                    <td>{{this.value}}</td>
+                    <td>{{this.unit}}</td>
+                    <td>{{this.reference}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Este es un documento generado automáticamente.</p>
+        <p>{{labName}} | {{labDir}} | Tel: {{labPhone}}</p>
+    </div>
+
+</body>
+</html>
