@@ -1,13 +1,11 @@
 <template>
   <AnimateBlock
     ref="animatedBlock"
-    @after-leave="onAfterLeave"
+    @after-leave="() => onAfterLeave(router)"
     enter-duration="2s"
     leave-duration="1s"
   >
-    <div
-      class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full border-4 border-secondary mt-12"
-    >
+    <AuthContentBlock>
       <h1 class="font-semibold text-4xl mb-4">Iniciar Sesión</h1>
       <p class="text-base mb-4 leading-5">
         ¿Nuevo en BioDESK?
@@ -92,7 +90,7 @@
           >
         </div>
       </VaForm>
-    </div>
+    </AuthContentBlock>
   </AnimateBlock>
 </template>
 <script setup lang="ts">
@@ -107,6 +105,7 @@
    */
   import { ref, onMounted, reactive } from 'vue';
   import { useForm } from 'vuestic-ui';
+  import router from '@/router';
   import { validator } from '@/services/utils.js';
   import { authApi, labApi } from '@/services/api';
   import {
@@ -116,8 +115,9 @@
   } from './toasts';
   import { useAuthStore } from '@/stores/authStore';
   import { useLabStore } from '@/stores/labStore';
-  import { useRouter, onBeforeRouteLeave } from 'vue-router';
   import AnimateBlock from '@/components/AnimateBlock.vue';
+  import AuthContentBlock from '@/components/AuthContentBlock.vue';
+  import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
 
   // Store de autenticación global
   const authStore = useAuthStore();
@@ -125,18 +125,11 @@
   // Store de laboratorio global
   const labStore = useLabStore();
 
-  // Router para navegar entre vistas
-  const router = useRouter();
-
   // Estado para mostrar el botón de carga
   const isLoading = ref(false);
 
   const animatedBlock = ref();
-
-  // Para navegación interna (ej: submit)
-  const pendingRoute = ref<null | { name: string }>(null);
-  // Para navegación externa (cualquier cambio de ruta)
-  const nextRoute = ref<null | (() => void)>(null);
+  const { pendingRoute, onAfterLeave } = useAnimatedRouteLeave(animatedBlock);
 
   // Estado reactivo para los datos del formulario
   const formData = reactive({
@@ -160,36 +153,6 @@
       formData.keepLoggedIn = true;
     }
   });
-
-  /**
-   * Guard de navegación para animar la retirada en cualquier cambio de ruta.
-   * Si se navega fuera del Login (por router.push, RouterLink, botón atrás, etc),
-   * primero se anima la salida y luego se permite la navegación.
-   */
-  onBeforeRouteLeave((to, from, next) => {
-    // Si ya está animando la salida, permite la navegación inmediatamente
-    if (!animatedBlock.value?.showAnimate) {
-      next();
-      return;
-    }
-    nextRoute.value = next;
-    animatedBlock.value.hide();
-  });
-
-  /**
-   * Handler que se ejecuta después de la animación de salida.
-   * - Si hay navegación pendiente por cambio de ruta, la realiza.
-   * - Si hay navegación interna (ej: submit), navega a la ruta indicada.
-   */
-  const onAfterLeave = () => {
-    if (nextRoute.value) {
-      nextRoute.value();
-      nextRoute.value = null;
-    } else if (pendingRoute.value) {
-      router.push(pendingRoute.value);
-      pendingRoute.value = null;
-    }
-  };
 
   /**
    * Envía el formulario de login.

@@ -6,7 +6,7 @@
     <div class="w-full flex flex-col items-center">
       <AnimateBlock
         ref="animatedBlock"
-        @after-leave="onAfterLeave"
+        @after-leave="() => onAfterLeave(router)"
         enter-duration="2s"
         leave-duration="1s"
       >
@@ -121,7 +121,7 @@
         enter-duration="3s"
         leave-duration="1.5s"
         delay="5s"
-        @after-leave="onRegisterLabAfterLeave"
+        @after-leave="() => onAfterLeave(router)"
       >
         <!-- Botón para registrar nuevo laboratorio -->
         <VaButton
@@ -168,17 +168,18 @@
   import { useLabStore } from '@/stores/labStore';
   import AnimateBlock from '@/components/AnimateBlock.vue';
   import { computed, ref, onMounted, nextTick, watch } from 'vue';
-  import { onBeforeRouteLeave } from 'vue-router';
   import { useBreakpoint, VaButton } from 'vuestic-ui';
+  import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
 
   // Store de laboratorios
   const labStore = useLabStore();
 
   const animatedBlock = ref();
   const registerLabBlock = ref();
-  const blocksLeaving = ref(0);
-  const pendingRoute = ref<null | { name: string }>(null);
-  const nextRoute = ref<null | (() => void)>(null);
+  const { pendingRoute, onAfterLeave } = useAnimatedRouteLeave([
+    animatedBlock,
+    registerLabBlock,
+  ]);
 
   // Breakpoint responsivo (igual que en Login)
   const breakpoint = useBreakpoint();
@@ -208,53 +209,15 @@
     router.push('/auth/signup/lab');
   }
 
-  function onAfterLeave() {
-    blocksLeaving.value++;
-    tryNavigateAfterLeave();
-  }
-
-  function onRegisterLabAfterLeave() {
-    blocksLeaving.value++;
-    tryNavigateAfterLeave();
-  }
-
-  function tryNavigateAfterLeave() {
-    // Espera a que ambos bloques hayan terminado la animación de salida
-    if (blocksLeaving.value < 2) return;
-    if (nextRoute.value) {
-      nextRoute.value();
-      nextRoute.value = null;
-    } else if (pendingRoute.value) {
-      router.push(pendingRoute.value);
-      pendingRoute.value = null;
-    }
-    blocksLeaving.value = 0; // Resetea el contador para la próxima vez
-  }
-
-  onBeforeRouteLeave((to, from, next) => {
-    // Si ambos bloques ya están ocultos, permite la navegación
-    if (
-      !animatedBlock.value?.showAnimate &&
-      !registerLabBlock.value?.showAnimate
-    ) {
-      next();
-      return;
-    }
-    nextRoute.value = next;
-    // Oculta ambos bloques
-    animatedBlock.value?.hide();
-    registerLabBlock.value?.hide();
-    // El next() se llamará en onAfterLeave cuando ambos hayan terminado
-  });
-
   /**
    * Selecciona el laboratorio actual en el store.
    * @param lab Laboratorio seleccionado.
    */
   function selectLab(lab: any) {
     labStore.setCurrentLab(lab);
-    // Aquí puedes redirigir a la siguiente vista si lo deseas, por ejemplo:
-    router.push({ name: 'LoadScreen' });
+    pendingRoute.value = { name: 'LoadScreen' };
+    animatedBlock.value.hide();
+    registerLabBlock.value.hide();
   }
 
   /**
@@ -284,7 +247,6 @@
 
   // Verifica scroll al montar y cuando cambian labs o el breakpoint
   onMounted(() => {
-    blocksLeaving.value = 0;
     checkScroll();
   });
   watch(() => labStore.labs.length, checkScroll);
