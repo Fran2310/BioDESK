@@ -8,7 +8,7 @@ import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { LabService } from 'src/lab/services/lab.service';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 
-const public_storage_url = `${process.env.STORAGE_URL}storage/v1/object/public/`
+const public_storage_url = `${process.env.SUPABASE_URL}storage/v1/object/public/`
 const banners = {
   bienvenida:         `${public_storage_url}banners/bienvenida.jpg`,
   cambiar_contrasena: `${public_storage_url}banners/cambiar_contrasena.jpg`,
