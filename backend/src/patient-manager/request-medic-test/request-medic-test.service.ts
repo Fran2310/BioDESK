@@ -4,13 +4,13 @@ import { SystemUserService } from 'src/user/system-user/system-user.service';
 
 import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
 import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
-import { MedicHistoryService } from '../medic-history/medic-history.service';
 import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
-import { AgeGroup, Gender, Priority, State } from '@prisma/client-lab';
+import { Priority, State } from '@prisma/client-lab';
 
 import { STATE_TRANSITIONS } from 'src/casl/helper/transition.helper';
-import { LabService } from 'src/lab/services/lab.service';
+import { LabUserService } from 'src/user/lab-user/lab-user.service';
+import { PdfService } from 'src/pdf/pdf.service';
 
 @Injectable()
 export class RequestMedicTestService {
@@ -18,9 +18,10 @@ export class RequestMedicTestService {
   
   constructor(
       private readonly systemUserService: SystemUserService,
-      private readonly labService: LabService,
+      private readonly labUserService: LabUserService,
       private readonly auditService: AuditService,
       private readonly labDbManageService: LabDbManageService,
+      private readonly pdfService: PdfService,
   ) {}
   
   async createRequestMedicTest(
@@ -342,6 +343,7 @@ export class RequestMedicTestService {
     try {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+      const labUser = await this.labUserService.getLabUserByUuid(labId, performedByUserUuid)
   
       // Obtener el request incluyendo el paciente relacionado
       const requestWithPatient = await labPrisma.requestMedicTest.findUnique({
@@ -359,6 +361,10 @@ export class RequestMedicTestService {
         throw new NotFoundException(`Examen médico con ID ${requestMedicTestId} no encontrado`);
       }
 
+      if (!labUser) {
+        throw new NotFoundException(`Usuario del laboratorio no encontrado`);
+      }
+
       // Verificar si la transción es válida
       for (const [currentState, possibleTransitions] of Object.entries(STATE_TRANSITIONS)) { 
         if (currentState === requestWithPatient?.state) {
@@ -373,7 +379,9 @@ export class RequestMedicTestService {
       const updated = await labPrisma.requestMedicTest.update({
         where: { id: requestMedicTestId },
         data: {
-          state
+          state,
+          byLabUserId: labUser.id,
+          completedAt: state === "COMPLETED" ? new Date().toISOString() : undefined, // Solo se actualiza si el estado es "COMPLETED"
         } 
       });
       
@@ -388,6 +396,11 @@ export class RequestMedicTestService {
           after: updated.state,
         },
       });
+
+      if (updated.state === "COMPLETED") {
+        this.pdfService.generateMedicReport(labId, updated.id) 
+        // TODO hacer que también se envie el correo al paciente
+      }
   
       return updated;
     } catch (error) {
@@ -397,152 +410,5 @@ export class RequestMedicTestService {
       this.logger.error(`Error al actualizar examen médico: ${error.message}`);
       throw new ConflictException(`${error.message}`);
     }
-  }
-
-async getReportData( // TODO Esta función se podría pasar al PdfService o a un submodulo para eso
-  labId: number,
-  requestMedicTestId: number,
-): Promise<any> {
-  try {
-    // --- 1. OBTENCIÓN DE DATOS CRUDOS ---
-    const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
-    
-    const [lab, requestWithRelations] = await Promise.all([
-      this.labService.getLabById(labId),
-      labPrisma.requestMedicTest.findUnique({
-        where: { id: requestMedicTestId, state: 'COMPLETED' },
-        include: {
-          medicHistory: { include: { patient: true } },
-          medicTestCatalog: { include: { properties: { include: { valueReferences: true } } } },
-        },
-      }),
-    ]);
-
-    if (!requestWithRelations) {
-      throw new NotFoundException(`Examen médico completado con ID ${requestMedicTestId} no fue encontrado.`);
-    }
-
-    // --- 2. EXTRACCIÓN Y CÁLCULOS (CON MANEJO DE NULOS) ---
-
-    const patient = requestWithRelations.medicHistory.patient;
-    if (!patient) {
-      throw new NotFoundException(`No se encontró el paciente asociado a la solicitud de examen.`);
-    }
-
-    // Declaramos las variables que pueden depender de la fecha de nacimiento
-    let patientAge: number | null = null;
-    let patientAgeGroup: AgeGroup = AgeGroup.ANY; // Default a 'ANY' para máxima compatibilidad
-
-    // **CAMBIO CLAVE 1: Manejo de birthDate nulo**
-    // Solo calculamos la edad si la fecha de nacimiento existe
-    if (patient.birthDate) {
-      patientAge = this.calculateAge(patient.birthDate);
-      // Solo asignamos un grupo específico si la edad fue calculada
-      if (patientAge !== null) {
-          patientAgeGroup = patientAge >= 18 ? AgeGroup.ADULT : AgeGroup.CHILD;
-      }
-    }
-    
-    // --- 3. PROCESAMIENTO DE RESULTADOS (CON MANEJO DE NULOS) ---
-
-    const results = requestWithRelations.medicTestCatalog.properties.map((prop) => {
-      // **CAMBIO CLAVE 2: Manejo de resultProperties nulo**
-      // Usamos el operador de encadenamiento opcional (?.) para evitar errores si resultProperties es null.
-      // Si es null o la propiedad específica no existe, usamos 'N/A'.
-      const resultValue = requestWithRelations.resultProperties?.[prop.name] ?? 'N/A';
-      
-      const referenceRange = this.findReferenceRange(
-        prop.valueReferences,
-        patient.gender,
-        patientAgeGroup, // Usamos el ageGroup calculado (o el default 'ANY')
-      );
-
-      return {
-        propertyName: prop.name,
-        value: resultValue,
-        unit: prop.unit ?? '',
-        referenceRange,
-      };
-    });
-
-    // --- 4. CONSTRUCCIÓN DEL OBJETO FINAL PARA LA PLANTILLA ---
-
-    const reportData = {
-      lab: {
-        name: lab.name,
-        rif: lab.rif,
-        dir: lab.dir,
-        phoneNums: lab.phoneNums,
-        logoPath: lab.logoPath,
-      },
-      patient: {
-        fullName: `${patient.name} ${patient.lastName}`,
-        ci: patient.ci,
-        // Mostramos la edad o un texto alternativo si no se pudo calcular
-        age: patientAge !== null ? `${patientAge} años` : 'No especificada',
-        gender: patient.gender,
-        email: patient.email,
-      },
-      request: {
-        id: requestWithRelations.id,
-        // Agregamos una verificación para completedAt
-        completedAtFormatted: requestWithRelations.completedAt
-          ? requestWithRelations.completedAt.toLocaleDateString('es-VE', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })
-          : 'Pendiente', // O el texto que prefieras si es null
-        medicTestName: requestWithRelations.medicTestCatalog.name,
-        observation: requestWithRelations.observation,
-      },
-      results,
-    };
-
-    return reportData;
-
-  } catch (error) {
-    if (error instanceof NotFoundException) {
-      throw error;
-    }
-    this.logger.error(`Error al generar los datos del reporte: ${error.message}`, error.stack);
-    throw new InternalServerErrorException(`Ocurrió un error inesperado al procesar la solicitud del reporte.`);
-  }
-}
-
-// --- Helpers ---
-  private calculateAge(birthDate: Date | null): number | null {
-    // Si la fecha es nula, devolvemos null inmediatamente.
-    if (!birthDate) return null;
-    
-    const today = new Date("2025-06-26T04:05:19.000Z"); // Hora actual para consistencia
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
-
-  private findReferenceRange(references: any[], gender: Gender, ageGroup: AgeGroup): string {
-      const specificMatch = references.find(
-        (ref) => ref.gender === gender && ref.ageGroup === ageGroup,
-      );
-      if (specificMatch) return specificMatch.range;
-
-      const anyGenderMatch = references.find(
-        (ref) => ref.gender === Gender.ANY && ref.ageGroup === ageGroup,
-      );
-      if (anyGenderMatch) return anyGenderMatch.range;
-      
-      const anyAgeMatch = references.find(
-        (ref) => ref.gender === gender && ref.ageGroup === AgeGroup.ANY,
-      );
-      if (anyAgeMatch) return anyAgeMatch.range;
-
-      const fallback = references.find(
-        (ref) => ref.gender === Gender.ANY && ref.ageGroup === AgeGroup.ANY,
-      );
-      return fallback ? fallback.range : 'No disponible';
   }
 }
