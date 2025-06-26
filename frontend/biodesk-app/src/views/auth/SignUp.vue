@@ -1,4 +1,5 @@
 <template>
+  <RouterView />
   <div>
     <h1>Pruebas de LabApi</h1>
     <!-- Campo para setear el labId manualmente -->

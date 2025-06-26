@@ -20,6 +20,20 @@ const router = createRouter({
           name: 'SignUp',
           // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
           component: () => import('@/views/auth/SignUp.vue'),
+          children: [
+            {
+              path: 'user',
+              name: 'RegisterUser',
+              // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
+              component: () => import('@/views/auth/RegisterUser.vue'),
+            },
+            {
+              path: 'lab',
+              name: 'RegisterLab',
+              // Carga dinamica (lazy loading: mejora el rendimiento al cargar solo cuando se necesita)
+              component: () => import('@/views/auth/RegisterLab.vue'),
+            },
+          ],
         },
         {
           path: 'forgot-password',

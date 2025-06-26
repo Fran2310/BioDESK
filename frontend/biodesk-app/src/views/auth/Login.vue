@@ -1,8 +1,8 @@
 <template>
-  <Transition :name="transitionName">
+  <Transition :name="transitionName" @after-leave="onAfterLeave">
     <div
       v-if="showAnimate"
-      class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full max-w-xl border-4 border-secondary"
+      class="bg-backgroundLightSecondary p-4 py-7 rounded shadow-2xl block w-full max-w-xl border-4 border-secondary mt-12"
     >
       <h1 class="font-semibold text-4xl mb-4">Iniciar Sesión</h1>
       <p class="text-base mb-4 leading-5">
@@ -83,7 +83,7 @@
 
         <!-- INGRESAR BUTTON -->
         <div class="flex justify-center mt-4">
-          <VaButton class="w-full" @click="submit" :loading="isLoading">
+          <VaButton class="w-full" type="submit" :loading="isLoading">
             Ingresar</VaButton
           >
         </div>
@@ -99,11 +99,12 @@
    * - Si el usuario marca "Recordarme en este dispositivo", el email se guarda en localStorage para autocompletar en futuros inicios.
    * - Utiliza animaciones de transición según el tamaño de pantalla.
    * - Muestra notificaciones (toast) según el resultado del login.
+   * - Anima la retirada del componente en cualquier navegación (router.push, RouterLink, botón atrás, etc).
    */
   import { ref, onMounted, reactive, computed } from 'vue';
   import { useBreakpoint, useForm } from 'vuestic-ui';
   import { validator } from '@/services/utils.js';
-  import { authApi } from '@/services/api';
+  import { authApi, labApi } from '@/services/api';
   import {
     warningFieldsToast,
     successLoginToast,
@@ -111,6 +112,7 @@
   } from './toasts';
   import { useAuthStore } from '@/stores/authStore';
   import { useLabStore } from '@/stores/labStore';
+  import { useRouter, onBeforeRouteLeave } from 'vue-router';
 
   // Store de autenticación global
   const authStore = useAuthStore();
@@ -118,8 +120,19 @@
   // Store de laboratorio global
   const labStore = useLabStore();
 
-  // Estado para animar la entrada del formulario
+  // Router para navegar entre vistas
+  const router = useRouter();
+
+  // Estado para animar la entrada/salida del formulario
   const showAnimate = ref(false);
+
+  // Estado para mostrar el botón de carga
+  const isLoading = ref(false);
+
+  // Para navegación interna (ej: submit)
+  const pendingRoute = ref<null | { name: string }>(null);
+  // Para navegación externa (cualquier cambio de ruta)
+  const nextRoute = ref<null | (() => void)>(null);
 
   // Estado reactivo para los datos del formulario
   const formData = reactive({
@@ -127,9 +140,6 @@
     password: '',
     keepLoggedIn: false,
   });
-
-  // Estado para mostrar el botón de carga
-  const isLoading = ref(false);
 
   // Validación del formulario
   const { validate } = useForm('form');
@@ -155,11 +165,44 @@
   });
 
   /**
+   * Guard de navegación para animar la retirada en cualquier cambio de ruta.
+   * Si se navega fuera del Login (por router.push, RouterLink, botón atrás, etc),
+   * primero se anima la salida y luego se permite la navegación.
+   */
+  onBeforeRouteLeave((to, from, next) => {
+    // Si ya está animando la salida, permite la navegación inmediatamente
+    if (!showAnimate.value) {
+      next();
+      return;
+    }
+    // Guarda el callback para continuar la navegación después de la animación
+    nextRoute.value = next;
+    showAnimate.value = false;
+  });
+
+  /**
+   * Handler que se ejecuta después de la animación de salida.
+   * - Si hay navegación pendiente por cambio de ruta, la realiza.
+   * - Si hay navegación interna (ej: submit), navega a la ruta indicada.
+   */
+  const onAfterLeave = () => {
+    if (nextRoute.value) {
+      nextRoute.value();
+      nextRoute.value = null;
+    } else if (pendingRoute.value) {
+      router.push(pendingRoute.value);
+      pendingRoute.value = null;
+    }
+  };
+
+  /**
    * Envía el formulario de login.
    * - Valida los campos.
    * - Llama al endpoint de login.
    * - Guarda el token en la store.
    * - Si "Recordarme" está activo, guarda el email en localStorage.
+   * - Consulta los laboratorios del usuario y los guarda en el store.
+   * - Anima la salida antes de navegar a la selección de laboratorio.
    * - Muestra toasts según el resultado.
    */
   const submit = async () => {
@@ -185,6 +228,16 @@
       } else {
         localStorage.removeItem('biodeskEmail');
       }
+
+      // Consultar laboratorios del usuario
+      const labsResponse = await labApi.getUserLabs();
+      labStore.setLabs(labsResponse.data.labs);
+
+      // Animar la salida antes de navegar a SelectLab
+      pendingRoute.value = { name: 'SelectLab' };
+      showAnimate.value = false;
+
+      //[NOTA] manejar el caso donde el usuario no tiene laboratorios para que dispare una modal donde le pregunte si quiere crear uno.
     } catch (error: any) {
       failedLoginToast(error.message);
     } finally {
@@ -200,10 +253,14 @@
     cubic-bezier(0.22, 1, 0.36, 1)
     */
   /**PARA: Transition */
-  .slide-fade-x-enter-active,
-  .slide-fade-x-leave-active {
+  .slide-fade-x-enter-active {
     transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
   }
+
+  .slide-fade-x-leave-active {
+    transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   .slide-fade-x-enter-from,
   .slide-fade-x-leave-to {
     opacity: 0;
@@ -217,10 +274,14 @@
     filter: blur(0);
   }
 
-  .slide-fade-y-enter-active,
-  .slide-fade-y-leave-active {
+  .slide-fade-y-enter-active {
     transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
   }
+
+  .slide-fade-y-leave-active {
+    transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   .slide-fade-y-enter-from,
   .slide-fade-y-leave-to {
     opacity: 0;
