@@ -251,7 +251,7 @@
   function selectLab(lab: any) {
     labStore.setCurrentLab(lab);
     // Aquí puedes redirigir a la siguiente vista si lo deseas, por ejemplo:
-    // router.push({ name: 'Dashboard' });
+    router.push({ name: 'LoadScreen' });
   }
 
   /**

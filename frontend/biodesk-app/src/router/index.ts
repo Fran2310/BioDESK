@@ -3,6 +3,8 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Login from '@/views/auth/Login.vue';
 import HomeView from '@/views/home/HomeView.vue';
+import LoadScreen from '@/layouts/LoadScreen.vue';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL_APP_DEV),
   routes: [
@@ -71,6 +73,11 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       redirect: '/auth/login',
+    },
+    {
+      path: '/load',
+      name: 'LoadScreen',
+      component: LoadScreen,
     },
   ],
 });
