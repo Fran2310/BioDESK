@@ -10,8 +10,8 @@ import { RegisterDto } from 'src/auth/dto/register.dto';
 
 const public_storage_url = `${process.env.SUPABASE_URL}storage/v1/object/public/`
 const banners = {
-  bienvenida:         `${public_storage_url}banners/bienvenida.jpg`,
-  cambiar_contrasena: `${public_storage_url}banners/cambiar_contrasena.jpg`,
+  bienvenida:         `${public_storage_url}/images/banners/bienvenida.jpg`,
+  cambiar_contrasena: `${public_storage_url}/images/banners/cambiar_contrasena.jpg`,
 }
 
 @Injectable()
