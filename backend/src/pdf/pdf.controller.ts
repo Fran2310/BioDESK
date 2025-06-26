@@ -3,12 +3,15 @@ import { PdfService } from './pdf.service';
 import { Response } from 'express';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { RequestMedicTestService } from 'src/patient-manager/request-medic-test/request-medic-test.service';
 
 @ApiTags('PDF Services') // Agrega agrupación en Swagger UI
 @Public()
 @Controller('pdf')
 export class PdfController {
-  constructor(private readonly pdfService: PdfService) {}
+  constructor(
+    private readonly pdfService: PdfService,
+  ) {}
 
   @Post('generate-and-upload')
   @ApiOperation({
@@ -39,17 +42,17 @@ export class PdfController {
     schema: {
       type: 'object',
       properties: {
-        template: {
-          type: 'string',
-          description: 'Nombre de la plantilla a usar (sin extensión .hbs)',
-          example: 'default',
-          default: 'default'
+        labId: {
+          type: 'number',
+          description: 'ID del laboratorio para obtener datos',
+          required: ['true'],
+          example: 12345
         },
-        examId: {
-          type: 'string',
+        medicTestId: {
+          type: 'number',
           description: 'ID del examen para obtener datos',
           required: ['true'],
-          example: '12345'
+          example: 12345
         },
         fileName: {
           type: 'string',
@@ -63,47 +66,17 @@ export class PdfController {
           example: 'informes/2023'
         }
       },
-      required: ['examId']
+      required: ['medicTestId']
     }
   })
   async generateAndUploadPdf(
     @Body() body: {
-      template?: string;
-      examId: string;
-      fileName?: string;
-      customPath?: string;
+      labId: number,
+      medicTestId: number;
+      fileName: string;
+      customPath: string;
     },
   ) {
-    try {
-      const { template = 'default', examId, fileName = `examen_${examId}.pdf`, customPath } = body;
-
-      if (!examId) {
-        throw new InternalServerErrorException('El examId es requerido');
-      }
-
-      const examData = await this.pdfService.getExamData(examId);
-      const result = await this.pdfService.generateAndUploadPdf(
-        template,
-        examData,
-        fileName,
-        customPath,
-      );
-
-      return {
-        success: true,
-        message: 'PDF generado y subido correctamente',
-        storagePath: result.storagePath,
-        downloadUrl: result.url,
-        pdfInfo: {
-          size: result.pdfBuffer.length,
-          generatedAt: new Date().toISOString(),
-        },
-      };
-    } catch (error) {
-      console.error('Error al generar y subir PDF:', error);
-      throw new InternalServerErrorException(
-        error.message || 'Error al generar y subir el PDF'
-      );
-    }
+    return this.pdfService.generateMedicReport(body.labId, body.medicTestId)
   }
 }

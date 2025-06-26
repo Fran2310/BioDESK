@@ -5,12 +5,17 @@ import * as path from 'path';
 import * as handlebars from 'handlebars';
 import { Readable } from 'stream';
 import { StorageService } from 'src/storage/storage.service';
+import { RequestMedicTestService } from 'src/patient-manager/request-medic-test/request-medic-test.service';
 
 @Injectable()
 export class PdfService {
   private readonly logger = new Logger(PdfService.name);
 
-  constructor(private readonly storageService: StorageService) {}
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly requestMedicTestService: RequestMedicTestService,
+
+  ) {}
 
   async generateAndUploadPdf(
     templateName: string,
@@ -100,6 +105,7 @@ export class PdfService {
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
+        margin: { top: '2.5cm', right: '1.5cm', bottom: '2.5cm', left: '1.5cm' },
       });
 
       return Buffer.from(pdfBuffer);
@@ -113,23 +119,40 @@ export class PdfService {
     }
   }
 
-  async getExamData(examId: string): Promise<any> {
-    this.logger.log(`Buscando datos para el examen con ID: ${examId}`);
-    return {
-      patientName: 'Juan Pérez',
-      patientId: 'V-12.345.678',
-      patientDob: '15/05/1985',
-      patientAge: 39,
-      examType: 'Hematología Completa',
-      examDate: '22/06/2025',
-      doctorName: 'Ana Martínez',
-      results: [
-        { test: 'Glóbulos Rojos', value: '4.8', unit: 'x10^6/µL', reference: '4.5 - 5.5' },
-        { test: 'Hemoglobina', value: '15.2', unit: 'g/dL', reference: '13.5 - 17.5' },
-        { test: 'Hematocrito', value: '45.0', unit: '%', reference: '41 - 53' },
-        { test: 'Glóbulos Blancos', value: '7.5', unit: 'x10^3/µL', reference: '4.0 - 11.0' },
-        { test: 'Plaquetas', value: '250', unit: 'x10^3/µL', reference: '150 - 450' },
-      ],
-    };
+  async generateMedicReport(
+    labId: number,
+    medicTestId: number,
+  ) {
+    try {
+
+      if (!medicTestId) {
+        throw new InternalServerErrorException('El medicTestId es requerido');
+      }
+
+      const examData = await this.requestMedicTestService.getReportData(labId, medicTestId);
+      const result = await this.generateAndUploadPdf(
+        'medic-test-report',
+        examData,
+        `${medicTestId}.pdf`,
+        `${labId}`,
+      );
+
+      return {
+        success: true,
+        message: 'PDF generado y subido correctamente',
+        storagePath: result.storagePath,
+        downloadUrl: result.url,
+        pdfInfo: {
+          size: result.pdfBuffer.length,
+          generatedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      console.error('Error al generar y subir PDF:', error);
+      throw new InternalServerErrorException(
+        error.message || 'Error al generar y subir el PDF'
+      );
+    }
   }
+
 }
