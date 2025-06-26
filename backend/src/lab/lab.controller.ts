@@ -118,7 +118,7 @@ export class LabController {
     status: 200,
     description: 'Logo actualizado exitosamente',
     schema: {
-      example: { logoPath: '/img/logolab/lab_8_logo.png' },
+      example: { logoPath: 'supabase.com/../images/logolab/8.png' },
     },
   })
   @ApiResponse({

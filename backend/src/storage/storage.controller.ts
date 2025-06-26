@@ -23,7 +23,7 @@ import { StorageService } from './storage.service';
 
 @ApiBearerAuth()
 @SkipLabIdCheck()
-@ApiTags('Storage [Tests]') // Para agrupar los endpoints en Swagger UI
+@ApiTags('[Testing] Storage') // Para agrupar los endpoints en Swagger UI
 @Controller('storage')
 export class StorageController {
   private readonly logger = new Logger(StorageController.name);
