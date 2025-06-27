@@ -102,6 +102,7 @@ export class PdfService {
     let browser: puppeteer.Browser | null = null;
     try {
       browser = await puppeteer.launch({
+        executablePath: '/usr/bin/google-chrome',
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
