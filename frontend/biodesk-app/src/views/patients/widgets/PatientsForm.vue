@@ -43,7 +43,7 @@ const isFormHasUnsavedChanges = computed(() => {
     newUser.value.lastName !== (props.patient?.lastName || '') ||
     newUser.value.ci !== (props.patient?.ci || '') ||
     newUser.value.dir !== (props.patient?.dir || '')
-    // Add more comparisons if needed
+    
   )
 })
 
@@ -148,14 +148,14 @@ const removePhone = (index: number) => {
             v-model="newUser.name"
             label="Name"
             class="w-full sm:w-1/2"
-            :rules="[validators.required]"
+            :rules="[validator.required]"
             name="name"
           />
           <VaInput
             v-model="newUser.lastName"
             label="Last Name"
             class="w-full sm:w-1/2"
-            :rules="[validators.required]"
+            :rules="[validator.required]"
             name="lastName"
           />
         </div>
@@ -182,7 +182,7 @@ const removePhone = (index: number) => {
             v-model="newUser.email"
             label="Email"
             class="w-full sm:w-1/2"
-            :rules="[validators.required, validators.email]"
+            :rules="[validator.required, validator.email]"
             name="email"
             type="email"
           />
@@ -190,7 +190,7 @@ const removePhone = (index: number) => {
             v-model="newUser.ci"
             label="CI"
             class="w-full sm:w-1/2"
-            :rules="[validators.required]"
+            :rules="[validator.required]"
             name="ci"
           />
         </div>
@@ -226,7 +226,7 @@ const removePhone = (index: number) => {
               <VaInput
                 v-model="newUser.phoneNums[index]"
                 label="Phone"
-                :rules="[validators.required]"
+                :rules="[validator.required]"
                 :name="`phone-${index}`"
               />
               <VaButton icon="delete" color="danger" size="small" @click="removePhone(index)" v-if="newUser.phoneNums.length > 1" />

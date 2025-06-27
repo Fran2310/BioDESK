@@ -182,14 +182,14 @@ const formatDate = (dateStr: string) => {
         <VaButton
           preset="primary"
           size="small"
-          icon="mso-edit"
+          icon="edit"
           aria-label="Edit patient"
           @click.stop="$emit('edit-patient', rowData as Patient)"
         />
         <VaButton
           preset="primary"
           size="small"
-          icon="mso-delete"
+          icon="va-delete"
           color="danger"
           aria-label="Delete patient"
           @click.stop="onPatientDelete(rowData as Patient)"

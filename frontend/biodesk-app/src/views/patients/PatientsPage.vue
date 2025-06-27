@@ -7,6 +7,7 @@ import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 // import { useLabStore } from '../../stores/labStore'
 import { patientApi } from '@/services/api'
 import type { Patient } from '@/types/patientType'
+import type { GetExtendQuerys } from '@/services/interfaces/global'
 
 const { t } = useI18n()
 // const labStore = useLabStore()
@@ -17,28 +18,23 @@ const sorting = ref({ sortBy: 'fullname', sortingOrder: null })
 const pagination = ref({ page: 1, perPage: 20, total: 0 })
 const patients = ref<Patient[]>([])
 
-const fetchPatients = async () => {
+const fetchPatients = async (extraQuery: Partial<GetExtendQuerys> = {}) => {
   isLoading.value = true
   error.value = null
   try {
-    // No need to check labStore.currentLab?.id, api.ts handles labId and errors
-    // Compose query for API
-    const query: any = {
-      ...filters.value,
-      ...sorting.value,
-      page: pagination.value.page,
-      perPage: pagination.value.perPage,
+    const query: GetExtendQuerys = {
+      offset: (pagination.value.page - 1) * pagination.value.perPage,
+      limit: pagination.value.perPage,
+      includeData: true,
+      ...extraQuery,
     }
     const response = await patientApi.getPatients(query)
-    patients.value = response.data
-    if (response.pagination) {
-      pagination.value = response.pagination
-    } else if (response.meta) {
-      // fallback for meta-based pagination
-      pagination.value.total = response.meta.total || 0
-      pagination.value.page = response.meta.page || 1
-      pagination.value.perPage = response.meta.perPage || 20
-    }
+    const responseData = response.data
+    console.log('Patients API response:', responseData)
+    patients.value = responseData.data
+    pagination.value.total = responseData.total
+    pagination.value.page = Math.floor(responseData.offset / responseData.limit) + 1
+    pagination.value.perPage = responseData.limit
   } catch (e: any) {
     error.value = e
     console.error('fetchPatients error', e)
@@ -47,18 +43,25 @@ const fetchPatients = async () => {
   }
 }
 
+const onSearchByName = () => {
+  fetchPatients({
+    'search-term': filters.value.search,
+    'search-fields': ['name'],
+  })
+}
+
 onMounted(() => {
   fetchPatients()
 })
 
-watch(
+/* watch(
   filters,
   () => {
     pagination.value.page = 1
     fetchPatients()
   },
   { deep: true },
-)
+) */
 
 watch(
   [() => sorting.value.sortBy, () => sorting.value.sortingOrder],
@@ -166,12 +169,15 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
     <VaCard>
       <VaCardContent>
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-          <div class="flex flex-col md:flex-row gap-2 justify-start">
+          <div class="flex flex-col md:flex-row gap-2 justify-start items-center">
             <VaInput v-model="filters.search" placeholder="Search">
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>
             </VaInput>
+            <VaButton @click="onSearchByName" color="primary" icon="search" class="ml-2">
+              Search by Name
+            </VaButton>
           </div>
           <VaButton @click="showAddPatientModal">{{t('form.addPatient')}}</VaButton>
         </div>
