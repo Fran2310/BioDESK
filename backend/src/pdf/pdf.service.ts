@@ -253,14 +253,14 @@ export class PdfService {
         },
         patient: {
           fullName: `${patient.name} ${patient.lastName}`,
-          ci: patient.ci,
+          ci: this.formatCi(patient.ci),
           // Mostramos la edad o un texto alternativo si no se pudo calcular
           age: patientAge !== null ? `${patientAge} años` : 'No especificada',
           gender: patient.gender,
           email: patient.email,
         },
         request: {
-          id: requestWithRelations.id,
+          id: this.formatRequestId(requestWithRelations.id),
           // Agregamos una verificación para completedAt
           completedAtFormatted: requestWithRelations.completedAt
             ? requestWithRelations.completedAt.toLocaleDateString('es-VE', {
@@ -321,4 +321,15 @@ export class PdfService {
         );
         return fallback ? fallback.range : 'No disponible';
     }
+
+    private formatRequestId(id: number): string {
+      return id.toString().padStart(6, '0');
+    }
+
+    private formatCi(ci: string | number): string {
+      const ciStr = ci.toString();
+      const visible = ciStr.slice(1); 
+      return `V-${visible}`; // TODO Puedes ajustar si tienes nacionalidad en el modelo
+    }
+    
 }
