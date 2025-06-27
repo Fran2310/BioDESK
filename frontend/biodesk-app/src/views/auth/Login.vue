@@ -85,7 +85,13 @@
 
         <!-- INGRESAR BUTTON -->
         <div class="flex justify-center mt-4">
-          <VaButton gradient class="w-full" type="submit" :loading="isLoading">
+          <VaButton
+            gradient
+            class="w-full"
+            type="submit"
+            icon="login"
+            :loading="isLoading"
+          >
             Ingresar</VaButton
           >
         </div>

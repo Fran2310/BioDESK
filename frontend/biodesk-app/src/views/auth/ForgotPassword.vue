@@ -5,19 +5,311 @@
     enter-duration="2s"
     leave-duration="1s"
   >
-    <AuthContentBlock>
-      <h1 class="font-semibold text-4xl mb-4">Cambio de contraseña</h1>
+    <AuthContentBlock class="relative overflow-hidden">
+      <h1 class="font-semibold text-3xl mb-4">Cambio de contraseña</h1>
+      <!-- Transición direccional dinámica -->
+      <Transition :name="transitionName" mode="out-in">
+        <VaStepper
+          :key="step"
+          v-model="step"
+          :steps="steps"
+          class="w-full h-full min-h-[55vh] min-w-650 relative flex flex-col items-center justify-center"
+          color="primary"
+          controls-hidden
+        >
+          <!--STEP 0-->
+          <template #step-content-0>
+            <div>
+              <p class="text-md w-full mb-2 max-w-sm">
+                Enviaremos un <b>código</b> a su correo para autorizar el cambio
+                de contraseña
+              </p>
+              <VaForm ref="form" @submit.prevent="submit">
+                <!-- EMAIL -->
+                <VaInput
+                  v-model="formData.email"
+                  autocomplete="email"
+                  placeholder="xample@xample.com"
+                  :rules="[validator.required, validator.email]"
+                  class="mb-4 w-full"
+                  label="Email"
+                  type="email"
+                  color="primary"
+                >
+                  <template #prependInner>
+                    <VaIcon name="mail_outline" color="secondary" />
+                  </template>
+                </VaInput>
+
+                <!-- Botón de envío -->
+                <div class="flex justify-center mt-4">
+                  <VaButton
+                    gradient
+                    class="w-full"
+                    type="submit"
+                    :loading="isLoading"
+                    icon-right="send"
+                  >
+                    Enviar código
+                  </VaButton>
+                </div>
+
+                <!-- Volver a login -->
+                <div class="flex justify-center mt-4">
+                  <VaButton
+                    class="w-full"
+                    icon="arrow_back_ios_new"
+                    color="#f2f0eb"
+                    border-color="primary"
+                    @click="router.push({ name: 'Login' })"
+                  >
+                    Volver a login
+                  </VaButton>
+                </div>
+              </VaForm>
+            </div>
+          </template>
+
+          <!--STEP 1-->
+          <template #step-content-1>
+            <VaForm ref="form" @submit.prevent="changePassword">
+              <div
+                class="flex flex-col justify-center items-center w-8xl min-w-4xl"
+              >
+                <!-- Código -->
+                <VaInput
+                  v-model="formData.token"
+                  placeholder="XXXXXX"
+                  :rules="[validator.required, validator.alphanumericUppercase]"
+                  class="w-full"
+                  label="Código"
+                  counter
+                  color="primary"
+                >
+                  <template #prependInner>
+                    <VaIcon name="lock" color="secondary" />
+                  </template>
+                </VaInput>
+
+                <!-- Nueva contraseña -->
+                <VaValue v-slot="isPasswordVisible" :default-value="false">
+                  <VaInput
+                    v-model="formData.password"
+                    placeholder="securePass123!"
+                    :rules="[
+                      validator.required,
+                      validator.hasUppercase,
+                      validator.hasNumber,
+                      validator.minLength,
+                    ]"
+                    :type="isPasswordVisible.value ? 'text' : 'password'"
+                    color="primary"
+                    class="w-full"
+                    counter
+                    label="Nueva contraseña"
+                    @clickAppendInner.stop="
+                      isPasswordVisible.value = !isPasswordVisible.value
+                    "
+                  >
+                    <template #prependInner>
+                      <VaIcon name="key" color="secondary" />
+                    </template>
+                    <template #appendInner>
+                      <VaIcon
+                        :name="
+                          isPasswordVisible.value
+                            ? 'visibility_off'
+                            : 'visibility'
+                        "
+                        class="cursor-pointer"
+                        color="secondary"
+                      />
+                    </template>
+                  </VaInput>
+                </VaValue>
+
+                <!-- Repetir contraseña -->
+                <VaValue v-slot="isPasswordVisible" :default-value="false">
+                  <VaInput
+                    v-model="formData.repeatPassword"
+                    placeholder="securePass123!"
+                    :rules="[
+                      validator.required,
+                      validator.hasUppercase,
+                      validator.hasNumber,
+                      validator.minLength,
+                    ]"
+                    :type="isPasswordVisible.value ? 'text' : 'password'"
+                    color="primary"
+                    class="w-full"
+                    counter
+                    label="Repetir contraseña"
+                    @clickAppendInner.stop="
+                      isPasswordVisible.value = !isPasswordVisible.value
+                    "
+                  >
+                    <template #prependInner>
+                      <VaIcon name="key" color="secondary" />
+                    </template>
+                    <template #appendInner>
+                      <VaIcon
+                        :name="
+                          isPasswordVisible.value
+                            ? 'visibility_off'
+                            : 'visibility'
+                        "
+                        class="cursor-pointer"
+                        color="secondary"
+                      />
+                    </template>
+                  </VaInput>
+                </VaValue>
+                <!-- Botón de envío -->
+                <div class="flex justify-center w-full mt-2">
+                  <VaButton
+                    gradient
+                    class="w-full"
+                    type="submit"
+                    :loading="isLoading"
+                    icon-right="send"
+                  >
+                    Nueva contraseña
+                  </VaButton>
+                </div>
+              </div>
+            </VaForm>
+          </template>
+        </VaStepper>
+      </Transition>
     </AuthContentBlock>
   </AnimateBlock>
 </template>
+
 <script setup lang="ts">
   import AnimateBlock from '@/components/AnimateBlock.vue';
   import AuthContentBlock from '@/components/AuthContentBlock.vue';
-  import router from '@/router';
-  import { ref } from 'vue';
   import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
+  import router from '@/router';
+  import { reactive, ref, watch } from 'vue';
+  import { validator } from '@/services/utils.js';
+  import { warningFieldsToast } from './toasts';
+  import { useForm } from 'vuestic-ui';
+  import { authApi, patientApi } from '@/services/api';
+  import type { SendTokenData } from '@/services/interfaces/auth';
+  import { initToast } from '@/services/toast';
+  import type { GetExtendQuerys } from '@/services/interfaces/global';
 
+  const step = ref(0);
+  const previousStep = ref(0);
+  const transitionName = ref('slide-left'); // animación inicial
+
+  const steps = [
+    { label: 'Enviar código', icon: 'lock' },
+    { label: 'Ingresar datos', icon: 'key' },
+  ];
+
+  watch(step, (newStep, oldStep) => {
+    previousStep.value = oldStep;
+    transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
+    console.log('step cambió de', oldStep, 'a', newStep);
+  });
   const animatedBlock = ref();
   const { onAfterLeave } = useAnimatedRouteLeave(animatedBlock);
+
+  // Estado para mostrar el botón de carga
+  const isLoading = ref(false);
+
+  const { validate } = useForm('form');
+
+  // Estado reactivo para los datos del formulario
+  const formData = reactive({
+    email: '',
+    token: '',
+    password: '',
+    repeatPassword: '',
+  });
+
+  const submit = async () => {
+    if (!validate()) {
+      // Bloquea el envío si hay errores y muestra un toast de advertencia
+      warningFieldsToast();
+      return;
+    }
+    isLoading.value = true;
+    try {
+      const data: SendTokenData = { email: formData.email };
+      const response = await authApi.sendToken(data);
+
+      initToast('Envio de código', response.data.message, 'success');
+    } catch (error: any) {
+      initToast('Error', error.message, 'danger');
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const changePassword = async () => {
+    // Tu lógica para verificar el código aquí
+    console.log('Verificando código:', formData.token);
+    const query: GetExtendQuerys = {
+      'search-fields': ['name', 'ci'],
+      'search-term': 'v58547585',
+      limit: 10,
+      offset: 0,
+      includeData: false,
+    };
+    const response = await patientApi.getPatients(query);
+    console.log(response);
+    // ...
+  };
 </script>
-<style scoped></style>
+<style scoped>
+  /**ANIMACION DE STEPPER */
+  /** ANIMACIÓN SLIDE A LA IZQUIERDA (avanzo paso) */
+  .slide-left-enter-active,
+  .slide-left-leave-active {
+    width: 100%;
+    transition: all 0.25s cubic-bezier(0.73, -0.12, 0.16, 1.05);
+  }
+  .slide-left-enter-from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  .slide-left-leave-to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  /** ANIMACIÓN SLIDE A LA DERECHA (retrocedo paso) */
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    width: 100%;
+    transition: all 0.25s cubic-bezier(0.73, -0.12, 0.16, 1.05);
+  }
+  .slide-right-enter-from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  .slide-right-leave-to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  /**FORMLARIO */
+  ::v-deep(.va-input-wrapper__field::after) {
+    border: solid 1px gray;
+  }
+  ::v-deep(.va-stepper__divider) {
+    max-width: 1rem;
+  }
+
+  ::v-deep(.va-stepper__step-button) {
+    padding: 0.25rem;
+  }
+
+  ::v-deep(.va-stepper__step-content) {
+    min-width: 50dvw;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+  }
+</style>

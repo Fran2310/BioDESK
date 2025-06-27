@@ -31,7 +31,7 @@
       <main
         class="bg-Lightbase h-full min-h-screen flex items-center justify-center mx-5"
       >
-        <div class="min-h-full flex flex-col items-center justify-start">
+        <div class="min-h-full flex flex-col items-center justify-start gap-8">
           <Logo :height="'6rem'" />
           <RouterView />
         </div>

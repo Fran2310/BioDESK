@@ -11,6 +11,12 @@ export const validator = {
   hasUppercase: (v: string) =>
     /[A-Z]/.test(v) || 'Debe contener al menos una letra mayúscula.',
   hasNumber: (v: string) => /\d/.test(v) || 'Debe contener al menos un número.',
+  alphanumericUppercase: (v: string) => {
+    if (v.length < 6) return 'Debe tener al menos 6 caracteres.';
+    if (!/^[A-Z0-9]+$/.test(v))
+      return 'Solo se permiten números y letras mayúsculas.';
+    return true;
+  },
 };
 
 export function mapPermissionsFormat(permissions: any[] = []) {
