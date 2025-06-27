@@ -36,6 +36,7 @@ import type {
 } from './interfaces/medicTestRequest';
 import type { State } from './types/global.type';
 
+
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API_PROD, // Cambia según el backend en uso
   headers: {
