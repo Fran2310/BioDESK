@@ -11,6 +11,8 @@ import { Priority, State } from '@prisma/client-lab';
 import { STATE_TRANSITIONS } from 'src/casl/helper/transition.helper';
 import { LabUserService } from 'src/user/lab-user/lab-user.service';
 import { PdfService } from 'src/pdf/pdf.service';
+import { MailService } from 'src/mail/mail.service';
+import { LabService } from 'src/lab/services/lab.service';
 
 @Injectable()
 export class RequestMedicTestService {
@@ -19,9 +21,11 @@ export class RequestMedicTestService {
   constructor(
       private readonly systemUserService: SystemUserService,
       private readonly labUserService: LabUserService,
+      private readonly labService: LabService,
       private readonly auditService: AuditService,
       private readonly labDbManageService: LabDbManageService,
       private readonly pdfService: PdfService,
+      private readonly mailService: MailService,
   ) {}
   
   async createRequestMedicTest(
@@ -344,6 +348,11 @@ export class RequestMedicTestService {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
       const labUser = await this.labUserService.getLabUserByUuid(labId, performedByUserUuid)
+      const lab = this.labService.getLabById(labId) // TODO Refactorizar todo esto
+
+      if (!lab) {
+        throw new NotFoundException(`Laboratorio con ID ${labId} no se encuentra`);
+      }
   
       // Obtener el request incluyendo el paciente relacionado
       const requestWithPatient = await labPrisma.requestMedicTest.findUnique({
@@ -396,10 +405,14 @@ export class RequestMedicTestService {
           after: updated.state,
         },
       });
-
-      if (updated.state === "COMPLETED") {
-        this.pdfService.generateMedicReport(labId, updated.id) 
-        // TODO hacer que también se envie el correo al paciente
+      
+      if (updated.state === "COMPLETED") { //TODO Con esto
+        const pdf = await this.pdfService.generateMedicReport(labId, updated.id)
+        if (pdf.downloadUrl) {
+          this.mailService.sendMedicResults(lab, patient, requestWithPatient, pdf.downloadUrl)
+        } else {
+          this.logger.error(`No hay enlace de descarga para el PDF`);
+        }
       }
   
       return updated;

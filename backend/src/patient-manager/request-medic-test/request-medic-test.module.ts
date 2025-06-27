@@ -9,6 +9,7 @@ import { LabPrismaModule } from 'src/prisma-manage/lab-prisma/lab-prisma.module'
 import { LabModule } from 'src/lab/lab.module';
 import { LabUserModule } from 'src/user/lab-user/lab-user.module';
 import { PdfModule } from 'src/pdf/pdf.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -20,6 +21,8 @@ import { PdfModule } from 'src/pdf/pdf.module';
       MedicHistoryModule,
       AuditModule,
       PdfModule,
+      MailModule,
+      LabModule,
     ],
   controllers: [RequestMedicTestController],
   providers: [RequestMedicTestService],

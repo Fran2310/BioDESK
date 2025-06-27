@@ -10,8 +10,8 @@ import { RegisterDto } from 'src/auth/dto/register.dto';
 
 const public_storage_url = `${process.env.SUPABASE_URL}storage/v1/object/public/`
 const banners = {
-  bienvenida:         `${public_storage_url}/images/banners/bienvenida.jpg`,
-  cambiar_contrasena: `${public_storage_url}/images/banners/cambiar_contrasena.jpg`,
+  bienvenida:         `${public_storage_url}images/banners/system/bienvenida.jpg`,
+  cambiar_contrasena: `${public_storage_url}images/banners/system/cambiar_contrasena.jpg`,
 }
 
 @Injectable()
@@ -45,6 +45,38 @@ export class MailService {
     return result.html;
   }
 
+  async sendMedicResults(lab, patient, requestMedicTest, pdfUrl: string) {
+    if (lab && patient && requestMedicTest) {
+      const formatDate = (dateISO: string) => { // Convertir la fecha ISO a formato legible (ej: "15 de junio de 2023, 2:30 PM")
+        return new Date(dateISO).toLocaleString('es-ES', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      };
+
+      const html = await this.templateToHTML('test_results.mjml', {
+        bannerUrl: banners.bienvenida,
+        labName: lab.name,
+        name: `${patient.name} ${patient.lastName}`,
+        requestedAt: formatDate(requestMedicTest.requestedAt),
+        completedAt: formatDate(requestMedicTest.completedAt),
+        pdfUrl,
+        year: new Date().getFullYear(),
+      });
+
+      await this.sendEmail({
+        from: this.ourEmail,
+        to: [patient.email],
+        subject: `Resultados Médicos`,
+        html: html,
+      })
+      this.logger.log(`Correo de resultados enviados a ${patient.email}`);
+    }
+  }
+
   async sendWelcomeEmail(userDto: RegisterDto) {
     if (userDto) {
       const html = await this.templateToHTML('welcome.mjml', {
@@ -59,8 +91,8 @@ export class MailService {
         subject: '¡Bienvenido a BioDESK!',
         html: html,
       })
+      this.logger.log(`Correo de bienvenida a ${userDto.email}`);
     }
-    this.logger.log(`Correo de bienvenida a ${userDto.email}`);
   }
 
   async sendWelcomeToLabEmail(email: string, labId: number, role: string) {
