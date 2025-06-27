@@ -326,8 +326,14 @@
   ::v-deep(.va-input-wrapper__field::after) {
     border: solid 1px gray;
   }
+
+  ::v-deep(.va-stepper__navigation) {
+    display: flex;
+    justify-content: start;
+  }
   ::v-deep(.va-stepper__divider) {
-    max-width: 1rem;
+    min-width: 1rem;
+    height: 0.1rem;
   }
 
   ::v-deep(.va-stepper__step-button) {
