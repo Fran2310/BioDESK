@@ -14,7 +14,7 @@
         <RouterLink to="/" aria-label="Visit home page">
           <!-- <VuesticLogo /> -->
 
-          <BiodeskLogo :style= "{height: '3em'}"/>
+          <BioDESKLogo :style= "{height: '3em'}"/>
 
         </RouterLink>
       </div>
@@ -29,7 +29,7 @@
 import { storeToRefs } from 'pinia'
 import { useGlobalStore } from '../../stores/global-store'
 import AppNavbarActions from './components/AppNavbarActions.vue'
-import BiodeskLogo from '../../components/Biodesk-logo.vue'
+import BioDESKLogo from '../../components/BioDESKLogo.vue'
 
 defineProps({
   isMobile: { type: Boolean, default: false },
