@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-/* import { useGlobalStore } from '../../stores/global-store' */
+import { useGlobalStore } from '../../stores/global-store'
 import AppNavbarActions from './components/AppNavbarActions.vue'
 import BiodeskLogo from '../../components/Biodesk-logo.vue'
 
