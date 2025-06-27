@@ -1,6 +1,3 @@
-import { ref } from 'vue';
-import { useAuthStore } from '../../../stores/authStore';
-import { getAuthData } from '../../../utils/auth';
 import { useReferenceModal } from './useReferenceModal';
 import { useExamForm } from './useExamForm';
 import { useSupplies } from './useSupplies';
@@ -15,8 +12,6 @@ export function useLaboratoryCatalog() {
     const { addSupplies, removeSupply } = useSupplies(examForm);
     const { addProperty, removeProperty } = useExamProperties();
     const referenceModal = useReferenceModal();
-    const { labId, token } = getAuthData();
-    const authStore = useAuthStore();
 
     // Helpers y modales de referencia
     const {
@@ -99,14 +94,6 @@ export function useLaboratoryCatalog() {
         selectedVariation.value = { ageGroup: '', gender: '', range: '' };
     }
 
-    function printLabId() {
-        if (!labId) {
-            console.error('No se ha seleccionado un laboratorio.');
-            return;
-        }
-        console.log('ID del laboratorio actual:', labId);
-    }
-
     return {
         examForm,
         tableState,
@@ -131,10 +118,7 @@ export function useLaboratoryCatalog() {
         openModalForNewReference,
         openModalForNewVariation,
         editVariation,
-        printLabId,
         fetchExams,
-        labId,
-        token,
         // ...otros helpers y refs
     };
 }

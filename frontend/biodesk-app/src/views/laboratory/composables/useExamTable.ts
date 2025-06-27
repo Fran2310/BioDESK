@@ -1,7 +1,7 @@
 import { computed, reactive } from 'vue';
 import type { MedicTestCatalog } from '../types';
-import { fetchMedicTests } from '../../../services/api';
-import { getAuthData } from '../../../utils/auth';
+import { medicTestCatalogApi } from '../../../services/api'; // <-- Usa la API centralizada
+
 
 // Estado reactivo para la tabla de exámenes
 type ExamTableState = {
@@ -37,15 +37,15 @@ export function setTableLoading(value: boolean) {
 }
 
 export async function fetchExams(showError?: (msg: string) => void) {
-    const { labId, token } = getAuthData();
-    if (!labId || !token) {
-        if (showError) showError('No se ha seleccionado un laboratorio o no hay token disponible.');
-        else console.error('No se ha seleccionado un laboratorio o no hay token disponible.');
-        return;
-    }
     setTableLoading(true);
     try {
-        tableState.exams = await fetchMedicTests(labId, token);
+        // Llama a la API centralizada (no necesitas labId ni token aquí si ya lo gestiona la API)
+        const response = await medicTestCatalogApi.getMedicTestCatalog({
+            offset: 0,
+            limit: 100,
+            includeData: true,
+        });
+        tableState.exams = response.data;
     } catch (error) {
         if (showError) showError('Ocurrió un error al obtener los exámenes.');
         else console.error('Ocurrió un error al obtener los exámenes.', error);

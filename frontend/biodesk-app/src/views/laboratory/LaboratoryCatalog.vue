@@ -45,7 +45,7 @@
             <va-button
               size="small"
               color="danger"
-              @click="deleteExam(row)"
+              @click="deleteExam(row, fetchExams, showError)"
             >
               Eliminar
             </va-button>
@@ -228,8 +228,6 @@ const {
   editExam,
   updateExam,
   deleteExam,
-  labId,
-  token,
   closeModal,
   // Insumos
   addSupplies,
@@ -249,7 +247,6 @@ const {
   // Otros
   viewDetails,
   showError,
-  printLabId,
   fetchExams,
 } = useLaboratoryCatalog()
 

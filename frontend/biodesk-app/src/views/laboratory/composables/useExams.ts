@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { useExamsStore } from '../../../stores/exams'
-import { Exam } from '../types'
+import { useExamsStore } from '../../../stores/catalogStore'
+import type { Exam } from '../types'
 
 export const useExams = () => {
   const examsStore = useExamsStore()
