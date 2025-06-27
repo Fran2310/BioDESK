@@ -30,9 +30,6 @@ const defaultNewPatient = {
   phoneNums: [''],
   dir: '',
   birthDate: null,
-  notes: '',
-  active: true,
-  medicHistory: null,
 }
 
 const newUser = ref<Patient>({ ...defaultNewPatient } as Patient)
@@ -66,10 +63,12 @@ watch(
       return
     }
 
+    // Omit medicHistory, notes, and active if present in props.patient
+    const { medicHistory, notes, active, ...rest } = props.patient || {};
     newUser.value = {
       ...defaultNewPatient,
-      ...props.patient,
-      phoneNums: props.patient?.phoneNums?.length ? [...props.patient.phoneNums] : ['']
+      ...rest,
+      phoneNums: rest?.phoneNums?.length ? [...rest.phoneNums] : ['']
     } as Patient
     console.log('newUser set to patient:', newUser.value)
   },
@@ -235,13 +234,7 @@ const removePhone = (index: number) => {
           </div>
         </div>
 
-        <div class="flex gap-4 w-full">
-          <div class="flex items-center w-1/2 mt-4">
-            <VaCheckbox v-model="newUser.active" label="Active" class="w-full" name="active" />
-          </div>
-        </div>
-
-        <VaTextarea v-model="newUser.notes" label="Notes" class="w-full" name="notes" />
+        <!-- Removed Active checkbox and Notes textarea -->
 
         <div class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center">
           <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancel</VaButton>
