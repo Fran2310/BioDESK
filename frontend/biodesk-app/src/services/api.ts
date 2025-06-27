@@ -35,13 +35,14 @@ import type {
   PatchMedicTestRequestData,
 } from './interfaces/medicTestRequest';
 import type { State } from './types/global.type';
-
+import qs from 'qs';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API_PROD, // Cambia según el backend en uso
   headers: {
     accept: 'application/json',
   },
+  paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'repeat' }),
 });
 
 // Interceptor para devolver solo el error del backend
