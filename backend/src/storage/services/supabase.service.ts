@@ -68,7 +68,7 @@ export class SupabaseService {
   ): Promise<{ path: string }> {
     const bucket = STORAGE_BUCKETS.TESTS;
     const filePath = customPath ? path.join(customPath, fileName) : fileName;
-
+    // TODO colocarle un tiempo de vida a la firma de 30 días
     await this._upload(bucket, filePath, file);
 
     return {
