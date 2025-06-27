@@ -4,6 +4,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Login from '@/views/auth/Login.vue';
 import HomeView from '@/views/home/HomeView.vue';
 import LoadScreen from '@/layouts/LoadScreen.vue';
+import PatientsPage from '@/views/patients/PatientsPage.vue';
+import AppLayoutVuestic from '@/layouts/AppLayoutVuestic.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL_APP_DEV),
@@ -54,7 +56,7 @@ const router = createRouter({
     },
     {
       path: '/app',
-      component: AppLayout,
+      component: AppLayoutVuestic,
       children: [
         {
           path: 'home',
@@ -62,6 +64,11 @@ const router = createRouter({
           component: HomeView,
         },
         // Aquí se agregan mas hijos de app layout
+        {
+          path: 'patients',
+          name: 'Patients',
+          component: PatientsPage,
+        },
       ],
     },
     // Redirección de la raíz a /auth/login
