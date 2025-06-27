@@ -348,11 +348,7 @@ export class RequestMedicTestService {
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
       const labUser = await this.labUserService.getLabUserByUuid(labId, performedByUserUuid)
-      const lab = this.labService.getLabById(labId) // TODO Refactorizar todo esto
-
-      if (!lab) {
-        throw new NotFoundException(`Laboratorio con ID ${labId} no se encuentra`);
-      }
+      const lab = await this.labService.getLabById(labId) // TODO Refactorizar todo esto
   
       // Obtener el request incluyendo el paciente relacionado
       const requestWithPatient = await labPrisma.requestMedicTest.findUnique({

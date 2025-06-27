@@ -12,6 +12,7 @@ const public_storage_url = `${process.env.SUPABASE_URL}storage/v1/object/public/
 const banners = {
   bienvenida:         `${public_storage_url}images/banners/system/bienvenida.jpg`,
   cambiar_contrasena: `${public_storage_url}images/banners/system/cambiar_contrasena.jpg`,
+  resultados_medicos: `${public_storage_url}images/banners/system/resultados_medicos.jpg`,
 }
 
 @Injectable()
@@ -53,12 +54,13 @@ export class MailService {
           month: 'short',
           year: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
+          hour12: true,
         });
       };
 
       const html = await this.templateToHTML('test_results.mjml', {
-        bannerUrl: banners.bienvenida,
+        bannerUrl: banners.resultados_medicos,
         labName: lab.name,
         name: `${patient.name} ${patient.lastName}`,
         requestedAt: formatDate(requestMedicTest.requestedAt),
@@ -70,7 +72,7 @@ export class MailService {
       await this.sendEmail({
         from: this.ourEmail,
         to: [patient.email],
-        subject: `Resultados Médicos`,
+        subject: `${lab.name} | Resultados Médicos`,
         html: html,
       })
       this.logger.log(`Correo de resultados enviados a ${patient.email}`);

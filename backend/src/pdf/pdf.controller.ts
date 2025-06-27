@@ -1,11 +1,9 @@
-import { Controller, Get, Query, Res, Post, Body, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { PdfService } from './pdf.service';
-import { Response } from 'express';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiQuery } from '@nestjs/swagger';
-import { RequestMedicTestService } from 'src/patient-manager/request-medic-test/request-medic-test.service';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 
-@ApiTags('PDF Services') // Agrega agrupación en Swagger UI
+@ApiTags('[Testing] PDF Services') // Agrega agrupación en Swagger UI
 @Public()
 @Controller('pdf')
 export class PdfController {

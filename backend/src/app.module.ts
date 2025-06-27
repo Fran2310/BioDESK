@@ -20,7 +20,6 @@ import { LabUserModule } from './user/lab-user/lab-user.module';
 import { MailModule } from './mail/mail.module';
 import { SystemUserModule } from './user/system-user/system-user.module';
 import { CatalogLabModule } from './catalog-lab/catalog-lab.module';
-import { ImagesModule } from './images/images.module';
 import { StorageModule } from './storage/storage.module';
 import { PdfModule } from './pdf/pdf.module';
 import { RequestMedicTestModule } from './patient-manager/request-medic-test/request-medic-test.module';
@@ -42,7 +41,6 @@ import { RequestMedicTestModule } from './patient-manager/request-medic-test/req
     SystemUserModule,
     RequestMedicTestModule,
     CatalogLabModule,
-    ImagesModule,
     StorageModule,
     PdfModule,
   ],
