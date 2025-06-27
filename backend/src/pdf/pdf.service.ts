@@ -112,7 +112,7 @@ export class PdfService {
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        margin: { top: '2.5cm', right: '1.5cm', bottom: '2.5cm', left: '1.5cm' },
+        margin: { top: '1.5cm', right: '1.5cm', bottom: '1.5cm', left: '1.5cm' },
       });
 
       return Buffer.from(pdfBuffer);
