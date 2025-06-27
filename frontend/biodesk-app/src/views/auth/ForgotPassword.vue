@@ -31,7 +31,7 @@
                   autocomplete="email"
                   placeholder="xample@xample.com"
                   :rules="[validator.required, validator.email]"
-                  class="mb-4 w-full"
+                  class="mb-4 mt-2 w-full"
                   label="Email"
                   type="email"
                   color="primary"
@@ -42,7 +42,7 @@
                 </VaInput>
 
                 <!-- Botón de envío -->
-                <div class="flex justify-center mt-4">
+                <div class="flex justify-center mt-12">
                   <VaButton
                     gradient
                     class="w-full"
@@ -74,7 +74,7 @@
           <template #step-content-1>
             <VaForm ref="form" @submit.prevent="changePassword">
               <div
-                class="flex flex-col justify-center items-center w-8xl min-w-4xl"
+                class="flex flex-col justify-center items-center w-8xl min-w-password"
               >
                 <!-- Código -->
                 <VaInput
@@ -134,6 +134,7 @@
                     v-model="formData.repeatPassword"
                     placeholder="securePass123!"
                     :rules="[
+                      samePasswordValidator,
                       validator.required,
                       validator.hasUppercase,
                       validator.hasNumber,
@@ -165,7 +166,7 @@
                   </VaInput>
                 </VaValue>
                 <!-- Botón de envío -->
-                <div class="flex justify-center w-full mt-2">
+                <div class="flex justify-center w-full mt-4">
                   <VaButton
                     gradient
                     class="w-full"
@@ -194,24 +195,37 @@
   import { validator } from '@/services/utils.js';
   import { warningFieldsToast } from './toasts';
   import { useForm } from 'vuestic-ui';
-  import { authApi, patientApi } from '@/services/api';
-  import type { SendTokenData } from '@/services/interfaces/auth';
+  import { authApi } from '@/services/api';
+  import type {
+    ResetPasswordData,
+    SendTokenData,
+  } from '@/services/interfaces/auth';
   import { initToast } from '@/services/toast';
-  import type { GetExtendQuerys } from '@/services/interfaces/global';
 
   const step = ref(0);
   const previousStep = ref(0);
   const transitionName = ref('slide-left'); // animación inicial
 
+  const codeSent = ref(false);
   const steps = [
     { label: 'Enviar código', icon: 'lock' },
     { label: 'Ingresar datos', icon: 'key' },
   ];
 
+  // Watch para controlar la animación y bloquear avance manual
   watch(step, (newStep, oldStep) => {
+    // Bloquear avance manual al step 1 si no se ha enviado el código
+    if (newStep === 1 && !codeSent.value) {
+      step.value = oldStep; // Revertir el cambio
+      initToast(
+        'Advertencia',
+        'Primero debes enviar el código a tu correo.',
+        'warning'
+      );
+      return;
+    }
     previousStep.value = oldStep;
     transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
-    console.log('step cambió de', oldStep, 'a', newStep);
   });
   const animatedBlock = ref();
   const { onAfterLeave } = useAnimatedRouteLeave(animatedBlock);
@@ -229,6 +243,10 @@
     repeatPassword: '',
   });
 
+  const samePasswordValidator = (value: string) => {
+    return value === formData.password || 'Las contraseñas no coinciden';
+  };
+
   const submit = async () => {
     if (!validate()) {
       // Bloquea el envío si hay errores y muestra un toast de advertencia
@@ -241,6 +259,8 @@
       const response = await authApi.sendToken(data);
 
       initToast('Envio de código', response.data.message, 'success');
+      codeSent.value = true;
+      step.value = 1;
     } catch (error: any) {
       initToast('Error', error.message, 'danger');
     } finally {
@@ -249,18 +269,25 @@
   };
 
   const changePassword = async () => {
-    // Tu lógica para verificar el código aquí
-    console.log('Verificando código:', formData.token);
-    const query: GetExtendQuerys = {
-      'search-fields': ['name', 'ci'],
-      'search-term': 'v58547585',
-      limit: 10,
-      offset: 0,
-      includeData: false,
-    };
-    const response = await patientApi.getPatients(query);
-    console.log(response);
-    // ...
+    if (!validate()) {
+      // Bloquea el envío si hay errores y muestra un toast de advertencia
+      warningFieldsToast();
+      return;
+    }
+    isLoading.value = true;
+    try {
+      const data: ResetPasswordData = {
+        email: formData.email,
+        token: formData.token,
+        newPassword: formData.password,
+      };
+      const response = await authApi.resetPassword(data);
+      initToast('Envio de código', response.data.message, 'success');
+    } catch (error: any) {
+      initToast('Error Token', error.message, 'danger');
+    } finally {
+      isLoading.value = false;
+    }
   };
 </script>
 <style scoped>
@@ -308,7 +335,7 @@
   }
 
   ::v-deep(.va-stepper__step-content) {
-    min-width: 50dvw;
+    min-width: 29dvw;
     margin-bottom: 1rem;
     margin-top: 1rem;
   }
