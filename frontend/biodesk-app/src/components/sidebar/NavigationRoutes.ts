@@ -1,8 +1,8 @@
 export interface INavigationRoute {
-  name: string
-  displayName: string
-  meta: { icon: string }
-  children?: INavigationRoute[]
+  name: string;
+  displayName: string;
+  meta: { icon: string };
+  children?: INavigationRoute[];
 }
 
 export default {
@@ -25,5 +25,12 @@ export default {
         icon: 'group',
       },
     },
+    {
+      name: 'LaboratoryCatalog',
+      displayName: 'Catalogo de laboratorio',
+      meta: {
+        icon: 'science',
+      },
+    },
   ] as INavigationRoute[],
-}
+};
