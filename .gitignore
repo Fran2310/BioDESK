@@ -1,0 +1,5 @@
+# Ignorar dependencias
+frontend/node_modules/
+
+frontend/.gitignore
+
