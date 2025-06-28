@@ -1,14 +1,14 @@
 <template>
     <div class="card" @click="goToX" style="cursor: pointer;">
             <div>
-                <!-- Corner icon -->
-                <VaIcon :name="icon" color="primary" class="corner-icon material-symbols-outlined" size="48px"/>
+                <!-- Ícono -->
+                <VaIcon :name="props.icon" color="primary" class="corner-icon material-symbols-outlined" size="48px"/>
 
-                <!-- Card content -->
+                <!-- Contenido de la tarjeta -->
                 <p class="font-semibold text-3xl"> {{ props.title }} </p>
                 <p class="text-card"> {{ props.subtitle }} </p>
-                
-                <!-- Corner triangle-->
+
+                <!-- Triángulo de la esquina-->
                 <div class="triangle"></div>
             </div>
         </div>
@@ -26,7 +26,7 @@
         routeName?: string
     }>()
 
-    // Navigation shortcuts
+    // Atajo de navegación
     const router = useRouter()
 
     function goToX() {
@@ -36,7 +36,7 @@
 
 
 <style scoped>
-    /* Card characteristics */
+    /* Características de la tarjeta */
     .card {
         position: relative;
         display: grid;
@@ -44,8 +44,8 @@
         justify-content: space-around;
         align-items: center;
         text-align: center;
-        width: 280px;
-        height: 280px;
+        width: 25vh;    /* 300px*/
+        height: 30vh;   /* 280px*/
         padding: 15px;
         margin: 10px;
         background-color: var(--va-background-light-secondary);
@@ -55,7 +55,7 @@
 
     .card:hover {
         background-color: var(--va-base);
-        transition: transform 0.2s; /* Size transition */
+        transition: transform 0.2s;     /* transición del tamaño */
         transform: scale(1.05);
     }
 
@@ -67,11 +67,19 @@
         color: var(--va-primary);
     }
 
-    /* Corner triangle */
+    .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 48
+    }
+
+    /* Triángulo de la esquina */
     .triangle {
         width: 50px;
         aspect-ratio: 1;
-        clip-path: polygon(0 100%,100% 0,100% 100%); /* Shape */ 
+        clip-path: polygon(0 100%,100% 0,100% 100%);    /* forma */ 
         background-color: var(--va-primary);
         position: absolute;
         bottom: 0;

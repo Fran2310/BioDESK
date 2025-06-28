@@ -1,13 +1,13 @@
 <template>
     <div class="card">
             <div>
-                <!-- Corner icon -->
+                <!-- Ícono -->
                 <VaIcon :name="icon" color="primary" class="corner-icon material-symbols-outlined" size="48px"/>
                 
-                <!-- Title -->
+                <!-- Título -->
                 <p class="font-semibold text-3xl" style="cursor: pointer"  @click="toggleOptions"> {{ props.title }} </p>
-                
-                <!-- Deployable menu -->
+
+                <!-- Menú desplegable -->
                 <div class="menu">
                     <div class="arrow-hide" style="cursor: pointer" :class="showOptions ? 'arrow-show' : 'arrow-hide'" @click="toggleOptions"/>
 
@@ -27,7 +27,7 @@
                     </transition>
                 </div>
                 
-                <!-- Corner triangle -->
+                <!-- Triángulo de la esquina -->
                 <div class="triangle"></div>
             </div>
         </div>
@@ -37,7 +37,7 @@
 <script setup lang="ts">
     import { useRouter } from 'vue-router'
     import { ref, defineProps } from 'vue'
-    
+
     const props = defineProps<{
         title?: string
         icon?: string
@@ -49,14 +49,14 @@
         routeName3?: string
     }>()
 
-    // Submenu
+    // Desplegar el menú
     const showOptions = ref(false)
 
     function toggleOptions() {
     showOptions.value = !showOptions.value
     }
     
-    // Navigation shortcuts
+    // Atajos de navegación
     const router = useRouter()
 
     function goToX() {
@@ -72,40 +72,48 @@
 
 
 <style>
-    /* Basic card content */
-    .card { /* characteristics */
+    /* Contenido básico de la tarjeta */
+    .card {     /* características */
         position: relative;
         display: grid;
         flex-wrap: wrap;
         justify-content: space-around;
         align-items: center;
         text-align: center;
-        width: 280px;
-        height: 280px;
+        width: 25vh;    /* 300px */
+        height: 30vh;   /* 280px */
         padding: 15px;
         margin: 10px;
         background-color: var(--va-background-light-secondary);
         border: 3px solid var(--va-primary);
         border-radius: 8px;
-        transition: transform 0.2s;
     }
 
     .card:hover {
         background-color: var(--va-base);
         transform: scale(1.05);
+        transition: transform 0.2s;
     }
 
-    .corner-icon { /* corner icon */
+    .corner-icon {      /* ícono */
         position: absolute;
         top: 10px;
         left: 10px;
         color: var(--va-primary);
     }
 
-    .triangle { /* corner triangle */
+    .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 48
+    }
+
+    .triangle {     /* triángulo de la esquina */
         width: 50px;
         aspect-ratio: 1;
-        clip-path: polygon(0 100%,100% 0,100% 100%); /* shape */
+        clip-path: polygon(0 100%,100% 0,100% 100%);    /* forma */
         background-color: var(--va-primary);
         position: absolute;
         bottom: 0;
@@ -119,21 +127,21 @@
         justify-content: center;
     }
 
-    /* Arrows */
+    /* Flecha del menú */
     .arrow-hide {
         height: 25px;
         aspect-ratio: 1/2;
-        clip-path: polygon(0 0,100% 50%,0 100%); /* shape */
+        clip-path: polygon(0 0,100% 50%,0 100%);    /* forma */
         background-color: var(--va-primary);
-        transition: transform 0.5s ease; /* go to original orientation */
+        transition: transform 0.5s ease;    /* regresar a su orientación original */
     }
 
-    .arrow-show { /* rotate the arrow */
+    .arrow-show {       /* rotar la flecha */
         transform: rotate(90deg);
         transition: transform 0.5s ease;
     }
 
-    /* Text options */
+    /* Opciones del menú */
     .options {
         justify-items: left;
     }
@@ -143,26 +151,11 @@
         text-align: center;
     }
 
-    .text-card.italic { /* show more/less */
+    .text-card.italic {     /* mostrar más/menos */
         color: var(--va-secondary);
     }
 
-    /* Slide animation for the options */
-    @keyframes slideDown {
-        from {
-            opacity: 1;
-            transform: translateY(0px);
-        }
-        to {
-            opacity: 0;
-            transform: translateY(50px);
-        }
-    }
-
-    .slidedown-anim {
-        animation: slideDown 2s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
+    /* Animación de entrada */
     @keyframes slideUp {
         from {
             opacity: 0;
@@ -176,5 +169,21 @@
 
     .slideup-anim {
         animation: slideUp 2s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    /* Animación de salida */
+    @keyframes slideDown {
+        from {
+            opacity: 1;
+            transform: translateY(0px);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+    }
+
+    .slidedown-anim {
+        animation: slideDown 2s cubic-bezier(0.23, 1, 0.32, 1);
     }
 </style>

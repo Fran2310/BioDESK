@@ -1,14 +1,14 @@
 <template>
     <div class="flex justify-center banner">
-        <Logo></Logo>
+        <Logo/>
         
-        <!-- Vertical line -->
+        <!-- Línea vertical -->
         <div class="vl"></div>
 
         <div class="lab-details">
-            <p class="text-5xl text-details"> {{ props.labName }} </p> <!-- Lab name -->
+            <p class="text-5xl text-details"> {{ props.labName }} </p> <!-- Nombre del lab -->
 
-            <p class="text-3xl text-details"> {{ props.role }} </p> <!-- User role -->
+            <p class="text-3xl text-details"> {{ props.role }} </p> <!-- Rol del usuario -->
         </div>
     </div>
 </template>
@@ -27,16 +27,21 @@
 
 <style>
     .banner {
-        height: 9em;
-        margin-top: 30px;
-        margin-bottom: 100px;
+        display: flex;
+        flex-direction: row;
+        height: 10em;
+        margin-top: 5vh;
+        margin-bottom: 12vh;
+        align-items: center;
         justify-content: center;
+        justify-items: center;
     }
 
-    .vl { /* Vertical line */
-        margin-left: 30px;
+    .vl { /* Línea vertical */
+        height: 10em;
         border-left: 6px solid var(--va-primary);
-        height: 175px;
+        margin-left: 30px;
+        margin-right: 40px;
     }
 
     .lab-details {
@@ -44,8 +49,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: left;
-        margin-left: 30px;
-        gap: 20px;
+        gap: 3vh;
     }
 
     .text-details {
