@@ -80,9 +80,9 @@
         justify-content: space-around;
         align-items: center;
         text-align: center;
-        width: 25vh;    /* 300px */
-        height: 30vh;   /* 280px */
-        padding: 15px;
+        max-width: 15vw;    /* 300px */
+        max-height: 15vw;   /* 280px */
+        padding: 1%;
         margin: 10px;
         background-color: var(--va-background-light-secondary);
         border: 3px solid var(--va-primary);
@@ -93,6 +93,28 @@
         background-color: var(--va-base);
         transform: scale(1.05);
         transition: transform 0.2s;
+    }
+
+    /* Tamaño para tablets */
+    @media (max-width: 1024px) {
+        .card {
+            width: 20vw;
+            height: 20vh;
+            min-width: 220px;
+            min-height: 180px;
+            margin: 5px;
+        }
+    }
+
+    /* Tamaño para móviles */
+    @media (max-width: 425px) {
+        .card {
+            width: 10vw;
+            height: 5vh;
+            min-width: 150px;
+            min-height: 120px;
+            padding: 5px;
+        }
     }
 
     .corner-icon {      /* ícono */
@@ -155,22 +177,6 @@
         color: var(--va-secondary);
     }
 
-    /* Animación de entrada */
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0px);
-        }
-    }
-
-    .slideup-anim {
-        animation: slideUp 2s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
     /* Animación de salida */
     @keyframes slideDown {
         from {
@@ -179,11 +185,27 @@
         }
         to {
             opacity: 0;
-            transform: translateY(50px);
+            transform: translateY(40px);
         }
     }
 
     .slidedown-anim {
-        animation: slideDown 2s cubic-bezier(0.23, 1, 0.32, 1);
+        animation: slideDown 1s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    /* Animación de entrada */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0px);
+        }
+    }
+
+    .slideup-anim {
+        animation: slideUp 1s cubic-bezier(0.23, 1, 0.32, 1);
     }
 </style>

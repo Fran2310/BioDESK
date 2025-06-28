@@ -44,9 +44,13 @@
         justify-content: space-around;
         align-items: center;
         text-align: center;
-        width: 25vh;    /* 300px*/
-        height: 30vh;   /* 280px*/
-        padding: 15px;
+        width: 15vw;
+        min-width: 15vw;
+        max-width: 15vw;    /* 300px*/
+        height: 15vw;
+        min-height: 15vw;
+        max-height: 15vw;   /* 280px*/
+        padding: 1%;
         margin: 10px;
         background-color: var(--va-background-light-secondary);
         border: 3px solid var(--va-primary);
@@ -57,6 +61,28 @@
         background-color: var(--va-base);
         transition: transform 0.2s;     /* transición del tamaño */
         transform: scale(1.05);
+    }
+
+    Tamaño para tablets
+    @media (max-width: 1024px) {
+        .card {
+            width: 20vw;
+            height: 20vh;
+            min-width: 220px;
+            min-height: 180px;
+            margin: 5px
+        }
+    }
+
+    /* Tamaño para móviles */
+    @media (max-width: 425px) {
+        .card {
+            width: 10vw;
+            height: 5vh;
+            min-width: 150px;
+            min-height: 120px;
+            margin: 5px;
+        }
     }
 
     /* Corner icon */

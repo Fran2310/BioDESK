@@ -30,8 +30,8 @@
         display: flex;
         flex-direction: row;
         height: 10em;
-        margin-top: 5vh;
-        margin-bottom: 12vh;
+        margin-top: 3vh;
+        margin-bottom: 10vh;
         align-items: center;
         justify-content: center;
         justify-items: center;
