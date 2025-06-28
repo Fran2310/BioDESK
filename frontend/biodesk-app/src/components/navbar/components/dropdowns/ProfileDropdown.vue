@@ -68,13 +68,13 @@ withDefaults(
         list: [
           {
             name: 'profile',
-            to: 'preferences',
-            icon: 'mso-account_circle',
+            to: 'Patients',
+            icon: 'account_circle',
           },
           {
             name: 'settings',
-            to: 'settings',
-            icon: 'mso-settings',
+            to: 'Patients',
+            icon: 'settings',
           },
         ],
       },
@@ -83,14 +83,14 @@ withDefaults(
         separator: false,
         list: [
           {
-            name: 'select lab',
-            to: 'select-lab',
+            name: 'select-lab',
+            to: 'SelectLab',
             icon: 'medical_services',
           },
           {
             name: 'logout',
-            to: 'login',
-            icon: 'mso-logout',
+            to: 'Login',
+            icon: 'logout',
           },
         ],
       },

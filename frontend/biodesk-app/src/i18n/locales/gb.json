@@ -80,6 +80,7 @@
   "user": {
     "language": "Change language",
     "logout": "Logout",
+    "select-lab": "Seleccionar Laboratorio",
     "profile": "Profile",
     "settings": "Settings",
     "billing": "Billing",
