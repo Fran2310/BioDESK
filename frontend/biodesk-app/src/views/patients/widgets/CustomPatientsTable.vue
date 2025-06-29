@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { defineVaDataTableColumns, useModal } from 'vuestic-ui'
-import { Patient } from '../patient.types'
+import type { DataTableSortingOrder } from 'vuestic-ui'
+import type { Patient } from '@/services/types/patientType'
 
-import { PropType, computed, toRef, ref} from 'vue'
-import { Pagination, Sorting } from '../../../data/pages/patients'
+import type { PropType } from 'vue'
+import { computed, toRef, ref} from 'vue'
+// Removed Pagination and Sorting import as they are not needed
 import { useVModel } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
@@ -63,9 +65,12 @@ const props = defineProps({
   },
   
   loading: { type: Boolean, default: false },
-  pagination: { type: Object as PropType<Pagination>, required: true },
-  sortBy: { type: String as PropType<Sorting['sortBy']>, required: true },
-  sortingOrder: { type: String as PropType<Sorting['sortingOrder']>, default: null },
+  pagination: {
+    type: Object as PropType<{ page: number; perPage: number; total: number }>,
+    required: true,
+  },
+  sortBy: { type: String, required: true },
+  sortingOrder: { type: String as PropType<DataTableSortingOrder | undefined>, default: undefined },
 })
 
 
@@ -74,8 +79,8 @@ const props = defineProps({
 const emit = defineEmits<{
   (event: 'edit-patient', patient: Patient): void
   (event: 'delete-patient', patient: Patient): void
-  (event: 'update:sortBy', sortBy: Sorting['sortBy']): void
-  (event: 'update:sortingOrder', sortingOrder: Sorting['sortingOrder']): void
+  (event: 'update:sortBy', sortBy: string): void
+  (event: 'update:sortingOrder', sortingOrder: DataTableSortingOrder | undefined): void
 }>()
 
 const patients = toRef(props, 'patients')

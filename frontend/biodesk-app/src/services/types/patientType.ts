@@ -1,4 +1,4 @@
-import type { PatientData } from '../services/interfaces/patient'
+import type { PatientData } from '@/services/interfaces/patient'
 
 // Patient type as returned from the API, includes id
 export type Patient = PatientData & { id: string | number }

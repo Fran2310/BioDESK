@@ -5,7 +5,7 @@
 <script lang="ts" setup>
   import { withDefaults, defineProps } from 'vue'
 
-  const props = withDefaults(
+  const { logoSrc } = withDefaults(
     defineProps<{
       logoSrc?: string
     }>(),

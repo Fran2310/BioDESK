@@ -13,7 +13,8 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { useNotificationsStore } from '../../../stores/notifications'
+// import { useNotificationsStore } from '../../../stores/notifications'
 
-const { notifications } = useNotificationsStore()
+// const { notifications } = useNotificationsStore()
+const notifications = []
 </script>

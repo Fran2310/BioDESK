@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { PropType, computed, ref, watch } from 'vue'
+import type { PropType } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useForm } from 'vuestic-ui'
 
 
-import type { Patient } from '@/types/patientType'
+import type { Patient } from '@/services/types/patientType'
 import { validator } from '../../../services/utils'
 
 const props = defineProps({
@@ -221,7 +222,7 @@ const removePhone = (index: number) => {
           />
           <div class="w-full sm:w-1/2">
             <label class="block mb-1 font-semibold">Phone Numbers</label>
-            <div v-for="(phone, index) in newUser.phoneNums" :key="index" class="flex items-center gap-2 mb-2">
+            <div v-for="(_, index) in newUser.phoneNums" :key="index" class="flex items-center gap-2 mb-2">
               <VaInput
                 v-model="newUser.phoneNums[index]"
                 label="Phone"

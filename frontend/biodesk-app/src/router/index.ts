@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import AppLayout from '@/layouts/AppLayout.vue';
+// import AppLayout from '@/layouts/AppLayout.vue';
 import Login from '@/views/auth/Login.vue';
 import HomeView from '@/views/home/HomeView.vue';
 import LoadScreen from '@/layouts/LoadScreen.vue';

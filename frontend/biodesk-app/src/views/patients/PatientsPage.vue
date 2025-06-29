@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useToast, useModal } from 'vuestic-ui'
 import { useI18n } from 'vue-i18n'
 import PatientsForm from './widgets/PatientsForm.vue'
@@ -7,6 +7,7 @@ import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 // import { useLabStore } from '../../stores/labStore'
 import { patientApi } from '@/services/api'
 import type { Patient } from '@/services/types/patientType'
+import type { PatientData } from '@/services/interfaces/patient'
 import type { GetExtendQuerys } from '@/services/interfaces/global'
 
 const { t } = useI18n()
@@ -14,7 +15,7 @@ const { t } = useI18n()
 const isLoading = ref(false)
 const error = ref<any>(null)
 const filters = ref({ isActive: true, search: '' })
-const sorting = ref({ sortBy: 'fullname', sortingOrder: null })
+const sorting = ref<{ sortBy: string; sortingOrder: 'asc' | 'desc' | null }>({ sortBy: 'fullname', sortingOrder: null })
 const pagination = ref({ page: 1, perPage: 20, total: 0 })
 const patients = ref<Patient[]>([])
 
