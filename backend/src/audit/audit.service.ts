@@ -69,7 +69,7 @@ export class AuditService {
           }
         }
       },
-      orderBy: { madeAt: 'desc' } // Mantener el orden original
+      //orderBy: { madeAt: 'desc' } // Comentar par probar si ya se ordena bien
     });
   
     await prisma.$disconnect();
