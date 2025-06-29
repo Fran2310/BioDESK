@@ -6,7 +6,7 @@ import PatientsForm from './widgets/PatientsForm.vue'
 import CustomPatientsTable from './widgets/CustomPatientsTable.vue'
 // import { useLabStore } from '../../stores/labStore'
 import { patientApi } from '@/services/api'
-import type { Patient } from '@/types/patientType'
+import type { Patient } from '@/services/types/patientType'
 import type { GetExtendQuerys } from '@/services/interfaces/global'
 
 const { t } = useI18n()
