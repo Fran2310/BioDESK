@@ -21,17 +21,14 @@ const defaultNewUser: Omit<User, 'id'> = {
   fullname: '',
   role: 'user',
   username: '',
-  notes: '',
-  email: '',
-  active: true,
-  projects: [],
+  email: ''
 }
 
 const newUser = ref<User>({ ...defaultNewUser } as User)
 
 const isFormHasUnsavedChanges = computed(() => {
   return Object.keys(newUser.value).some((key) => {
-    if (key === 'avatar' || key === 'projects') {
+    if (key === 'avatar') {
       return false
     }
 

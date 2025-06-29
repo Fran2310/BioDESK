@@ -27,10 +27,14 @@ const isUrl = (avatar: string) => {
 
 const fallback = (fullname: string) => {
   try {
-    const [firstName, lastName] = fullname.split(' ')
-    return `${firstName[0]}${lastName[0]}`
+    // Remove leading/trailing spaces, replace multiple spaces with a single space, then split
+    const cleaned = fullname.trim().replace(/\s+/g, ' ')
+    const names = cleaned.split(' ')
+    if (names.length === 0) return ''
+    if (names.length === 1) return names[0][0]
+    return `${names[0][0]}${names[1][0]}`
   } catch {
-    return fullname[0]
+    return fullname[0] || ''
   }
 }
 </script>

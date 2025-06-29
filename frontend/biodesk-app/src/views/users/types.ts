@@ -9,7 +9,4 @@ export type User = {
   username: string
   role: UserRole
   avatar: string
-  projects: UUID[]
-  notes: string
-  active: boolean
 }
