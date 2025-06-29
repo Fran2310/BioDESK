@@ -13,15 +13,12 @@ export type Sorting = {
 }
 
 export type Filters = {
-  isActive: boolean
   search: string
 }
 
 export const getUsers = async (filters: Partial<Filters & Pagination & Sorting>) => {
-  const { isActive, search } = filters
+  const { search } = filters
   let filteredUsers: User[] = await fetch(api.allUsers()).then((r) => r.json())
-
-  filteredUsers = filteredUsers.filter((user) => user.active === isActive)
 
   if (search) {
     filteredUsers = filteredUsers.filter((user) => user.fullname.toLowerCase().includes(search.toLowerCase()))

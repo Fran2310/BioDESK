@@ -27,7 +27,7 @@ const isUrl = (avatar: string) => {
 
 const fallback = (fullname: string) => {
   try {
-    // Remove leading/trailing spaces, replace multiple spaces with a single space, then split
+    // Remueve espacios leading/trailing, reemplaza múltiples espacios con un solo espacio, luego lo divide
     const cleaned = fullname.trim().replace(/\s+/g, ' ')
     const names = cleaned.split(' ')
     if (names.length === 0) return ''
