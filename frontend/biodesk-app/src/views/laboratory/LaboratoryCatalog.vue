@@ -56,56 +56,58 @@
 
     <!-- Modal para agregar/editar examen -->
     <va-modal v-model="examForm.showAddModal" hide-default-actions>
-      <va-card>
+      <va-card class="w-full">
         <va-card-title>
           {{ isEditing ? 'Editar examen' : 'Agregar nuevo examen' }}
         </va-card-title>
-        <va-card-content>
+        <va-card-content class="flex">
           <form @submit.prevent="isEditing ? updateExam(fetchExams,showError) : addExam(fetchExams,showError)">
             <va-input
               v-model="newExam.name"
               label="Nombre"
               required
-              class="mb-3"
+              class="w-full mb-3"
             />
             <va-input
               v-model="newExam.description"
               label="Descripción"
-              class="mb-3"
+              class="w-full mb-3"
             />
             
-            <div class="supplies-section">
-            <va-input 
-              v-model="examForm.newSupply" 
-              label="Agregar Insumo"
-              placeholder="Escribe un insumo y presiona agregar"
-            />
+            <div class="flex gap-2 flex-wrap items-end mb-3"> <!-- <div class="flex flex-col sm:flex-row gap-2"> -->
+              <div class="w-full sm:w-1/2">
+                <va-input 
+                v-model="examForm.newSupply" 
+                label="Agregar Insumo"
+                placeholder="Escribe un insumo y presiona agregar"
+                class="w-5/6"
+              />
+              </div>
 
-            <va-button
-              color="primary"
-              size="small"
-              @click="addSupplies"
-              class="custom-button"
-              icon="add"
-            >
-            Agregar
-            </va-button>
-
-            <!-- Lista de insumos -->
-            <ul>
-              <li v-for="(supply, index) in examForm.supplies" :key="index">
-                {{ supply }}
+              <div class="flex items-end mt">
                 <va-button 
-                  icon="close" 
-                  color="danger" 
-                  size="small" 
-                  @click="removeSupply(index)"
-                  type="button"
-                />
-              </li>
-            </ul>
-          </div>
-
+                color="primary"
+                size="small"
+                @click="addSupplies"
+                class="p-1 ">
+                  Agregar 
+                </va-button>
+              </div>
+            </div>  
+              <!-- Lista de insumos -->
+              <ul>
+                <li v-for="(supply, index) in examForm.supplies" :key="index">
+                  {{ supply }}
+                  <va-button 
+                    icon="close" 
+                    color="danger" 
+                    size="small" 
+                    @click="removeSupply(index)"
+                    type="button"
+                  />
+                </li>
+              </ul>
+            
             <va-input
               v-model.number="newExam.price"
               label="Precio"
@@ -116,79 +118,86 @@
 
             <!-- Propiedades-->
 
-            <div class="mb-3">
+            <div class="flex flex-col">
               <label class="block mb-3 especial">PROPIEDADES</label>
-
-              <!-- Lista de nombres y unidades con sus combinaciones -->
-              <div v-for="(reference, idx) in referenceData" :key="idx" class="reference-block">
-                <div class="header">
-                  <span class="reference-name">{{ reference.name }}</span>
-                  <span class="reference-unit">{{ reference.unit }}</span>
-                  <va-button icon="delete" color="danger" size="small" @click.stop="removeReference(idx)" />
-                </div>
-
-                <div class="variations">
-                  <div v-for="(variation, vIdx) in reference.variations" :key="vIdx" class="variation-row">
-                    <span class="variation-detail">{{ variation.ageGroup }}</span>
-                    <span class="variation-detail">{{ variation.gender }}</span>
-                    <span class="variation-detail">{{ variation.range }}</span>
-                    <va-button 
-                      icon="delete"  
-                      color="danger" 
-                      size="small" 
-                      @click="removeVariation(idx, vIdx)" 
+              <VaCard>
+                <!-- Fila para agregar nueva propiedad -->
+                <div class="flex gap-4"> 
+                  <div class="grid grid-cols-3 gap-2 m-2">
+                    <va-input
+                      v-model="newProperty.name"
+                      placeholder="Nombre"
+                      size="small"
+                      class="col-span-2 w-1/1"
+                    />
+                    <va-input
+                      v-model="newProperty.unit"
+                      placeholder="Unidad"
+                      size="small"
+                      class="col-span-1 w-1/1"
+                    />
+                    <va-select
+                      v-model="newProperty.variation.ageGroup"
+                      :options="ageGroups"
+                      placeholder="Edad"
+                      size="small"
+                      class="col-span-2 w-1/1"
+                    />
+                    <va-select
+                      v-model="newProperty.variation.gender"
+                      :options="genderOptions"
+                      placeholder="Sexo"
+                      size="small"
+                      class="w-1/1"
+                    />
+                    <va-input
+                      v-model="newProperty.variation.range"
+                      placeholder="Rango"
+                      size="small"
+                      class="col-span-2 w-3/4"
                     />
                   </div>
                 </div>
-
-                <va-button color="primary" size="small" @click="openModalForNewVariation(idx)" class="custom-button" icon="add">
-                  Agregar Referencia
-                </va-button>
-              </div>
-
-              <!-- Botón para abrir el modal y agregar un nuevo nombre/unidad -->
-              <va-button color="primary" size="small" @click="openModalForNewReference" class="custom-button" icon="add">
-                Agregar Propiedad
-              </va-button>
-    
-              <!-- Modal para ingresar/editar nombre y unidad -->
-              <va-modal v-model="showModal" hide-default-actions>
-                <va-card>
-                  <va-card-title>{{ isEditingReference ? "Editar Valor de Referencia" : "Agregar Valor de Referencia" }}</va-card-title>
-                  <va-card-content>
-                    <div class="flex flex-col gap-3">
-                      <va-input v-model="selectedReference.name" placeholder="Nombre del valor" />
-                      <va-input v-model="selectedReference.unit" placeholder="Unidad" />
+              </VaCard>
+                <va-button
+                  color="primary"
+                  size="small"
+                  @click="addPropertyDirect"
+                  class="custom-button w-1/6"
+                 > Añadir propiedad</va-button>
+                <div
+                  v-for="(reference, idx) in referenceData"
+                  :key="idx"
+                  class="property-block"
+                >
+                  <div
+                    class="property-details"
+                  >
+                    <div class="property-name">
+                      {{ reference.name }}
                     </div>
-                  </va-card-content>
-                  <va-card-actions class="flex justify-end">
-                    <va-button color="secondary" @click="closeModal">Cancelar</va-button>
-                    <va-button color="success" @click="handleSaveReference">Guardar</va-button>
-                  </va-card-actions>
-                </va-card>
-              </va-modal>
-
-              <!-- Modal para ingresar/editar combinaciones de grupo de edad, sexo y rango -->
-              <va-modal v-model="showVariationModal" hide-default-actions>
-                <va-card>
-                  <va-card-title>{{ isEditingVariation ? "Editar Combinación" : "Agregar Combinación" }}</va-card-title>
-                  <va-card-content>
-                    <div class="flex flex-col gap-3">
-                      <va-select v-model="selectedVariation.ageGroup" :options="ageGroups" placeholder="Grupo de edad" />
-                      <va-select v-model="selectedVariation.gender" :options="genderOptions" placeholder="Sexo" />
-                      <va-input v-model="selectedVariation.range" placeholder="Rango" />
+                    <div class="property-unit">
+                      {{ reference.unit }}
                     </div>
-                  </va-card-content>
-                  <va-card-actions class="flex justify-end">
-                    <va-button color="secondary" @click="showVariationModal = false">Cancelar</va-button>
-                    <va-button color="success" @click="saveVariation" type="submit">Guardar</va-button>
-                  </va-card-actions>
-                </va-card>
-              </va-modal>
+                     <div class="property-range">
+                      {{ reference.variations[0]?.ageGroup }}
+                    </div>
+                      <div class="property-range">
+                      {{ reference.variations[0]?.gender }}
+                    </div>
+                     <div class="property-range">
+                      {{ reference.variations[0]?.range }}
+                    </div>
+                  </div>
+                  <va-button
+                    icon="delete"
+                    color="danger"
+                    size="small"
+                    @click="removeReference(idx)"
+                  />
+                </div>
             </div>
 
-            
-            
             <div class="flex gap-2 justify-end mt-4">
               <va-spacer />
               <va-button color="secondary" @click="closeModal" type="button">
@@ -213,7 +222,7 @@ import {
   VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
 } from 'vuestic-ui'
 
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
@@ -278,7 +287,28 @@ const isEditingVariation = referenceModal.isEditingVariation
 const ageGroups = ['CHILD', 'ADULT', 'ANY']
 const genderOptions = ['MALE', 'FEMALE', 'ANY']
 
+const newProperty = ref({
+  name: '',
+  unit: '',
+  variation: { ageGroup: '', gender: '', range: '' }
+})
 
+function addPropertyDirect() {
+  if (
+    newProperty.value.name &&
+    newProperty.value.unit &&
+    newProperty.value.variation.ageGroup &&
+    newProperty.value.variation.gender &&
+    newProperty.value.variation.range
+  ) {
+    referenceData.value.push({
+      name: newProperty.value.name,
+      unit: newProperty.value.unit,
+      variations: [{ ...newProperty.value.variation }]
+    })
+    newProperty.value = { name: '', unit: '', variation: { ageGroup: '', gender: '', range: '' } }
+  }
+}
 
 function handleSaveReference() {
   const idx = saveReference()
@@ -394,6 +424,55 @@ li {
   color: #555;
 }
 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.table-responsive table {
+  min-width: 600px;
+  font-size: 13px;
+}
+
+
+.va-card-content {
+  overflow-x: auto;
+}
+
+.property-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+}
+
+.property-details {
+  display: flex;
+  flex-direction: row; /* Cambia de column a row */
+  gap: 24px;           /* Espacio entre propiedades */
+  align-items: center; /* Centra verticalmente */
+}
+
+.property-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.property-unit {
+  font-size: 12px;
+  color: #666;
+}
+
+.property-range{
+  font-size: 12px;
+  color: #666;
+}
 </style>
 
 
