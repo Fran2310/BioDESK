@@ -132,6 +132,12 @@ export function useExamForm() {
                 gender: valueRef.gender,
                 ageGroup: valueRef.ageGroup,
               }))
+            : Array.isArray(prop.valueReferences)
+            ? prop.valueReferences.map((valueRef: any) => ({
+                range: valueRef.range,
+                gender: valueRef.gender,
+                ageGroup: valueRef.ageGroup,
+              }))
             : [],
         });
       });

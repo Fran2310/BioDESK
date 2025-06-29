@@ -89,7 +89,7 @@
                 color="primary"
                 size="small"
                 @click="addSupplies"
-                class="p-1 ">
+                class="p-1">
                   Agregar 
                 </va-button>
               </div>
@@ -120,7 +120,10 @@
 
             <div class="flex flex-col">
               <label class="block mb-3 especial">PROPIEDADES</label>
-              <VaCard>
+              <VaCard
+                stripe
+                stripe-color="#2F6F79"
+              >
                 <!-- Fila para agregar nueva propiedad -->
                 <div class="flex gap-4"> 
                   <div class="grid grid-cols-3 gap-2 m-2">
@@ -163,7 +166,7 @@
                   color="primary"
                   size="small"
                   @click="addPropertyDirect"
-                  class="custom-button w-1/6"
+                  class="custom-button w-1/5"
                  > Añadir propiedad</va-button>
                 <div
                   v-for="(reference, idx) in referenceData"
@@ -332,6 +335,7 @@ onMounted(() => {
 .custom-button { /*va-button style*/ 
   margin-top: 10px; 
   margin-bottom: 10px; 
+  padding: 5px;
 }
 
 
@@ -454,23 +458,23 @@ li {
 .property-details {
   display: flex;
   flex-direction: row; /* Cambia de column a row */
-  gap: 24px;           /* Espacio entre propiedades */
+  gap: 5rem;           /* Espacio entre propiedades */
   align-items: center; /* Centra verticalmente */
 }
 
 .property-name {
-  font-size: 14px;
+  font-size: 1.2rem;
   font-weight: 500;
   color: #333;
 }
 
 .property-unit {
-  font-size: 12px;
+  font-size: 1.1rem;
   color: #666;
 }
 
 .property-range{
-  font-size: 12px;
+  font-size: 1rem;
   color: #666;
 }
 </style>
