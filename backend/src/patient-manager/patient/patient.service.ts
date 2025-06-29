@@ -150,9 +150,7 @@ export class PatientService {
 
       const before = await this.getPatient(labId, patientId); // Verifica si existe
 
-      if (before.ci != dto.ci || before.email != dto.email) {
-        await this.validateUniquePatient(labId, dto.ci, dto.email)
-      }
+      await this.validateUniquePatient(labId, dto.ci, dto.email, patientId)
 
       const updated = await labPrisma.patient.update({
         where: { id: Number(patientId) },
@@ -234,12 +232,18 @@ export class PatientService {
 
   // ============ HELPER METHODS ============
 
-  private async validateUniquePatient(labId: number, ci?: string | undefined, email?: string | undefined) {
+  private async validateUniquePatient(
+    labId: number, 
+    ci?: string | undefined, 
+    email?: string | undefined,
+    idToExclude?: number
+  ) {
     const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
     const patient = await labPrisma.patient.findFirst({
       where: {
         OR: [{ ci }, { email }],
+        NOT: { id: idToExclude }
       },
     });
 
