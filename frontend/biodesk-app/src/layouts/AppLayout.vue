@@ -1,5 +1,5 @@
 <template>
-  <p>SISTEMA</p>
+  <p></p>
   <RouterView></RouterView>
 </template>
 <script setup lang="ts"></script>
