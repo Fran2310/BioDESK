@@ -66,6 +66,13 @@ const router = createRouter({
           name: 'HomeView',
           component: HomeView,
         },
+        // Agrega esta nueva ruta para el Dashboard
+        {
+          path: 'dashboard',
+          name: 'Dashboard',
+          // Carga dinámica (recomendado para mejor rendimiento)
+          component: () => import('@/views/dashboard/DashboardView.vue'),
+        },
         // Aquí se agregan mas hijos de app layout
       ],
     },
