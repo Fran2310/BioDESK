@@ -94,7 +94,7 @@ export class AuditService {
     labId: number,
     offset = 0,
     limit = 20,
-    includeData = false,
+    includeData = true,
     searchTerm?: string,  // Opcional: para futuras implementaciones
     searchFields?: string[]  // Opcional: para futuras implementaciones
   ): Promise<{ total: number; offset: number; limit: number; data: any[] }> {
