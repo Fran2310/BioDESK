@@ -3,7 +3,7 @@ import { Injectable, ConflictException, Logger, NotFoundException } from '@nestj
 import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
 
 import { RegisterDto } from 'src/auth/dto/register.dto';
-import { CreateLabDto } from 'src/user/dto/create-lab.dto';
+import { CreateLabDto } from 'src/lab/dto/create-lab.dto';
 import { CreateUserDto } from 'src/user/system-user/dto/create-user.dto';
 import { UpdateSystemUserDto } from './system-user/dto/update-system-user.dto';
 import { RoleDto } from 'src/role/dto/role.dto';

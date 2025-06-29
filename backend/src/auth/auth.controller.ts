@@ -11,7 +11,7 @@ import { Public } from './decorators/public.decorator'; // Ruta pública, no req
 import { AuthService } from './auth.service';
 import { MailService } from 'src/mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
-import { CreateLabDto } from 'src/user/dto/create-lab.dto';
+import { CreateLabDto } from 'src/lab/dto/create-lab.dto';
 import { CreateUserDto } from 'src/user/system-user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';

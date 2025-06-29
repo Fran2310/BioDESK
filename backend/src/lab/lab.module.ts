@@ -8,6 +8,7 @@ import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
 import { UserModule } from 'src/user/user.module';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
 import { StorageModule } from 'src/storage/storage.module';
+import { SystemUserModule } from 'src/user/system-user/system-user.module';
 
 @Module({
   imports: [
@@ -16,6 +17,8 @@ import { StorageModule } from 'src/storage/storage.module';
     SharedCacheModule,
     AuditModule,
     StorageModule,
+    SystemUserModule,
+    AuditModule,
     forwardRef(() => UserModule), // UserModule se importa de forma diferida para evitar dependencias circulares
   ],
   providers: [LabService, ManageLogoLabService],
