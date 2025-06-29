@@ -1,13 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { medicTestRequestApi } from '@/services/api'
+import { medicTestRequestApi, patientApi } from '@/services/api'
 
+// Reactive state
 const exams = ref<any[]>([])
 const filters = ref({ search: '' })
 const pagination = ref({ page: 1, perPage: 10, total: 0 })
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
+const patientInfo = ref<{ ci: string; name: string; lastName: string } | null>(null)
+const showModal = ref(false)
+const selectedExam = ref<any | null>(null)
+
+const patientId = 1 // Replace with dynamic value if needed
+
+// Fetch patient info
+const fetchPatientInfo = async () => {
+  try {
+    const response = await patientApi.getPatientById(patientId)
+    const { ci, name, lastName } = response.data
+    patientInfo.value = { ci, name, lastName }
+  } catch (e: any) {
+    error.value = e.message || 'Failed to fetch patient info.'
+  }
+}
+
+// Fetch exams
 const fetchExams = async () => {
   isLoading.value = true
   error.value = null
@@ -15,12 +34,23 @@ const fetchExams = async () => {
     const query: any = {
       offset: (pagination.value.page - 1) * pagination.value.perPage,
       limit: pagination.value.perPage,
-      // Add search filter if needed
-      // 'search-term': filters.value.search,
+      medicHistoryId: patientId,
+      includeData: true
     }
+
     const response = await medicTestRequestApi.getMedicTestRequests(query)
     const data = response.data
+
     exams.value = data.data
+
+    if (patientInfo.value) {
+      exams.value.forEach((exam: any) => {
+        exam.ci = patientInfo.value?.ci
+        exam.name = patientInfo.value?.name
+        exam.lastName = patientInfo.value?.lastName
+      })
+    }
+
     pagination.value.total = data.total
   } catch (e: any) {
     error.value = e.message || 'Failed to fetch exams.'
@@ -29,15 +59,41 @@ const fetchExams = async () => {
   }
 }
 
-onMounted(fetchExams)
+onMounted(async () => {
+  isLoading.value = true
+  await fetchPatientInfo()
+  await fetchExams()
+  isLoading.value = false
+})
 
-watch([
-  () => pagination.value.page,
-  () => pagination.value.perPage,
-  // () => filters.value.search, // Uncomment if you want to fetch on search change
-], fetchExams)
+watch([() => pagination.value.page, () => pagination.value.perPage], fetchExams)
 
+// Pagination
 const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
+
+// Priority color mapping
+function priorityColor(priority: string) {
+  switch (priority?.toUpperCase()) {
+    case 'HIGH': return 'danger'
+    case 'MEDIUM': return 'warning'
+    case 'LOW': return 'success'
+    default: return 'info'
+  }
+}
+
+// Format date helper
+function formatDate(dateString: string) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 </script>
 
 <template>
@@ -45,6 +101,7 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
     <h1 class="page-title">Exams</h1>
     <VaCard>
       <VaCardContent>
+        <!-- Search -->
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
           <div class="flex flex-col md:flex-row gap-2 justify-start items-center">
             <VaInput v-model="filters.search" placeholder="Search exams">
@@ -57,19 +114,72 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
             </VaButton>
           </div>
         </div>
-        <VaDataTable
-          :columns="[
-            { label: 'Exam ID', key: 'id' },
-            { label: 'Exam Name', key: 'examName' },
-            { label: 'Patient Name', key: 'patientName' },
-            { label: 'Requested At', key: 'requestedAt' },
-            { label: 'State', key: 'state' },
-            { label: 'Priority', key: 'priority' }
-          ]"
-          :items="exams"
-          :loading="isLoading"
-        />
+
+        <!-- Table -->
+        <div class="relative">
+          <VaDataTable
+            :columns="[
+              { label: 'CI', key: 'ci' },
+              { label: 'Name', key: 'name' },
+              { label: 'Last Name', key: 'lastName' },
+              { label: 'Requested At', key: 'requestedAt' },
+              { label: 'State', key: 'state' },
+              { label: 'Priority', key: 'priority' }
+            ]"
+            :items="exams"
+            :loading="isLoading"
+            @row:click="event => {
+              if (event && event.item) {
+                selectedExam = event.item
+                showModal = true
+              } else {
+                console.error('Invalid row click event:', event)
+              }
+            }"
+          >
+            <template #cell(requestedAt)="{ rowData }">
+              {{ formatDate(rowData.requestedAt) }}
+            </template>
+            <template #cell(state)="{ rowData }">
+              <va-chip size="small" :color="rowData.state === 'COMPLETED' ? 'success' : 'danger'">
+                {{ rowData.state }}
+              </va-chip>
+            </template>
+            <template #cell(priority)="{ rowData }">
+              <va-chip size="small" :color="priorityColor(rowData.priority)">
+                {{ rowData.priority }}
+              </va-chip>
+            </template>
+          </VaDataTable>
+
+          <!-- Loading overlay -->
+          <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+            <VaProgressCircle indeterminate size="large" color="primary" />
+          </div>
+        </div>
+
+        <!-- Modal -->
+        <VaModal v-model="showModal" title="Exam Results" hide-default-actions>
+          <div v-if="selectedExam">
+            <h4>Result Properties:</h4>
+            <ul class="mb-4">
+              <li v-for="(value, key) in selectedExam.resultProperties" :key="key" class="mb-1">
+                <b>{{ key }}:</b> {{ value }}
+              </li>
+            </ul>
+
+            <h4>Observation:</h4>
+            <p>{{ selectedExam.observation || 'No observation provided.' }}</p>
+          </div>
+          <div v-else>
+            No exam selected or invalid data.
+          </div>
+        </VaModal>
+
+        <!-- Error message -->
         <div v-if="error" class="text-danger mt-2">{{ error }}</div>
+
+        <!-- Pagination -->
         <div class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2">
           <div>
             <b>{{ pagination.total }} results.</b>
