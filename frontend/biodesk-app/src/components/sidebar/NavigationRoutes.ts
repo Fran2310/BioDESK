@@ -32,5 +32,12 @@ export default {
         icon: 'home',
       },
     },
+    {
+      name: 'NewRequest',
+      displayName: 'New Exam',
+      meta: {
+        icon: 'home',
+      },
+    },
   ] as INavigationRoute[],
 }

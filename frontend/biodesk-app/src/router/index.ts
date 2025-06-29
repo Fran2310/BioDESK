@@ -7,6 +7,7 @@ import LoadScreen from '@/layouts/LoadScreen.vue';
 import PatientsPage from '@/views/patients/PatientsPage.vue';
 import AppLayoutVuestic from '@/layouts/AppLayoutVuestic.vue';
 import Exams from '@/views/exams/Exams.vue';
+import NewRequest from '@/views/new-request/NewRequest.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL_APP_DEV),
@@ -77,6 +78,12 @@ const router = createRouter({
           component: Exams,
         },
         
+        {
+          path: 'newrequest',
+          name: 'NewRequest',
+          component: NewRequest ,
+        },
+
         {path: '/settings',
         name: 'Settings',
         component: () => import('../views/settings/Settings.vue'),
