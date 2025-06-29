@@ -47,7 +47,8 @@ export class AuditService {
     const baseOptions = {
       skip: offset,
       take: limit,
-      omit: { operationData: !includeData, labUserId: true }
+      omit: { operationData: !includeData, labUserId: true },
+      orderBy: { madeAt: 'desc' } // Mantener el orden de más nuevo al más viejo
     };
   
     const { results: partialLogs, total } = await intelligentSearch(
@@ -68,13 +69,9 @@ export class AuditService {
             systemUserUuid: true
           }
         }
-      }
+      },
     });
-    
-    // Ordenar manualmente para mantener el orden de partialLogs
-    const dataMap = new Map(data.map(item => [item.id, item]));
-    const orderedData = partialLogs.map(item => dataMap.get(item.id));
-      
+
     await prisma.$disconnect();
   
     return { total, data, offset, limit };
