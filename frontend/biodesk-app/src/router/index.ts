@@ -6,6 +6,7 @@ import HomeView from '@/views/home/HomeView.vue';
 import LoadScreen from '@/layouts/LoadScreen.vue';
 import PatientsPage from '@/views/patients/PatientsPage.vue';
 import AppLayoutVuestic from '@/layouts/AppLayoutVuestic.vue';
+import Exams from '@/views/exams/Exams.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL_APP_DEV),
@@ -68,6 +69,12 @@ const router = createRouter({
           path: 'patients',
           name: 'Patients',
           component: PatientsPage,
+        },
+
+        {
+          path: 'exams',
+          name: 'Exams',
+          component: Exams,
         },
         
         {path: '/settings',

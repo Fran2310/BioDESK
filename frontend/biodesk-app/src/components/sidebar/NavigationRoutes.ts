@@ -25,5 +25,12 @@ export default {
         icon: 'group',
       },
     },
+    {
+      name: 'Exams',
+      displayName: 'Exams',
+      meta: {
+        icon: 'home',
+      },
+    },
   ] as INavigationRoute[],
 }
