@@ -30,8 +30,8 @@
         display: flex;
         flex-direction: row;
         height: 10em;
-        margin-top: 3vh;
-        margin-bottom: 10vh;
+        margin-top: 2em;
+        margin-bottom: 5em;
         align-items: center;
         justify-content: center;
         justify-items: center;
@@ -49,7 +49,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: left;
-        gap: 3vh;
+        gap: 2em;
     }
 
     .text-details {

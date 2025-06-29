@@ -68,6 +68,8 @@
     function goToZ() {
     router.push({ name: props.routeName3 })
     }
+
+    
 </script>
 
 
@@ -80,8 +82,12 @@
         justify-content: space-around;
         align-items: center;
         text-align: center;
-        max-width: 15vw;    /* 300px */
-        max-height: 15vw;   /* 280px */
+        width: 20vw;
+        min-width: 20vw;
+        max-width: 25vw;
+        height: 20vw;
+        min-height: 20vw;
+        max-height: 25vw;
         padding: 1%;
         margin: 10px;
         background-color: var(--va-background-light-secondary);
@@ -89,32 +95,22 @@
         border-radius: 8px;
     }
 
+    @media (min-width: 1420px) {    /* Límite de tamaño de la tarjeta */
+        .card {
+            width: 300px;
+            min-width: 280px;
+            max-width: 350px;
+            height: 300px;
+            min-height: 280px;
+            max-height: 350px;
+            padding: 10px
+        }
+    }
+
     .card:hover {
         background-color: var(--va-base);
         transform: scale(1.05);
         transition: transform 0.2s;
-    }
-
-    /* Tamaño para tablets */
-    @media (max-width: 1024px) {
-        .card {
-            width: 20vw;
-            height: 20vh;
-            min-width: 220px;
-            min-height: 180px;
-            margin: 5px;
-        }
-    }
-
-    /* Tamaño para móviles */
-    @media (max-width: 425px) {
-        .card {
-            width: 10vw;
-            height: 5vh;
-            min-width: 150px;
-            min-height: 120px;
-            padding: 5px;
-        }
     }
 
     .corner-icon {      /* ícono */
