@@ -5,7 +5,7 @@ export const validator = {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return pattern.test(v) || 'Por favor, introduzca un correo válido.';
   },
-  required: (v: string) => !!v || 'Campo requerido.',
+  required: (v: any) => !!v || 'Campo requerido.',
   minLength: (v: string) =>
     v.length >= 8 || 'Debe tener al menos 8 caracteres.',
   hasUppercase: (v: string) =>

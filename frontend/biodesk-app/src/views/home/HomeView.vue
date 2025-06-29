@@ -71,7 +71,7 @@
       title: 'Usuarios',
       icon: 'account_circle',
       subtitle: 'Ir a usuarios',
-      routeName: ''
+      routeName: 'UsersView'
     },
     {   // Tarjeta al catálogo del laboratorio
       title: 'Laboratorio',

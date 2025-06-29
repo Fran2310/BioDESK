@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Login from '@/views/auth/Login.vue';
 import HomeView from '@/views/home/HomeView.vue';
 import LoadScreen from '@/layouts/LoadScreen.vue';
+import UsersView from '@/views/users/UsersView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL_APP_DEV),
@@ -61,6 +62,11 @@ const router = createRouter({
           name: 'HomeView',
           component: HomeView,
         },
+        {
+          path: 'users',
+          name: 'UsersView',
+          component: UsersView
+        }
         // Aquí se agregan mas hijos de app layout
       ],
     },
