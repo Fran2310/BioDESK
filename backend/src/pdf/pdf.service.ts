@@ -292,7 +292,7 @@ export class PdfService {
       // Si la fecha es nula, devolvemos null inmediatamente.
       if (!birthDate) return null;
       
-      const today = new Date("2025-06-26T04:05:19.000Z"); // Hora actual para consistencia
+      const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const m = today.getMonth() - birthDate.getMonth();
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
