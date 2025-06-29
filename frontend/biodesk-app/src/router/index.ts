@@ -69,6 +69,11 @@ const router = createRouter({
           name: 'Patients',
           component: PatientsPage,
         },
+        
+        {path: '/settings',
+        name: 'Settings',
+        component: () => import('../views/settings/Settings.vue'),
+      },
       ],
     },
     // Redirección de la raíz a /auth/login

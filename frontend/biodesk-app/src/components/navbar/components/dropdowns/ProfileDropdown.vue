@@ -73,7 +73,7 @@ withDefaults(
           },
           {
             name: 'settings',
-            to: 'Patients',
+            to: 'Settings',
             icon: 'settings',
           },
         ],
