@@ -392,7 +392,7 @@ export class RequestMedicTestService {
       
       // Auditoría
       await this.auditService.logAction(labId, performedByUserUuid, {
-        action: 'update',
+        action: 'set_state',
         entity: 'requestMedicTest',
         recordEntityId: updated.id.toString(),
         details: `El usuario ${systemUser.name} ${systemUser.lastName} cambió el estado de un examen médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
