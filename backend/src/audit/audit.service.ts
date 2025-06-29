@@ -68,10 +68,13 @@ export class AuditService {
             systemUserUuid: true
           }
         }
-      },
-      //orderBy: { madeAt: 'desc' } // Comentar par probar si ya se ordena bien
+      }
     });
-  
+    
+    // Ordenar manualmente para mantener el orden de partialLogs
+    const dataMap = new Map(data.map(item => [item.id, item]));
+    const orderedData = partialLogs.map(item => dataMap.get(item.id));
+      
     await prisma.$disconnect();
   
     return { total, data, offset, limit };
