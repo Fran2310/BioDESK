@@ -1,73 +1,48 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { medicTestRequestApi, patientApi } from '@/services/api'
-import { defineProps } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { medicTestRequestApi } from '@/services/api'
+import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest'
 
-// Accept patientId as an optional prop
-const props = defineProps<{ patientId?: number }>()
+// Types
+interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
+  id: number;
+  requestedAt: string;
+  completedAt?: string;
+  state: string;
+  priority: string;
+  resultProperties: Record<string, string>;
+  observation: string;
+  byLabUserId: number;
+  medicTestCatalogId: number;
+  ci?: string;
+  name?: string;
+  lastName?: string;
+}
 
-// Reactive state
-const exams = ref<any[]>([])
+const exams = ref<ExamRow[]>([])
 const filters = ref({ search: '' })
 const pagination = ref({ page: 1, perPage: 10, total: 0 })
 const isLoading = ref(false)
 const error = ref<string | null>(null)
-
-const patientInfo = ref<{ ci: string; name: string; lastName: string } | null>(null)
 const showModal = ref(false)
-const selectedExam = ref<any | null>(null)
+const selectedExam = ref<ExamRow | null>(null)
 
-// Fetch patient info
-const fetchPatientInfo = async () => {
-  if (!props.patientId) return
-  try {
-    const response = await patientApi.getPatientById(props.patientId)
-    const { ci, name, lastName } = response.data
-    patientInfo.value = { ci, name, lastName }
-  } catch (e: any) {
-    error.value = e.message || 'Failed to fetch patient info.'
-  }
-}
 
-// Fetch exams
+
+// Fetch all exams (default)
 const fetchExams = async () => {
   isLoading.value = true
   error.value = null
   try {
-    const query: any = {
+    const query = {
       offset: (pagination.value.page - 1) * pagination.value.perPage,
       limit: pagination.value.perPage,
       includeData: true
     }
-    if (props.patientId) {
-      query.medicHistoryId = props.patientId
-    }
-
     const response = await medicTestRequestApi.getMedicTestRequests(query)
     const data = response.data
-
     exams.value = data.data
-
-    // Map: medicHistoryId -> patient info
-    const uniqueHistoryIds = [...new Set(exams.value.map((exam: any) => exam.medicHistoryId))]
-    const patientInfoMap: Record<number, {ci: string, name: string, lastName: string}> = {}
-    for (const id of uniqueHistoryIds) {
-      try {
-        const response = await patientApi.getPatientById(id)
-        const { ci, name, lastName } = response.data
-        patientInfoMap[id] = { ci, name, lastName }
-      } catch (e) {
-        // Optionally handle error per patient
-        patientInfoMap[id] = { ci: '-', name: '-', lastName: '-' }
-      }
-    }
-    exams.value.forEach((exam: any) => {
-      const info = patientInfoMap[exam.medicHistoryId]
-      exam.ci = info?.ci || '-'
-      exam.name = info?.name || '-'
-      exam.lastName = info?.lastName || '-'
-    })
-
+    await mergePatientInfoIntoExams()
     pagination.value.total = data.total
   } catch (e: any) {
     error.value = e.message || 'Failed to fetch exams.'
@@ -76,19 +51,38 @@ const fetchExams = async () => {
   }
 }
 
-onMounted(async () => {
+// Fetch exams by medicHistoryId (search)
+const searchExams = async () => {
   isLoading.value = true
-  await fetchPatientInfo()
-  await fetchExams()
-  isLoading.value = false
-})
+  error.value = null
+  try {
+    const id = filters.value.search.trim()
+    if (!id) {
+      await fetchExams()
+      return
+    }
+    const query = {
+      offset: (pagination.value.page - 1) * pagination.value.perPage,
+      limit: pagination.value.perPage,
+      includeData: true
+    }
+    const response = await medicTestRequestApi.getMedicTestRequestsByMedicHistoryId(id, query)
+    const data = response.data
+    exams.value = data.data
+    await mergePatientInfoIntoExams()
+    pagination.value.total = data.total
+  } catch (e: any) {
+    error.value = e.message || 'Failed to search exams.'
+  } finally {
+    isLoading.value = false
+  }
+}
 
-watch([() => pagination.value.page, () => pagination.value.perPage], fetchExams)
+// Initial load
+fetchExams()
 
-// Pagination
 const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
 
-// Priority color mapping
 function priorityColor(priority: string) {
   switch (priority?.toUpperCase()) {
     case 'HIGH': return 'danger'
@@ -98,7 +92,6 @@ function priorityColor(priority: string) {
   }
 }
 
-// Format date helper
 function formatDate(dateString: string) {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -111,14 +104,76 @@ function formatDate(dateString: string) {
     minute: '2-digit',
   })
 }
-// Edit and delete handlers
-function onEditExam(exam: any) {
-  // TODO: Implement edit logic/modal
-  console.log('Edit exam:', exam)
+
+// Merge patient info into each exam row
+async function mergePatientInfoIntoExams() {
+  const uniqueHistoryIds = [...new Set(exams.value.map((exam) => exam.medicHistoryId))]
+  const patientInfoMap: Record<number, {ci: string, name: string, lastName: string}> = {}
+  for (const id of uniqueHistoryIds) {
+    try {
+      const apiModule = await import('@/services/api')
+      const response = await apiModule.patientApi.getPatientById(id)
+      const { ci, name, lastName } = response.data
+      patientInfoMap[id] = { ci, name, lastName }
+    } catch (e) {
+      patientInfoMap[id] = { ci: '-', name: '-', lastName: '-' }
+    }
+  }
+  exams.value.forEach((exam) => {
+    const info = patientInfoMap[exam.medicHistoryId]
+    exam.ci = info?.ci || '-'
+    exam.name = info?.name || '-'
+    exam.lastName = info?.lastName || '-'
+  })
 }
-function onDeleteExam(exam: any) {
-  // TODO: Implement delete logic/confirmation
-  console.log('Delete exam:', exam)
+
+function onEditExam(exam: ExamRow) {
+  console.log('[Exams] Edit button clicked. Exam passed to handler:', exam)
+  // Simulate edit logic here if needed
+  // For demonstration, log the current state of selectedExam before and after
+  console.log('[Exams] selectedExam BEFORE edit:', selectedExam.value)
+  selectedExam.value = exam
+  console.log('[Exams] selectedExam AFTER edit:', selectedExam.value)
+}
+function onDeleteExam(exam: ExamRow) {
+  console.log('[Exams] Delete button clicked. Exam passed to handler:', exam)
+  // Simulate delete logic here if needed
+  // For demonstration, log the current state of exams before and after
+  console.log('[Exams] exams BEFORE delete:', exams.value)
+  // Example: exams.value = exams.value.filter(e => e.id !== exam.id)
+  // console.log('[Exams] exams AFTER delete:', exams.value)
+}
+
+function handleRowClick(event: any) {
+  console.log('[Exams] Row click event received:', event)
+  if (event && event.item) {
+    console.log('[Exams] Row clicked BEFORE assignment:', event.item)
+    selectedExam.value = { ...event.item }
+    showModal.value = true
+    console.log('[Exams] selectedExam AFTER assignment:', selectedExam.value)
+    console.log('[Exams] showModal AFTER assignment:', showModal.value)
+  } else {
+    console.error('Invalid row click event:', event)
+  }
+}
+
+function onPageChange(newPage: number) {
+  pagination.page = newPage
+  if (filters.value.search.trim()) {
+    searchExams()
+  } else {
+    fetchExams()
+  }
+}
+
+function onPerPageChange(newPerPage: number) {
+  pagination.page = 1
+  pagination.perPage = newPerPage
+  if (filters.value.search.trim()) {
+    searchExams()
+  } else {
+    fetchExams()
+  }
 }
 </script>
 
@@ -130,12 +185,12 @@ function onDeleteExam(exam: any) {
         <!-- Search -->
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
           <div class="flex flex-col md:flex-row gap-2 justify-start items-center">
-            <VaInput v-model="filters.search" placeholder="Search exams">
+            <VaInput v-model="filters.search" placeholder="Search by medicHistoryId">
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>
             </VaInput>
-            <VaButton color="primary" icon="search" class="ml-2" @click="fetchExams">
+            <VaButton color="primary" icon="search" class="ml-2" @click="searchExams">
               Search
             </VaButton>
           </div>
@@ -155,14 +210,7 @@ function onDeleteExam(exam: any) {
             ]"
             :items="exams"
             :loading="isLoading"
-            @row:click="event => {
-              if (event && event.item) {
-                selectedExam = event.item
-                showModal = true
-              } else {
-                console.error('Invalid row click event:', event)
-              }
-            }"
+            @row:click="handleRowClick"
           >
             <template #cell(requestedAt)="{ rowData }">
               {{ formatDate(rowData.requestedAt) }}
@@ -230,7 +278,7 @@ function onDeleteExam(exam: any) {
           <div>
             <b>{{ pagination.total }} results.</b>
             Results per page
-            <VaSelect v-model="pagination.perPage" class="!w-20" :options="[5, 10, 20, 50]" />
+            <VaSelect v-model="pagination.perPage" class="!w-20" :options="[5, 10, 20, 50]" @update:modelValue="onPerPageChange" />
           </div>
           <div v-if="totalPages > 1" class="flex">
             <VaButton
@@ -255,6 +303,7 @@ function onDeleteExam(exam: any) {
               :visible-pages="5"
               :boundary-links="false"
               :direction-links="false"
+              @update:modelValue="onPageChange"
             />
           </div>
         </div>
