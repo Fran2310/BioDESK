@@ -1,8 +1,8 @@
 export interface INavigationRoute {
-  name: string
-  displayName: string
-  meta: { icon: string }
-  children?: INavigationRoute[]
+  name: string;
+  displayName: string;
+  meta: { icon: string };
+  children?: INavigationRoute[];
 }
 
 export default {
@@ -20,24 +20,27 @@ export default {
     },
     {
       name: 'Patients',
-      displayName: 'Patients',
+      displayName: 'Pacientes',
       meta: {
-        icon: 'group',
+        icon: 'healing',
       },
     },
     {
       name: 'Exams',
-      displayName: 'Exams',
+      displayName: 'Exámenes',
       meta: {
-        icon: 'home',
+        icon: 'troubleshoot',
       },
-    },
-    {
-      name: 'NewRequest',
-      displayName: 'New Exam',
-      meta: {
-        icon: 'home',
-      },
+      children: [
+        {
+          name: 'Exams',
+          displayName: 'Exámenes',
+        },
+        {
+          name: 'NewRequest',
+          displayName: 'Nueva Solicitud',
+        },
+      ],
     },
   ] as INavigationRoute[],
-}
+};
