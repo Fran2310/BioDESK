@@ -2,7 +2,7 @@
   <!-- Vista de escritorio -->
   <VaLayout
     v-if="breakpoint.lgUp"
-    class="min-h-screen h-screen overflow-hidden max-h-screen bg-Lightbase"
+    class="min-h-screen h-screen overflow-y-hidden max-h-screen bg-Lightbase"
     :left="{ fixed: true }"
     color="bg-Lightbase"
   >

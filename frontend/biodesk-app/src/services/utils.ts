@@ -5,7 +5,7 @@ export const validator = {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return pattern.test(v) || 'Por favor, introduzca un correo válido.';
   },
-  required: (v: string) => !!v || 'Campo requerido.',
+  required: (v: any) => !!v || 'Campo requerido.',
   minLength: (v: string) =>
     v.length >= 8 || 'Debe tener al menos 8 caracteres.',
   hasUppercase: (v: string) =>
@@ -17,6 +17,14 @@ export const validator = {
       return 'Solo se permiten números y letras mayúsculas.';
     return true;
   },
+  onlyLetters: (v: string) =>
+    /^[A-Za-z]+$/.test(v) || 'Solo se permiten letras.',
+  onlyNumbers: (v: string) => /^[0-9]+$/.test(v) || 'Solo se permiten números.',
+  minLengthCi: (v: string) => v.length >= 7 || 'Debe tener al menos 7 números.',
+  noWhitespace: (v: string) =>
+    !/\s/.test(v) || 'No se permiten espacios en blanco.',
+  onlyLength7to8: (v: string) =>
+    (v.length >= 7 && v.length <= 8) || 'Debe tener entre 7 y 8 digitos.',
 };
 
 export function mapPermissionsFormat(permissions: any[] = []) {

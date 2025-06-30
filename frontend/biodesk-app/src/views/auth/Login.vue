@@ -9,7 +9,9 @@
       <h1 class="font-semibold text-4xl mb-4">Iniciar Sesión</h1>
       <p class="text-base mb-4 leading-5">
         ¿Nuevo en BioDESK?
-        <RouterLink :to="{ name: 'SignUp' }" class="font-semibold text-primary"
+        <RouterLink
+          :to="{ name: 'SignUpUser' }"
+          class="font-semibold text-primary"
           >Registrar</RouterLink
         >
       </p>
@@ -124,6 +126,7 @@
   import AnimateBlock from '@/components/AnimateBlock.vue';
   import AuthContentBlock from '@/components/AuthContentBlock.vue';
   import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
+  import { initToast } from '@/services/toast';
 
   // Store de autenticación global
   const authStore = useAuthStore();
@@ -201,10 +204,14 @@
       // Animar la salida antes de navegar a SelectLab
       pendingRoute.value = { name: 'SelectLab' };
       animatedBlock.value.hide();
-
-      //[NOTA] manejar el caso donde el usuario no tiene laboratorios para que dispare una modal donde le pregunte si quiere crear uno.
     } catch (error: any) {
-      failedLoginToast(error.message);
+      if (labStore.labs.length == 0) {
+        initToast('Aviso', 'No tiene ningun laboratorio asociado', 'warning');
+        pendingRoute.value = { name: 'SignUpLab' };
+        animatedBlock.value.hide();
+      } else {
+        failedLoginToast(error.message);
+      }
     } finally {
       isLoading.value = false;
     }

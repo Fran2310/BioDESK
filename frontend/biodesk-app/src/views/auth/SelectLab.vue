@@ -31,6 +31,7 @@
               v-for="lab in labStore.labs"
               :key="lab.id"
               class="w-full p-4 text-lg font-semibold shadow-md p-2 h-auto transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95"
+              :class="[labStore.labs.length === 1 ? 'col-span-2' : '']"
               color="base"
               borderColor="primary"
               :style="{ borderWidth: '3px', borderRadius: '0.5rem' }"

@@ -16,3 +16,6 @@ export type State =
   | 'TO_VERIFY'
   | 'CANCELED'
   | 'COMPLETED';
+
+// en el componente o archivo común
+export type SelectOptionApiDPT = { label: string; value: string };
