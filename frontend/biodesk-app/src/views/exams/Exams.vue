@@ -92,6 +92,15 @@ function priorityColor(priority: string) {
   }
 }
 
+function stateColor(state: string) {
+  switch (state?.toUpperCase()) {
+    case 'PENDING': return 'danger'; // red
+    case 'TO_VERIFY': return 'warning'; // yellow
+    case 'COMPLETED': return 'success'; // green
+    default: return 'info';
+  }
+}
+
 function formatDate(dateString: string) {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -213,7 +222,7 @@ watch(
               {{ formatDate(rowData.requestedAt) }}
             </template>
             <template #cell(state)="{ rowData }">
-              <va-chip size="small" :color="rowData.state === 'COMPLETED' ? 'success' : 'danger'">
+              <va-chip size="small" :color="stateColor(rowData.state)">
                 {{ rowData.state }}
               </va-chip>
             </template>
