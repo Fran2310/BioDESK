@@ -25,8 +25,7 @@
           :columns="columns"
           :items="filteredExams"
           :loading="loading"
-          :virtual-scroller="true"
-          class="shadow rounded min-h-[200px]"
+                    class="shadow rounded min-h-[200px]"
         >
 
         <template #cell(supplies)="{ value }">
