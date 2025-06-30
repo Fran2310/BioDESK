@@ -2,7 +2,7 @@
   import { defineVaDataTableColumns, useModal } from 'vuestic-ui'
   import { computed, toRef } from 'vue'
   import type { PropType } from 'vue'
-  import type { Pagination, Sorting } from '../../../data/views/users'
+  import type { Pagination, Sorting } from '@/data/views/users'
   import { useVModel } from '@vueuse/core'
   import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
 

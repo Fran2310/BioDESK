@@ -14,14 +14,14 @@
                     <transition enter-active-class="slideup-anim" leave-active-class="slidedown-anim">
                         <div class="options">
                             <div class="slideup-anim slidedown-anim" v-if="!showOptions">
-                                <p class="text-card italic" style="cursor: pointer" @click="toggleOptions"> Mostrar más... </p>
+                                <p class="text-card italic show-moreless" style="cursor: pointer" @click="toggleOptions"> Mostrar más... </p>
                             </div>
                             
                             <div class="slideup-anim slidedown-anim" v-if="showOptions">
-                                <p class="text-card italic" style="cursor: pointer" v-if="showOptions" @click="toggleOptions"> Mostrar menos... </p>
-                                <p class="text-card font-semibold" style="cursor: pointer" @click="goToX"> · {{ props.option1 }} </p>
-                                <p class="text-card font-semibold" style="cursor: pointer" @click="goToY"> · {{ props.option2}} </p>
-                                <p class="text-card font-semibold" style="cursor: pointer" @click="goToZ"> · {{ props.option3 }} </p>
+                                <p class="text-card italic show-moreless" style="cursor: pointer" v-if="showOptions" @click="toggleOptions"> Mostrar menos... </p>
+                                <p class="text-card font-semibold italic" style="cursor: pointer" @click="goToX"> {{ props.option1 }} </p>
+                                <p class="text-card font-semibold italic" style="cursor: pointer" @click="goToY"> {{ props.option2}} </p>
+                                <p class="text-card font-semibold italic" style="cursor: pointer" @click="goToZ"> {{ props.option3 }} </p>
                             </div>
                         </div>
                     </transition>
@@ -169,7 +169,7 @@
         text-align: center;
     }
 
-    .text-card.italic {     /* mostrar más/menos */
+    .show-moreless {     /* mostrar más/menos */
         color: var(--va-secondary);
     }
 

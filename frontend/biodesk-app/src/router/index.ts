@@ -98,7 +98,6 @@ const router = createRouter({
           name: 'LaboratoryCatalog',
           component: () => import('@/views/laboratory/LaboratoryCatalog.vue'),
         },
-        // Aquí se agregan mas hijos de app layout
         {
           path: 'patients',
           name: 'Patients',
