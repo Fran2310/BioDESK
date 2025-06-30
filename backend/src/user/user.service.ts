@@ -82,7 +82,7 @@ export class UserService {
     };
 
     // Obtener usuarios del laboratorio con filtro inteligente
-    const { results: labUsersResults } = await intelligentSearch(
+    const { results: labUsersResults, total: labUsersTotal } = await intelligentSearch(
       labPrisma.labUser,
       labUsersSearchOptions,
     );
@@ -149,7 +149,7 @@ export class UserService {
     const filteredTotal = enrichedData.length;
 
     return {
-      total: filteredTotal,
+      total: labUsersTotal,
       offset,
       limit,
       data: enrichedData, // Ahora devolvemos los datos combinados
