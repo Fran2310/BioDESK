@@ -81,8 +81,8 @@ const router = createRouter({
         {
           path: 'users',
           name: 'UsersView',
-          component: UsersView
-        }
+          component: UsersView,
+        },
         // Aquí se agregan mas hijos de app layout
         {
           path: 'patients',
