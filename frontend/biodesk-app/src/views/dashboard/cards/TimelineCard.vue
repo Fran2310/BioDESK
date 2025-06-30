@@ -121,7 +121,6 @@
   const firstLoading = ref(true); // Para la carga inicial
   const loadingMore = ref(false); // Para el scroll infinito
 
-  // Después de tus otras constantes en <script setup>
   const LOG_HEIGHT = 75; // px, ajusta si tu diseño cambia
   const MAX_VISIBLE_LOGS = 5;
   const MAX_SCROLLER_HEIGHT = LOG_HEIGHT * MAX_VISIBLE_LOGS;
