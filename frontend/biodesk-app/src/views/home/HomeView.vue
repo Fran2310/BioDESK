@@ -35,63 +35,62 @@
 
 
 <script setup lang="ts">
-  import { ref } from 'vue'
-  // import { useLabStore } from '@/stores/labStore';
+  import { ref, onMounted } from 'vue'
+  import { useLabStore } from '@/stores/labStore'
   import CardSimple from './CardSimple.vue'
   import CardComplex from './CardComplex.vue'
   import BannerHome from './BannerHome.vue'
-  
-  /* const labStore = useLabStore();
-  const lab = {
-    id: 29,
-    name: "jaja",
-    status: "active",
-    rif: "j987654321",
-    logoPath: ""
-  }
-  labStore.setCurrentLab(lab); */
 
   // Contenido del banner
+  const labStore = useLabStore();
   const banner = ref([
     {
-      labName: 'Laboratorio de Pruebas',
-      role: 'Biologista'
+      labName: '',
+      role: 'Admin'
     }
   ])
+
+  onMounted(async () => {
+    banner.value[0].labName = labStore.currentLab.name    // escribe el nombre en el banner
+  })
 
   // Contenido para las tarjetas simples
   const simpleCards = ref([
     {   // Tarjeta al dashboard
       title: 'Dashboard',
-      icon: 'developer_board',
+      icon: 'dashboard',
       subtitle: 'Ir al dashboard',
-      routeName: ''
+      routeName: 'Dashboard'
     },
-    {   // Tarjeta a usuarios
-      title: 'Usuarios',
-      icon: 'account_circle',
-      subtitle: 'Ir a usuarios',
-      routeName: 'UsersView'
+    {   // Tarjeta a pacientes
+      title: 'Pacientes',
+      icon: 'healing',
+      subtitle: 'Ir a los pacientes',
+      routeName: 'Patients'
     },
-    {   // Tarjeta al catálogo del laboratorio
-      title: 'Laboratorio',
-      icon: 'biotech',
-      subtitle: 'Ir al catálogo del laboratorio',
-      routeName: ''
-    }
   ])
 
   // Contenido para la tarjeta a datos de pacientes
   const complexCard = ref([
     {
-      title: 'Datos de pacientes',
-      icon: 'assignment_ind',
-      option1: 'Pacientes',
-      routeName1: '',
-      option2: 'Historial médico',
-      routeName2: '',
-      option3: 'Solicitud de pruebas',
+      title: 'Sistema',
+      icon: 'group',
+      option1: 'Usuarios',
+      routeName1: 'UsersView',
+      option2: 'Roles',
+      routeName2: 'RoleManagement',
+      option3: '',
       routeName3: ''
+    },
+    {
+      title: 'Exámenes',
+      icon: 'troubleshoot',
+      option1: 'Exámenes',
+      routeName1: 'Exams',
+      option2: 'Catálogo',
+      routeName2: 'LaboratoryCatalog',
+      option3: 'Nueva solicitud',
+      routeName3: 'NewRequest'
     }
   ])
 </script>

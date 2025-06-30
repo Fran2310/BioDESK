@@ -1,16 +1,18 @@
 <template>
   <div class="flex justify-center banner">
-    <Logo />
+    <Logo/>
 
     <!-- Línea vertical -->
     <div class="vl"></div>
 
     <div class="lab-details">
-      <p class="text-5xl text-details">{{ props.labName }}</p>
       <!-- Nombre del lab -->
-
-      <p class="text-3xl text-details">{{ props.role }}</p>
+      <transition name="fade">
+        <p class="text-5xl text-details">{{ props.labName }}</p>
+      </transition>
+      
       <!-- Rol del usuario -->
+      <p class="text-3xl text-details">{{ props.role }}</p>
     </div>
   </div>
 </template>
@@ -56,5 +58,13 @@
   .text-details {
     color: var(--va-primary);
     justify-items: left;
+  }
+
+  /* Fade transition */
+  .fade-enter-active, .fade-leave-active {
+    transition: opacity 0.8s;
+  }
+  .fade-enter-from, .fade-leave-to {
+    opacity: 0;
   }
 </style>

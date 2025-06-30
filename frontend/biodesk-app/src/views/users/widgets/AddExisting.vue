@@ -45,18 +45,6 @@ defineExpose({
   isFormHasUnsavedChanges,
 })
 
-// Inicio Prueba
-const labData: LabData = {
-    id: 29,
-    name: "Laboratorium",
-    status: "active",
-    rif: "j853946049",
-    logoPath: '',
-};
-const lab = useLabStore();
-lab.setCurrentLab(labData);
-// Fin prueba
-
 const form = useForm('add-user-form')
 
 const emit = defineEmits(['close', 'save'])
