@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { medicTestRequestApi, patientApi } from '@/services/api'
+import { defineProps } from 'vue'
+
+// Accept patientId as an optional prop
+const props = defineProps<{ patientId?: number }>()
 
 // Reactive state
 const exams = ref<any[]>([])
@@ -13,12 +17,11 @@ const patientInfo = ref<{ ci: string; name: string; lastName: string } | null>(n
 const showModal = ref(false)
 const selectedExam = ref<any | null>(null)
 
-const patientId = 1 // Replace with dynamic value if needed
-
 // Fetch patient info
 const fetchPatientInfo = async () => {
+  if (!props.patientId) return
   try {
-    const response = await patientApi.getPatientById(patientId)
+    const response = await patientApi.getPatientById(props.patientId)
     const { ci, name, lastName } = response.data
     patientInfo.value = { ci, name, lastName }
   } catch (e: any) {
@@ -34,8 +37,10 @@ const fetchExams = async () => {
     const query: any = {
       offset: (pagination.value.page - 1) * pagination.value.perPage,
       limit: pagination.value.perPage,
-      medicHistoryId: patientId,
       includeData: true
+    }
+    if (props.patientId) {
+      query.medicHistoryId = props.patientId
     }
 
     const response = await medicTestRequestApi.getMedicTestRequests(query)
@@ -43,13 +48,25 @@ const fetchExams = async () => {
 
     exams.value = data.data
 
-    if (patientInfo.value) {
-      exams.value.forEach((exam: any) => {
-        exam.ci = patientInfo.value?.ci
-        exam.name = patientInfo.value?.name
-        exam.lastName = patientInfo.value?.lastName
-      })
+    // Map: medicHistoryId -> patient info
+    const uniqueHistoryIds = [...new Set(exams.value.map((exam: any) => exam.medicHistoryId))]
+    const patientInfoMap: Record<number, {ci: string, name: string, lastName: string}> = {}
+    for (const id of uniqueHistoryIds) {
+      try {
+        const response = await patientApi.getPatientById(id)
+        const { ci, name, lastName } = response.data
+        patientInfoMap[id] = { ci, name, lastName }
+      } catch (e) {
+        // Optionally handle error per patient
+        patientInfoMap[id] = { ci: '-', name: '-', lastName: '-' }
+      }
     }
+    exams.value.forEach((exam: any) => {
+      const info = patientInfoMap[exam.medicHistoryId]
+      exam.ci = info?.ci || '-'
+      exam.name = info?.name || '-'
+      exam.lastName = info?.lastName || '-'
+    })
 
     pagination.value.total = data.total
   } catch (e: any) {
@@ -94,6 +111,15 @@ function formatDate(dateString: string) {
     minute: '2-digit',
   })
 }
+// Edit and delete handlers
+function onEditExam(exam: any) {
+  // TODO: Implement edit logic/modal
+  console.log('Edit exam:', exam)
+}
+function onDeleteExam(exam: any) {
+  // TODO: Implement delete logic/confirmation
+  console.log('Delete exam:', exam)
+}
 </script>
 
 <template>
@@ -124,7 +150,8 @@ function formatDate(dateString: string) {
               { label: 'Last Name', key: 'lastName' },
               { label: 'Requested At', key: 'requestedAt' },
               { label: 'State', key: 'state' },
-              { label: 'Priority', key: 'priority' }
+              { label: 'Priority', key: 'priority' },
+              { label: 'Actions', key: 'actions', align: 'right' }
             ]"
             :items="exams"
             :loading="isLoading"
@@ -149,6 +176,25 @@ function formatDate(dateString: string) {
               <va-chip size="small" :color="priorityColor(rowData.priority)">
                 {{ rowData.priority }}
               </va-chip>
+            </template>
+            <template #cell(actions)="{ rowData }">
+              <div class="flex gap-2 justify-end">
+                <VaButton
+                  preset="primary"
+                  size="small"
+                  icon="edit"
+                  aria-label="Edit exam"
+                  @click.stop="onEditExam(rowData)"
+                />
+                <VaButton
+                  preset="primary"
+                  size="small"
+                  icon="va-delete"
+                  color="danger"
+                  aria-label="Delete exam"
+                  @click.stop="onDeleteExam(rowData)"
+                />
+              </div>
             </template>
           </VaDataTable>
 
