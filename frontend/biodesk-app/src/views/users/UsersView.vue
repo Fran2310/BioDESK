@@ -5,6 +5,8 @@
   import { useModal, useToast } from 'vuestic-ui';
   import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
 
+  import Table from './widgets/Table.vue'
+
   const doShowEditUserModal = ref(false);
   const doShowAddExistingModal = ref(false);
 
@@ -60,8 +62,6 @@
 </script>
 
 <template>
-  <h1 class="font-bold text-5xl">Usuarios</h1>
-
   <VaCard>
     <VaCardContent>
       <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
@@ -77,17 +77,7 @@
         >
         <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
       </div>
-      <!--
-      <UsersTable
-        v-model:sort-by="sorting.sortBy"
-        v-model:sorting-order="sorting.sortingOrder"
-        :users="users"
-        :loading="isLoading"
-        :pagination="pagination"
-        @editUser="showEditUserModal"
-        @deleteUser="onUserDelete"
-      />
-      -->
+      <Table/>
     </VaCardContent>
   </VaCard>
 
