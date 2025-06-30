@@ -315,17 +315,24 @@
 </template>
 
 <script setup lang="ts">
+  /* ----------------------------------------
+   * 🔹 IMPORTACIONES
+   * ---------------------------------------- */
+  import { ref, reactive, computed, onMounted, watch } from 'vue';
+  import router from '@/router';
+
   import AnimateBlock from '@/components/AnimateBlock.vue';
   import AuthContentBlock from '@/components/AuthContentBlock.vue';
   import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
-  import router from '@/router';
-  import { onMounted, reactive, ref, watch } from 'vue';
+
+  import { defineVaStepperSteps, useForm, useBreakpoint } from 'vuestic-ui';
   import { validator } from '@/services/utils.js';
-  // import { warningFieldsToast } from '../toasts';
   import { initToast } from '@/services/toast';
-  import { defineVaStepperSteps, useBreakpoint, useForm } from 'vuestic-ui';
-  import type { RegisterLabData, LabData } from '@/services/interfaces/lab';
-  import { computed } from 'vue';
+  import { warningFieldsToast } from '../toasts';
+
+  import { labApi } from '@/services/api';
+  import { useLabStore } from '@/stores/labStore';
+
   import {
     loginApiDPT,
     fetchEntidades,
@@ -333,27 +340,38 @@
     fetchParroquias,
     fetchComunidades,
   } from '@/services/apiDPT';
-  import { warningFieldsToast } from '../toasts';
-  import type { SelectOptionApiDPT } from '@/services/types/global.type';
-  import { labApi } from '@/services/api';
-  import { useLabStore } from '@/stores/labStore';
 
+  import type { RegisterLabData, LabData } from '@/services/interfaces/lab';
+  import type { SelectOptionApiDPT } from '@/services/types/global.type';
+
+  /* ----------------------------------------
+   * 🔹 CONFIGURACIÓN GLOBAL
+   * ---------------------------------------- */
+
+  // Store de laboratorio
+  const labStore = useLabStore();
+
+  // Breakpoint responsive
   const breakpoint = useBreakpoint();
   const isDesktop = computed(() => breakpoint.mdUp);
 
-  const areaCodes = ['0414 ', '0424', '0416', '0426', '0412'];
-  const labStore = useLabStore();
+  // Token de acceso a API externa
+  const credentialsApiDPT = ref({
+    username: import.meta.env.VITE_CREDENTIAL_APISEGEN_USER,
+    password: import.meta.env.VITE_CREDENTIAL_APISEGEN_PW,
+  });
 
+  /* ----------------------------------------
+   * 🔹 NAVEGACIÓN Y TRANSICIÓN DEL STEPPER
+   * ---------------------------------------- */
   const step = ref(0);
   const previousStep = ref(0);
   const transitionName = ref('slide-left');
 
-  const form0Ref = ref();
-  const form1Ref = ref();
-  const step0Form = useForm(form0Ref);
-  const step1Form = useForm(form1Ref);
-  const isLoading = ref(false);
-  const showPhonesMenu = ref(false);
+  watch(step, (newStep, oldStep) => {
+    previousStep.value = oldStep;
+    transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
+  });
 
   const steps = ref(
     defineVaStepperSteps([
@@ -377,18 +395,42 @@
   const animatedBlock = ref();
   const { onAfterLeave } = useAnimatedRouteLeave(animatedBlock);
 
-  watch(step, (newStep, oldStep) => {
-    previousStep.value = oldStep;
-    transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
+  /* ----------------------------------------
+   * 🔹 FORMULARIOS
+   * ---------------------------------------- */
+  const form0Ref = ref();
+  const form1Ref = ref();
+
+  const step0Form = useForm(form0Ref);
+  const step1Form = useForm(form1Ref);
+
+  const isLoading = ref(false);
+  const showPhonesMenu = ref(false);
+
+  /* ----------------------------------------
+   * 🔹 DATOS DEL FORMULARIO
+   * ---------------------------------------- */
+
+  // 📌 Datos generales del laboratorio
+  const formData = reactive({
+    name: '',
+    rif: '',
+    rifType: 'J',
+    dir: '',
+    areaCode: '',
+    phoneNums: [] as string[],
   });
 
-  //  estado para el input de teléfono temporal
+  // ☎️ Estado temporal para capturar número telefónico
   const phoneInput = reactive({
     areaCode: '0412',
     number: '',
   });
 
-  // Computed para habilitar el botón de agregar
+  // 📋 Códigos de área válidos
+  const areaCodes = ['0414 ', '0424', '0416', '0426', '0412'];
+
+  // 🧠 Computed: validación para habilitar botón de agregar teléfono
   const canAddPhone = computed(() => {
     return (
       phoneInput.areaCode &&
@@ -401,40 +443,41 @@
     );
   });
 
-  // Función para agregar teléfono
+  // ➕ Agrega teléfono a la lista
   function addPhone() {
     if (!canAddPhone.value) return;
     const fullPhone = `${phoneInput.areaCode}-${phoneInput.number}`;
     formData.phoneNums.push(fullPhone);
     phoneInput.number = '';
-    // Mantener el código de área seleccionado, solo limpiar el número
   }
 
-  // Función para eliminar teléfono
+  // ❌ Elimina teléfono
   function removePhone(idx: number) {
     formData.phoneNums.splice(idx, 1);
   }
 
-  const formData = reactive({
-    name: '',
-    rif: '',
-    rifType: 'J',
-    dir: '',
-    areaCode: '',
-    phoneNums: [] as string[],
-  });
+  // ✅ Validadores condicionales para los teléfonos
+  const phoneAreaCodeValidator = (v: any) =>
+    formData.phoneNums.length > 0 ? true : validator.required(v);
 
-  const credentialsApiDPT = ref({
-    username: import.meta.env.VITE_CREDENTIAL_APISEGEN_USER,
-    password: import.meta.env.VITE_CREDENTIAL_APISEGEN_PW,
-  });
+  const phoneNumberValidator = (v: string) =>
+    formData.phoneNums.length > 0
+      ? true
+      : validator.required(v) === true &&
+        validator.onlyNumbers(v) === true &&
+        validator.onlyLength7to8(v) === true;
 
-  // Opciones para los selects
+  /* ----------------------------------------
+   * 🔹 DIRECCIÓN (Selects y dependencias)
+   * ---------------------------------------- */
+
+  // Opciones para selects
   const entityOptions = ref<SelectOptionApiDPT[]>([]);
   const municipalityOptions = ref<SelectOptionApiDPT[]>([]);
   const parishOptions = ref<SelectOptionApiDPT[]>([]);
   const communityOptions = ref<SelectOptionApiDPT[]>([]);
 
+  // Estado reactivo para inputs de dirección
   const dirInput = reactive<{
     entity: SelectOptionApiDPT | null;
     municipality: SelectOptionApiDPT | null;
@@ -449,7 +492,7 @@
     restDir: '',
   });
 
-  // 🔁 Cargar municipios al cambiar la entidad
+  // 🔁 Carga de municipios al cambiar entidad
   watch(
     () => dirInput.entity,
     async (newVal) => {
@@ -459,13 +502,14 @@
       municipalityOptions.value = [];
       parishOptions.value = [];
       communityOptions.value = [];
+
       if (newVal) {
         municipalityOptions.value = await fetchMunicipios(newVal.value);
       }
     }
   );
 
-  // 🔁 Cargar parroquias al cambiar el municipio
+  // 🔁 Carga de parroquias al cambiar municipio
   watch(
     () => dirInput.municipality,
     async (newVal) => {
@@ -473,6 +517,7 @@
       dirInput.community = null;
       parishOptions.value = [];
       communityOptions.value = [];
+
       if (newVal && dirInput.entity) {
         parishOptions.value = await fetchParroquias(
           dirInput.entity.value,
@@ -482,7 +527,7 @@
     }
   );
 
-  // 🔁 Cargar comunidades al cambiar parroquia
+  // 🔁 Carga de comunidades al cambiar parroquia
   watch(
     () => dirInput.parish,
     async (newVal) => {
@@ -499,29 +544,16 @@
     }
   );
 
-  // Validadores condicionales para teléfonos
-  const phoneAreaCodeValidator = (v: any) => {
-    // Si ya hay teléfonos añadidos, no es obligatorio
-    if (formData.phoneNums.length > 0) return true;
-    // Si no hay teléfonos, es obligatorio
-    return validator.required(v);
-  };
+  /* ----------------------------------------
+   * 🧰 UTILIDADES
+   * ---------------------------------------- */
 
-  const phoneNumberValidator = (v: string) => {
-    // Si ya hay teléfonos añadidos, no es obligatorio
-    if (formData.phoneNums.length > 0) return true;
-    // Si no hay teléfonos, debe cumplir todas las reglas
-    return (
-      validator.required(v) === true &&
-      validator.onlyNumbers(v) === true &&
-      validator.onlyLength7to8(v) === true
-    );
-  };
-
+  // 🧼 Capitaliza cada palabra en un string
   function capitalizeWords(str: string) {
     return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
+  // 🧾 Formatea dirección uniendo valores seleccionados
   function formatDir(input: typeof dirInput): string {
     const parts = [
       input.entity?.label,
@@ -534,30 +566,35 @@
     return capitalizeWords(parts.join(', '));
   }
 
+  /* ----------------------------------------
+   * 🚀 SUBMIT: Enviar datos del formulario
+   * ---------------------------------------- */
   const submit = async () => {
     const validStep1 = await step1Form.validateAsync();
     if (!validStep1) {
       warningFieldsToast();
       return;
     }
+
     isLoading.value = true;
     try {
-      // --- Formatear el RIF ---
       const formattedRif = `${formData.rifType.toLowerCase()}${formData.rif}`;
       const formattedDir = formatDir(dirInput);
+
       const data: RegisterLabData = {
         name: formData.name,
         rif: formattedRif,
         dir: formattedDir,
         phoneNums: formData.phoneNums,
       };
+
       const response = await labApi.createLab(data);
-      console.log('data: ', data);
-      console.log('response: ', response);
+
       const currentLab: LabData = {
         ...response.data,
-        logoPath: null, // Añadimos el campo logoPath
+        logoPath: null, // Logo por defecto en null
       };
+
       labStore.setCurrentLab(currentLab);
       initToast('Registro', 'Laboratorio registrado', 'success');
       router.push({ name: 'LoadScreen' });
@@ -568,6 +605,9 @@
     }
   };
 
+  /* ----------------------------------------
+   * ⚡ onMounted: Autologin y carga inicial de entidades
+   * ---------------------------------------- */
   onMounted(async () => {
     try {
       await loginApiDPT(

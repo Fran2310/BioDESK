@@ -233,38 +233,63 @@
 </template>
 
 <script setup lang="ts">
+  /* =============================
+   * 👉 Imports de componentes y herramientas
+   * ============================= */
+  import { ref, reactive, watch } from 'vue';
+  import router from '@/router';
   import AnimateBlock from '@/components/AnimateBlock.vue';
   import AuthContentBlock from '@/components/AuthContentBlock.vue';
   import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
-  import router from '@/router';
-  import { reactive, ref, watch } from 'vue';
+  import { defineVaStepperSteps, useForm } from 'vuestic-ui';
+
+  /* =============================
+   * 👉 Imports de servicios y stores
+   * ============================= */
   import { validator } from '@/services/utils.js';
   import { warningFieldsToast } from '../toasts';
+  import { initToast } from '@/services/toast';
   import { authApi } from '@/services/api';
   import type { RegisterData } from '@/services/interfaces/auth';
-  import { initToast } from '@/services/toast';
-  import { defineVaStepperSteps, useForm } from 'vuestic-ui';
   import { useAuthStore } from '@/stores/authStore';
 
-  // Store de autenticación global
+  /* =============================
+   * 🧠 Estado y lógica global
+   * ============================= */
+
+  // Acceso al store global de autenticación
   const authStore = useAuthStore();
 
+  // Control del estado de carga durante la solicitud
+  const isLoading = ref(false);
+
+  /* =============================
+   * 🔢 Stepper y transición animada
+   * ============================= */
+
+  // Control del stepper (pasos del formulario)
   const step = ref(0);
   const previousStep = ref(0);
   const transitionName = ref('slide-left');
 
-  const form0Ref = ref();
-  const form1Ref = ref();
-  const step0Form = useForm(form0Ref);
-  const step1Form = useForm(form1Ref);
-  const isLoading = ref(false);
+  // Referencia al bloque animado
+  const animatedBlock = ref();
+  const { onAfterLeave } = useAnimatedRouteLeave(animatedBlock);
 
+  // Cambia la dirección de la animación al cambiar de paso
+  watch(step, (newStep, oldStep) => {
+    previousStep.value = oldStep;
+    transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
+  });
+
+  // Definición de pasos del formulario
   const steps = ref(
     defineVaStepperSteps([
       {
         label: 'Acceso',
         icon: 'lock',
         beforeLeave: (step) => {
+          // Valida los campos del paso 0 antes de avanzar
           step.hasError = !step0Form.validate();
         },
       },
@@ -272,43 +297,64 @@
         label: 'Datos personales',
         icon: 'person',
         beforeLeave: async (step) => {
+          // Valida los campos del paso 1 de forma asíncrona
           step.hasError = !(await step1Form.validateAsync());
         },
       },
     ])
   );
 
-  const animatedBlock = ref();
-  const { onAfterLeave } = useAnimatedRouteLeave(animatedBlock);
+  /* =============================
+   * 📋 Referencias y formularios
+   * ============================= */
 
-  watch(step, (newStep, oldStep) => {
-    previousStep.value = oldStep;
-    transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
-  });
+  // Refs de los formularios
+  const form0Ref = ref();
+  const form1Ref = ref();
+
+  // Inicialización de validadores de Vuestic UI
+  const step0Form = useForm(form0Ref);
+  const step1Form = useForm(form1Ref);
+
+  /* =============================
+   * 🧾 Formulario reactivo
+   * ============================= */
 
   const formData = reactive({
-    email: '',
-    password: '',
-    repeatPassword: '',
-    name: '',
-    lastname: '',
-    ci: '',
-    ciType: 'V',
+    email: '', // Correo electrónico
+    password: '', // Contraseña
+    repeatPassword: '', // Repetir contraseña para validar
+    name: '', // Nombre del usuario
+    lastname: '', // Apellido del usuario
+    ci: '', // Cédula de identidad
+    ciType: 'V', // Tipo de CI (V/E/P...)
   });
 
+  /* =============================
+   * ✅ Validadores personalizados
+   * ============================= */
+
+  // Validador que comprueba si las contraseñas coinciden
   const samePasswordValidator = (value: string) => {
     return value === formData.password || 'Las contraseñas no coinciden';
   };
 
+  /* =============================
+   * 🚀 Función de envío del formulario
+   * ============================= */
+
   const submit = async () => {
     const validStep1 = await step1Form.validateAsync();
+
     if (!validStep1) {
       warningFieldsToast();
       return;
     }
 
     isLoading.value = true;
+
     try {
+      // Formatear los datos para el backend
       const data: RegisterData = {
         ci: formData.ci,
         name: formData.name,
@@ -316,12 +362,20 @@
         email: formData.email,
         password: formData.password,
       };
+
+      // Llamada al API de registro
       const response = await authApi.register(data);
+
+      // Guardar token en el store
       authStore.setToken(response.data.access_token);
+
+      // Notificación de éxito
       initToast('Registro', 'Usuario registrado', 'success');
 
+      // Redirección al paso siguiente (registro del laboratorio)
       router.push({ name: 'SignUpLab' });
     } catch (error: any) {
+      // Notificación de error
       initToast('Error', error.message, 'danger');
     } finally {
       isLoading.value = false;
