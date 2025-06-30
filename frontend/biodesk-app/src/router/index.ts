@@ -94,6 +94,30 @@ const router = createRouter({
           name: 'Patients',
           component: PatientsPage,
         },
+        {
+          path: 'roles',
+          name: 'RoleManagement',
+          component: () => import('@/views/role/RoleManagement.vue'),
+        },
+
+        {
+          path: 'exams/:medicHistoryId?',
+          name: 'Exams',
+          component: Exams,
+          props: true,
+        },
+
+        {
+          path: 'newrequest',
+          name: 'NewRequest',
+          component: NewRequest,
+        },
+
+        {
+          path: '/settings',
+          name: 'Settings',
+          component: () => import('../views/settings/Settings.vue'),
+        },
       ],
     },
     // Redirección de la raíz a /auth/login
