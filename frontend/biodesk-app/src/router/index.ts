@@ -83,30 +83,16 @@ const router = createRouter({
           name: 'UsersView',
           component: UsersView,
         },
+        {
+          path: 'laboratory-catalog',
+          name: 'LaboratoryCatalog',
+          component: () => import('@/views/laboratory/LaboratoryCatalog.vue'),
+        },
         // Aquí se agregan mas hijos de app layout
         {
           path: 'patients',
           name: 'Patients',
           component: PatientsPage,
-        },
-
-        {
-          path: 'exams/:medicHistoryId?',
-          name: 'Exams',
-          component: Exams,
-          props: true,
-        },
-
-        {
-          path: 'newrequest',
-          name: 'NewRequest',
-          component: NewRequest,
-        },
-
-        {
-          path: '/settings',
-          name: 'Settings',
-          component: () => import('../views/settings/Settings.vue'),
         },
       ],
     },
