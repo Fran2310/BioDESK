@@ -42,10 +42,10 @@
         <VaButton
           preset="primary"
           size="small"
-          icon="va-delete"
+          icon="va-close"
           color="danger"
           aria-label="Delete patient"
-          @click="deleteUser(rowData)"
+          @click="onUserDelete(rowData)"
         />
       </div>
     </template>
@@ -96,6 +96,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { userApi } from '@/services/api'
 import type { LabData } from '@/services/interfaces/lab'
 import { useLabStore } from '@/stores/labStore'
+
+import { useModal, useToast } from 'vuestic-ui'
+
+const { init: notify } = useToast();
 
 const labData: LabData = {
     id: 29,
@@ -190,8 +194,33 @@ function editUser(user: any) {
   console.log('Edit user:', user)
 }
 
-function deleteUser(user: any) {
-  console.log('Delete user:', user)
+const { confirm } = useModal()
+
+const onUserDelete = async (user: any) => {
+  const agreed = await confirm({
+    title: 'Remover usuario',
+    message: `¿Seguro que deseas remover a ${user.name} ${user.lastName} del laboratorio?`,
+    okText: 'Remover',
+    cancelText: 'Cancelar',
+    size: 'small',
+    maxWidth: '380px',
+  })
+
+  if (agreed) {
+    //emit('delete-user', user)
+    try {
+      await userApi.deleteSoftUser(user.systemUser.uuid)
+    } catch (error) {
+      notify({
+        message: error.message, // TODO Refactorizar eso
+        color: 'danger',
+      })
+    }
+    notify({
+        message: 'Usuario removido exitosamente', // TODO Refactorizar eso
+        color: 'success',
+    })
+  }
 }
 </script>
 
