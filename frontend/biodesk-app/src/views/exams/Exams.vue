@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+
+// Accept medicHistoryId as a prop from the router
+const props = defineProps<{ medicHistoryId?: string }>()
 import { medicTestRequestApi } from '@/services/api'
 import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest'
 
@@ -78,8 +81,15 @@ const searchExams = async () => {
   }
 }
 
-// Initial load
-fetchExams()
+// If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
+onMounted(() => {
+  if (props.medicHistoryId) {
+    filters.value.search = props.medicHistoryId
+    searchExams()
+  } else {
+    fetchExams()
+  }
+})
 
 const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
 

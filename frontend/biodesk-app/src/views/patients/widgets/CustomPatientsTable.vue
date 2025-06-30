@@ -13,9 +13,15 @@ const { t } = useI18n()
 
 //AGE CALCULATION
 
-const calculateAge = (birthDate: string): number => {
+const calculateAge = (birthDate: string): number | string => {
+  if (!birthDate) return '-'
+  // Try to match YYYY-MM-DD
+  const isoMatch = birthDate.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!isoMatch) return '-'
+  const [_, year, month, day] = isoMatch
+  const birth = new Date(Number(year), Number(month) - 1, Number(day))
+  if (isNaN(birth.getTime())) return '-'
   const today = new Date()
-  const birth = new Date(birthDate)
   let age = today.getFullYear() - birth.getFullYear()
   const m = today.getMonth() - birth.getMonth()
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
@@ -125,8 +131,8 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 function onViewExams(patient) {
-  if (patient && patient.id) {
-    router.push({ name: 'Exams', params: { patientId: patient.id } })
+  if (patient) {
+    router.push({ name: 'Exams', params: { medicHistoryId: patient.id } })
   }
 }
 function onAddExam(patient) {
