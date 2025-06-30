@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { medicTestRequestApi } from '@/services/api'
 import { useToast } from 'vuestic-ui'
+
+import { validator } from '@/services/utils'
+
+import { useLabStore } from '@/stores/labStore';
+import type { LabData } from '@/services/interfaces/lab'
+import { medicTestCatalogApi } from '@/services/api'
+import { patientApi } from '@/services/api'
+
+import type { GetExtendQuerys } from '@/services/interfaces/global';
+
 
 const form = ref({
   priority: '',
@@ -15,9 +25,21 @@ const form = ref({
   }
 })
 
+// Inicio Prueba
+const labData: LabData = {
+    id: 29,
+    name: "Laboratorium",
+    status: "active",
+    rif: "j853946049",
+    logoPath: '',
+};
+const lab = useLabStore();
+lab.setCurrentLab(labData);
+// Fin prueba
+
 const isLoading = ref(false)
 const error = ref<string | null>(null)
-const { push: pushToast } = useToast()
+const { init: notify } = useToast();
 
 const submitForm = async () => {
   isLoading.value = true
@@ -31,7 +53,7 @@ const submitForm = async () => {
       )
     }
     await medicTestRequestApi.createMedicTestRequest(payload)
-    pushToast({ message: 'Request submitted successfully!', color: 'success' })
+    notify({ message: 'Request submitted successfully!', color: 'success' })
     // Optionally reset form
     form.value = {
       priority: '',
@@ -42,17 +64,74 @@ const submitForm = async () => {
     }
   } catch (e: any) {
     error.value = e.message || 'Failed to submit request.'
-    pushToast({ message: error.value, color: 'danger' })
+    notify({ message: error.value, color: 'danger' })
   } finally {
     isLoading.value = false
   }
 }
+
+const medicTestsCatalog = ref<any[]>([])
+const medicTestsCatalogLoading = ref(true)
+
+const patients = ref<any[]>([])
+const patientsLoading = ref(true)
+
+async function fetchRoles() {
+  const queries: GetExtendQuerys = {
+  offset: 0,
+  limit: 10,
+  includeData: true
+  };
+  const response = await medicTestCatalogApi.getMedicTestCatalog(queries)
+  medicTestsCatalog.value = Array.isArray(response.data.data) ? response.data.data : []
+  medicTestsCatalogLoading.value = false
+  
+  console.log(medicTestsCatalog.value)
+}
+
+async function fetchPatients() {
+  patientsLoading.value = true;
+  const queries: GetExtendQuerys = {
+  offset: 0,
+  limit: 10,
+  includeData: true
+  };
+  const response = await patientApi.getPatients(queries)
+  if (Array.isArray(response.data.data)) {
+      patients.value = response.data.data.map(p => ({
+        ...p,
+        display: `${p.ci} - ${p.name} ${p.lastName}`
+      }));
+  patientsLoading.value = false;
+  console.log(patients.value)
+  }
+}
+
+onMounted(() => {
+  fetchPatients();
+  fetchRoles();
+});
+
+const filterPatients = (option, query) => {
+  const q = query.toLowerCase();
+  return (
+    option.ci?.toLowerCase().includes(q) ||
+    option.name?.toLowerCase().includes(q) ||
+    option.lastName?.toLowerCase().includes(q)
+  );
+};
+
+
+const priorities = [
+  { name: 'Alta', priority: 'HIGH' },
+  { name: 'Media', priority: 'MEDIUM' },
+  { name: 'Baja', priority: 'LOW' }
+];
+
 </script>
 
 <template>
   <div class="p-4 md:p-6">
-    <h1 class="page-title text-center mb-6">New Medic Test Request</h1>
-
     <VaCard class="max-w-3xl mx-auto shadow-md">
       <VaCardContent>
         <!-- Form Container -->
@@ -60,28 +139,58 @@ const submitForm = async () => {
 
           <!-- First Row: Priority, Medic History ID, Medic Test Catalog ID -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <VaInput label="Priority" v-model="form.priority" placeholder="e.g. MEDIUM">
+            <VaSelect
+              v-model="form.priority"
+              label="Prioridad"
+              class="w-full"
+              name="priority"
+              :options="priorities"
+              text-by="name"
+              value-by="priority"
+            >
               <template #prependInner>
                 <VaIcon name="priority_high" />
               </template>
-            </VaInput>
+            </VaSelect>  
 
-            <VaInput label="Medic History ID" type="number" v-model.number="form.medicHistoryId">
+            <VaSelect
+              v-model="form.medicHistoryId"
+              label="Buscar paciente por CI"
+              :options="patients"
+              text-by="display"
+              value-by="medicHistory.id"
+              searchable
+              clearable
+              :filter="filterPatients"
+              :loading="patientsLoading"
+              :disabled="patientsLoading"
+            >
               <template #prependInner>
                 <VaIcon name="assignment" />
               </template>
-            </VaInput>
+            </VaSelect>
 
-            <VaInput label="Medic Test Catalog ID" type="number" v-model.number="form.medicTestCatalogId">
-              <template #prependInner>
+            <VaSelect
+              v-model="form.medicTestCatalogId"
+              label="Catálogo"
+              class="w-full"
+              name="medicTestCatalogId"
+              :options="medicTestsCatalog"
+              :loading="medicTestsCatalogLoading"
+              :disabled="medicTestsCatalogLoading"
+              text-by="name"
+              value-by="id"
+            >
+            <template #prependInner>
                 <VaIcon name="science" />
-              </template>
-            </VaInput>
+            </template>
+            </VaSelect>
+
           </div>
 
           <!-- Notes -->
           <VaTextarea
-              label="Notes"
+              label="Notas"
               v-model="form.resultProperties.notes"
               auto-grow
               :rows="3"
