@@ -2,9 +2,10 @@
   <VaDataTable
     :columns="columns"
     :items="mappedUsers"
-    :per-page="10"
-    v-model:page="page"
+    :per-page="pagination.perPage"
+    v-model:page="pagination.page"
     :loading="usersLoading"
+    :total-items="pagination.total"
   >
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis">
@@ -59,49 +60,116 @@
 
   <div class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2">
     <div>
-      <b>{{ mappedUsers.length }}</b> resultados. Resultados por página
+      <b>{{ pagination.total }} Resultados.</b>
+      Resultados por página
+      <VaSelect
+        v-model="pagination.perPage"
+        class="!w-20"
+        :options="[10, 20, 50, 100]"
+        @update:model-value="handlePerPageChange"
+      />
+    </div>
+
+    <div v-if="shouldShowPagination" class="flex">
+      <VaButton
+        preset="secondary"
+        icon="va-arrow-left"
+        aria-label="Previous page"
+        :disabled="pagination.page === 1"
+        @click="pagination.page--"
+      />
+      <VaButton
+        class="mr-2"
+        preset="secondary"
+        icon="va-arrow-right"
+        aria-label="Next page"
+        :disabled="pagination.page === totalPages"
+        @click="pagination.page++"
+      />
+      <VaPagination
+        v-model="pagination.page"
+        buttons-preset="secondary"
+        :pages="totalPages"
+        :visible-pages="5"
+        :boundary-links="false"
+        :direction-links="false"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-
+import { ref, computed, onMounted, watch } from 'vue'
 import { userApi } from '@/services/api'
-import type { GetWithPermissionsQuerys } from '@/services/interfaces/global'
 import type { LabData } from '@/services/interfaces/lab'
 import { useLabStore } from '@/stores/labStore'
+
+const labData: LabData = {
+    id: 29,
+    name: "Laboratorium",
+    status: "active",
+    rif: "j853946049",
+    logoPath: '',
+};
+const lab = useLabStore();
+lab.setCurrentLab(labData);
 
 const users = ref<any[]>([])
 const usersLoading = ref(true)
 
-const labData: LabData = {
-  id: 29,
-  name: 'Laboratorium',
-  status: 'active',
-  rif: 'j853946049',
-  logoPath: '',
-}
-const lab = useLabStore()
-lab.setCurrentLab(labData)
+const pagination = ref({
+  page: 1,
+  perPage: 10,
+  total: 0
+})
+
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil(pagination.value.total / pagination.value.perPage))
+})
+
+const shouldShowPagination = computed(() => {
+  return pagination.value.total > pagination.value.perPage
+})
 
 async function fetchUsers() {
-  const queries: GetWithPermissionsQuerys = {
-    offset: 0,
-    limit: 10,
-    includePermissions: true,
+  usersLoading.value = true
+  try {
+    const queries = {
+      offset: (pagination.value.page - 1) * pagination.value.perPage,
+      limit: pagination.value.perPage,
+      includePermissions: true
+    }
+    const response = await userApi.getUsersMix(queries)
+    users.value = Array.isArray(response.data.data) ? response.data.data : []
+    pagination.value.total = response.data.total || 0
+    
+    // Resetear a página 1 si el cambio de perPage nos dejó en una página inválida
+    if (pagination.value.page > totalPages.value) {
+      pagination.value.page = 1
+    }
+  } catch (error) {
+    console.error('Error fetching users:', error)
+  } finally {
+    usersLoading.value = false
   }
-  const response = await userApi.getUsersMix(queries)
-  users.value = Array.isArray(response.data.data) ? response.data.data : []
-  usersLoading.value = false
-
-  console.log(users.value)
 }
+
+const handlePerPageChange = (newPerPage: number) => {
+  pagination.value.perPage = newPerPage
+  // No necesitamos llamar fetchUsers aquí porque el watcher lo hará
+}
+
+watch(
+  () => [pagination.value.page, pagination.value.perPage],
+  () => {
+    fetchUsers()
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   fetchUsers()
 })
-
-const page = ref(1)
 
 const columns = [
   { key: 'name', label: 'Nombre' },
@@ -112,7 +180,6 @@ const columns = [
   { key: 'actions', label: 'Acciones' },
 ]
 
-// Aquí es donde se hace el MAPPING al formato de la tabla
 const mappedUsers = computed(() =>
   users.value.map(u => ({
     id: u.systemUser.id,
@@ -123,14 +190,14 @@ const mappedUsers = computed(() =>
     role: u.labUser.role.role,
     systemUser: u.systemUser,
     labUser: u.labUser,
-  })),
+  }))
 )
 
-function editUser(user) {
+function editUser(user: any) {
   console.log('Edit user:', user)
 }
 
-function deleteUser(user) {
+function deleteUser(user: any) {
   console.log('Delete user:', user)
 }
 </script>
