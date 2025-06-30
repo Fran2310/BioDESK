@@ -14,7 +14,7 @@
                     clearable   
                 />
                 <va-spacer />
-                <va-button color="success" @click="showNewRoleModal = true">
+                <va-button color="#2F6F79" @click="showNewRoleModal = true">
                 Crear un nuevo rol
                 </va-button>
             </div> 
@@ -22,43 +22,32 @@
     </va-card>
           
     <va-card class="max-w-full w-full">
-    <va-card-content>
+      <va-card-content>
         <div v-if="loadingRoles" class="flex justify-center items-center py-8">
           <va-progress-circle indeterminate size="large" color="primary" />
         </div>
-            <va-data-table
-            v-else
-            :columns="roleColumns"
-            :items="filteredRoles"
-            class="shadow rounded min-h-[120px]"
-            :virtual-scroller="false"
-            >
-            <template #cell(role)="{ rowData }">
-                <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
-            </template>
-            <template #cell(description)="{ rowData }">
-                <span class="text-left w-full block">{{ rowData.description }}</span>
-            </template>
-            <template #cell(permissions)="{ rowData }">
-                <span class="text-sm text-gray-500 text-left w-full block">
-                <span v-if="Array.isArray(rowData.permissions)">
-                    {{ rowData.permissions.map((p: ApiRolePermission) =>
-                    Array.isArray(p.actions)
-                        ? p.actions.map((a: string) => `${p.subject}:${a}`).join(', ')
-                        : typeof p.actions === 'string'
-                        ? (p.actions as string).split(',').map((a: string) => `${p.subject}:${a.trim()}`).join(', ')
-                        : ''
-                    ).join(', ') }}
-                </span>
-                </span>
-            </template>
-            <template #cell(actions)="{ rowData }">
-                <div class="flex gap-2 justify-start">
-                <va-button size="small" color="warning" @click="openEditRoleModal(rowData)">Editar</va-button>
-                <va-button size="small" color="danger" @click="deleteRole(rowData.id)">Eliminar</va-button>
-                </div>
-            </template>
-            </va-data-table>
+        <va-data-table
+          v-else
+          :columns="roleColumns"
+          :items="filteredRoles"
+          class="shadow rounded min-h-[120px]"
+          :virtual-scroller="false"
+          @row:click="onRowClick"
+          :row-class="getRowClass"
+        >
+          <template #cell(role)="{ rowData }">
+            <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
+          </template>
+          <template #cell(description)="{ rowData }">
+            <span class="text-left w-full block">{{ rowData.description }}</span>
+          </template>
+          <template #cell(actions)="{ rowData }">
+            <div class="flex gap-2 justify-start" @click.stop>
+              <va-button size="small" color="warning" @click="openEditRoleModal(rowData)">Editar</va-button>
+              <va-button size="small" color="danger" @click="deleteRole(rowData.id)">Eliminar</va-button>
+            </div>
+          </template>
+        </va-data-table>
       </va-card-content>
     </va-card>
 
@@ -254,7 +243,53 @@
       </va-card>
     </va-modal>
 
-    <!-- ...existing code for old edit modal (can be removed if not needed)... -->
+    <!-- Modal para ver detalles del rol -->
+    <va-modal v-model="showRoleDetailsModal" hide-default-actions size="700px">
+      <va-card>
+        <va-card-title>
+          <span class="text-lg font-bold">Detalles del Rol</span>
+        </va-card-title>
+        <va-card-content>
+          <div v-if="selectedRole">
+            <div class="mb-2"><b>Nombre:</b> {{ selectedRole.role }}</div>
+            <div class="mb-2"><b>Descripción:</b> {{ selectedRole.description }}</div>
+            <div class="mb-2"><b>ID:</b> {{ selectedRole.id }}</div>
+            <div class="mb-2"><b>Permisos:</b></div>
+            <table class="w-full border mt-2">
+              <thead>
+                <tr>
+                  <th class="border px-2 py-1 text-left">Área</th>
+                  <th class="border px-2 py-1 text-left">Acciones</th>
+                  <th class="border px-2 py-1 text-left">Campos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
+                  <td class="border px-2 py-1">{{ perm.subject }}</td>
+                  <td class="border px-2 py-1">
+                    <span v-if="Array.isArray(perm.actions)">
+                      {{ perm.actions.join(', ') }}
+                    </span>
+                    <span v-else>
+                      {{ perm.actions }}
+                    </span>
+                  </td>
+                  <td class="border px-2 py-1">
+                    <span v-if="'fields' in perm && perm.fields">
+                      {{ perm.fields }}
+                    </span>
+                    <span v-else>-</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </va-card-content>
+        <template #footer>
+          <va-button color="primary" @click="showRoleDetailsModal = false">Cerrar</va-button>
+        </template>
+      </va-card>
+    </va-modal>
   </div>
 </template>
 
@@ -613,7 +648,7 @@ const saveEditRoleModal = async () => {
 const roleColumns = [
   { key: 'role', label: 'Nombre', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[220px]' },
   { key: 'description', label: 'Descripción', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[320px]' },
-  { key: 'permissions', label: 'Permisos', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[400px]' },
+  // { key: 'permissions', label: 'Permisos', ... } // Eliminado
   { key: 'actions', label: 'Acciones', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[180px]' },
 ]
 
@@ -673,6 +708,21 @@ const actionsOptions = [
   'manage',
   'set_state'
 ];
+
+const showRoleDetailsModal = ref(false)
+const selectedRole = ref<RoleFromApi | null>(null)
+
+function onRowClick(event: { item: RoleFromApi }) {
+  // Evita abrir el modal si el click fue en los botones de acción
+  // (esto ya se maneja con @click.stop en los botones)
+  selectedRole.value = event.item
+  showRoleDetailsModal.value = true
+}
+
+// Opcional: resalta la fila seleccionada
+function getRowClass(row: RoleFromApi) {
+  return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
+}
 </script>
 
 <style scoped>
@@ -697,5 +747,13 @@ const actionsOptions = [
 }
 .custom-roles-table ::v-deep td {
   text-align: left !important;
+}
+
+/* Aumenta el tamaño de fuente de los encabezados de la tabla */
+.va-data-table thead th,
+::v-deep(.va-data-table__table-th) {
+  font-size: 0.9rem !important;
+  font-weight: bold !important;
+  /* Puedes ajustar el tamaño aquí */
 }
 </style>

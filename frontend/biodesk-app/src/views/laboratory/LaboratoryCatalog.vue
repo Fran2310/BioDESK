@@ -13,7 +13,7 @@
             clearable
           />
           <va-spacer />
-          <va-button color="success" @click="examForm.showAddModal = true">
+          <va-button color="#2F6F79" @click="examForm.showAddModal = true">
             Agregar examen
           </va-button>
         </div>
@@ -225,7 +225,7 @@ import {
   VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
 } from 'vuestic-ui'
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
@@ -266,7 +266,12 @@ const {
 
 
 // Mapear los estados internos a los usados en el template
-const search = tableState.search
+const search = ref(tableState.search)
+
+watch(search, (val) => {
+  tableState.search = val
+})
+
 const loading = tableState.loading
 const supplies = examForm.supplies
 const newSupply = examForm.newSupply
