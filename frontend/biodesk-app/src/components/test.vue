@@ -1,77 +1,49 @@
-<!-- RIF - Reemplazar la div existente -->
-<div
-  class="grid gap-2"
-  :class="{
-    'grid-cols-1': !isDesktop,
-    'grid-cols-[auto_1fr]': isDesktop,
-  }"
-  style="min-height: 5rem"
->
-  <VaSelect
-    label="RIF"
-    required-mark
-    v-model="formData.rifType"
-    :options="['V', 'J', 'G']"
-    class="w-full sm:w-20"
-    color="primary"
-  />
-  <VaInput
-    v-model="formData.rif"
-    :label="isDesktop ? ' ' : 'Número RIF'"
-    :rules="[
-      validator.required,
-      validator.onlyNumbers,
-      validator.minLengthCi,
-    ]"
-    placeholder="123456789"
-    type="text"
-    color="primary"
-    class="w-full"
-    style="min-height: 5rem"
+<template>
+  <!-- Sustituye el bloque <VaVirtualScroller ...> por esto -->
+  <VaInfiniteScroll
+    :items="logs"
+    :item-size="LOG_HEIGHT"
+    :load="fetchLogs"
+    :has-more="logs.length < total"
+    :height="MAX_SCROLLER_HEIGHT"
+    class="space-y-2"
   >
-  </VaInput>
-</div>
-
-<!-- TELEFONOS - Reemplazar la div existente -->
-<div
-  class="grid gap-2 mb-2"
-  :class="{
-    'grid-cols-1': !isDesktop,
-    'grid-cols-[auto_1fr]': isDesktop,
-  }"
->
-  <VaSelect
-    label="Cod área"
-    required-mark
-    v-model="phoneInput.areaCode"
-    :options="areaCodes"
-    class="w-full sm:w-20"
-    color="primary"
-    searchable
-    :rules="[phoneAreaCodeValidator]"
-  />
-  <VaInput
-    v-model="phoneInput.number"
-    :label="isDesktop ? 'N° Teléfono' : 'Número'"
-    :rules="[phoneNumberValidator]"
-    placeholder="1234567"
-    type="tel"
-    color="primary"
-    class="w-full"
-    @keyup.enter="addPhone"
-  >
-    <template #prependInner>
-      <VaIcon name="call" color="secondary" />
+    <template #default="{ item: log }">
+      <div
+        :key="log.id"
+        class="flex items-start gap-3 bg-white rounded shadow-sm p-3 hover:bg-gray-50 transition"
+        style="height: 75px"
+      >
+        <!-- Icono, contenido y fecha igual que antes -->
+        <VaIcon
+          :name="iconForAction(log.action)"
+          size="20px"
+          :color="colorForAction(log.action)"
+          class="mt-1 shrink-0"
+        />
+        <div class="flex-1">
+          <p class="text-sm text-gray-700">
+            <span
+              :class="colorClassForAction(log.action)"
+              class="font-semibold capitalize"
+            >
+              {{ actionLabel(log.action) }}
+            </span>
+            en
+            <span class="font-medium">{{ log.entity }}</span>
+          </p>
+          <p class="text-xs text-gray-500">{{ log.details }}</p>
+        </div>
+        <div
+          class="text-xs text-gray-400 text-right whitespace-nowrap shrink-0"
+        >
+          {{ relativeTime(log.madeAt) }}
+          <div class="text-gray-500">
+            {{ log.performedBy?.name ?? 'Sistema' }}
+            {{ log.performedBy?.lastName ?? '' }}
+          </div>
+        </div>
+      </div>
     </template>
-    <template #appendInner>
-      <VaButton
-        icon="add"
-        color="primary"
-        @click="addPhone"
-        @keyup.enter="addPhone"
-        :disabled="!canAddPhone"
-        aria-label="Agregar teléfono"
-      />
-    </template>
-  </VaInput>
-</div>
+  </VaInfiniteScroll>
+</template>
