@@ -42,11 +42,23 @@
             </p>
           </div>
 
-          <!-- Fechas exactas -->
-          <div class="text-xs text-gray-400 text-right whitespace-nowrap shrink-0">
-            <div>{{ formatDate(request.requestedAt) }}</div>
-            <div v-if="request.completedAt">{{ formatDate(request.completedAt) }}</div>
-          </div>
+          <va-popover 
+          placement="left-start" 
+          trigger="hover"
+          class="popover-fix"
+          >
+            <template #body>
+              <div class="p-2 ">
+                <div><strong>Solicitado:</strong> {{ formatDate(request.requestedAt) }}</div>
+                <div v-if="request.completedAt"><strong>Completado:</strong> {{ formatDate(request.completedAt) }}</div>
+              </div>
+            </template>
+            <va-icon 
+            name="info" 
+            color="secondary" 
+            class="hover:text-primary cursor-pointer"
+            size="small" />
+          </va-popover>
         </div>
       </div>
     </div>
