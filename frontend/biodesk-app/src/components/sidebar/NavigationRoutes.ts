@@ -1,0 +1,43 @@
+export interface INavigationRoute {
+  name: string
+  displayName: string
+  meta: { icon: string }
+  children?: INavigationRoute[]
+}
+
+export default {
+  root: {
+    name: '/',
+    displayName: 'navigationRoutes.home',
+  },
+  routes: [
+    {
+      name: 'HomeView',
+      displayName: 'Home',
+      meta: {
+        icon: 'home',
+      },
+    },
+    {
+      name: 'Patients',
+      displayName: 'Patients',
+      meta: {
+        icon: 'group',
+      },
+    },
+    {
+      name: 'Exams',
+      displayName: 'Exams',
+      meta: {
+        icon: 'home',
+      },
+    },
+    {
+      name: 'NewRequest',
+      displayName: 'New Exam',
+      meta: {
+        icon: 'home',
+      },
+    },
+  ] as INavigationRoute[],
+}
