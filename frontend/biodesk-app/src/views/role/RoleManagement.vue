@@ -86,37 +86,43 @@
               >
                 <va-select
                   v-model="perm.subject"
-                  :options="subjectOptions"
+                  :options="subjectOptions.map(s => ({ label: getSubjectLabel(s), value: s }))"
                   class="input-xs"
-                  placeholder="Subject"
+                  placeholder="Herramienta"
                   size="small"
                   clearable
                   style="min-width: 120px; max-width: 180px;"
+                  :text-by="'label'"
+                  :track-by="'value'"
                 />
                 <va-select
                   v-model="perm.actions"
-                  :options="actionsOptions"
+                  :options="actionsOptions.map(a => ({ label: getActionLabel(a), value: a }))"
                   class="input-xs"
-                  placeholder="Actions"
+                  placeholder="Acciones"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: string) => a"
+                  :reduce="(a: any) => a.value"
                   :map-options="false"
                   style="min-width: 120px; max-width: 180px;"
+                  :text-by="'label'"
+                  :track-by="'value'"
                 />
                 <va-select
                   v-model="perm.fields"
-                  :options="getFieldsOptions(perm.subject)"
+                  :options="getFieldsOptions(perm.subject).map(f => ({ label: getFieldLabel(f), value: f }))"
                   class="input-xs"
-                  placeholder="Fields"
+                  placeholder="Campos"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: string) => a"
+                  :reduce="(a: any) => a.value"
                   :map-options="false"
                   :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
                   style="min-width: 120px; max-width: 180px;"
+                  :text-by="'label'"
+                  :track-by="'value'"
                 />
                 <va-button
                   color="danger"
@@ -182,37 +188,43 @@
               >
                 <va-select
                   v-model="perm.subject"
-                  :options="subjectOptions"
+                  :options="subjectOptions.map(s => ({ label: getSubjectLabel(s), value: s }))"
                   class="input-xs"
-                  placeholder="Subject"
+                  placeholder="Herramienta"
                   size="small"
                   clearable
                   style="min-width: 120px; max-width: 180px;"
+                  :text-by="'label'"
+                  :track-by="'value'"
                 />
                 <va-select
                   v-model="perm.actions"
-                  :options="actionsOptions"
+                  :options="actionsOptions.map(a => ({ label: getActionLabel(a), value: a }))"
                   class="input-xs"
-                  placeholder="Actions"
+                  placeholder="Acciones"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: string) => a"
+                  :reduce="(a: any) => a.value"
                   :map-options="false"
                   style="min-width: 120px; max-width: 180px;"
+                  :text-by="'label'"
+                  :track-by="'value'"
                 />
                 <va-select
                   v-model="perm.fields"
-                  :options="getFieldsOptions(perm.subject)"
+                  :options="getFieldsOptions(perm.subject).map(f => ({ label: getFieldLabel(f), value: f }))"
                   class="input-xs"
-                  placeholder="Fields"
+                  placeholder="Campos"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: string) => a"
+                  :reduce="(a: any) => a.value"
                   :map-options="false"
                   :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
                   style="min-width: 120px; max-width: 180px;"
+                  :text-by="'label'"
+                  :track-by="'value'"
                 />
                 <va-button
                   color="danger"
@@ -265,18 +277,26 @@
               </thead>
               <tbody>
                 <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
-                  <td class="border px-2 py-1">{{ perm.subject }}</td>
+                  <td class="border px-2 py-1">{{ getSubjectLabel(perm.subject) }}</td>
                   <td class="border px-2 py-1">
                     <span v-if="Array.isArray(perm.actions)">
-                      {{ perm.actions.join(', ') }}
+                      {{ perm.actions.map((a: string) => getActionLabel(a)).join(', ') }}
                     </span>
                     <span v-else>
-                      {{ perm.actions }}
+                      {{ getActionLabel(String(perm.actions)) }}
                     </span>
                   </td>
                   <td class="border px-2 py-1">
                     <span v-if="'fields' in perm && perm.fields">
-                      {{ perm.fields }}
+                      <span v-if="Array.isArray(perm.fields)">
+                        {{ perm.fields.map((f: string) => getFieldLabel(f)).join(', ') }}
+                      </span>
+                      <span v-else-if="typeof perm.fields === 'string'">
+                        {{ (String(perm.fields)).split(',').map(f => getFieldLabel(f.trim())).join(', ') }}
+                      </span>
+                      <span v-else>
+                        {{ getFieldLabel(String(perm.fields)) }}
+                      </span>
                     </span>
                     <span v-else>-</span>
                   </td>
@@ -375,7 +395,7 @@ const editRoleFields = ref<Record<string, { name: string; description: string }>
 const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
 
 const dynamicPermissions = ref([
-  { subject: '', actions: '', fields: '' }
+  { subject: '', actions: [], fields: [] }
 ]);
 
 const loadingRoles = ref(false)
@@ -443,7 +463,7 @@ function groupPermissionsWithFields(flatPermissions: string[]) {
 }
 
 function addPermission() {
-  dynamicPermissions.value.push({ subject: '', actions: '', fields: '' });
+  dynamicPermissions.value.push({ subject: '', actions: [], fields: [] });
 }
 
 function removePermission(idx: number) {
@@ -456,7 +476,7 @@ const createRole = async () => {
     return
   }
   const permissions = dynamicPermissions.value
-    .filter(p => p.subject && p.actions)
+    .filter(p => p.subject && p.actions && p.actions.length > 0)
     .map(p => ({
       subject: p.subject,
       actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
@@ -477,7 +497,7 @@ const createRole = async () => {
     await createRoleApi(payload)
     newRoleName.value = ''
     newRoleDescription.value = ''
-    dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+    dynamicPermissions.value = [{ subject: '', actions: [], fields: [] }]
     await fetchAllRoles() // Recargar roles
     alert('Rol creado con éxito.')
   } catch (error) {
@@ -499,7 +519,7 @@ const assignPermissions = async () => {
     alert('Permisos asignados con éxito.')
   } catch (error) {
     console.error('Error assigning permissions:', error)
-    alert('Error al asignar permisos.')
+    alert('Error al asignar permisos')
   }
 }
 
@@ -580,10 +600,10 @@ onMounted(async () => {
 })
 
 const showEditRoleModal = ref(false)
-const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string; fields?: string }[] }>({
+const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string[]; fields?: string[] }[] }>({
   name: '',
   description: '',
-  permissions: [{ subject: '', actions: '', fields: '' }]
+  permissions: [{ subject: '', actions: [], fields: [] }]
 })
 const editRoleIdForModal = ref<string | null>(null)
 
@@ -594,8 +614,8 @@ function openEditRoleModal(role: RoleFromApi) {
   editRoleModalData.value.description = role.description
   editRoleModalData.value.permissions = (role.permissions || []).map(p => ({
     subject: p.subject,
-    actions: Array.isArray(p.actions) ? p.actions.join(',') : (p.actions ?? ''),
-    fields: (p as any).fields ?? ''
+    actions: p.actions ? String(p.actions).split(',').map(a => a.trim()) : [],
+    fields: (p as any).fields ? String((p as any).fields).split(',').map((f: string) => f.trim()) : []
   }))
 }
 
@@ -604,11 +624,11 @@ function closeEditRoleModal() {
   editRoleIdForModal.value = null
   editRoleModalData.value.name = ''
   editRoleModalData.value.description = ''
-  editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
+  editRoleModalData.value.permissions = [{ subject: '', actions: [], fields: [] }]
 }
 
 function addEditRoleModalPermission() {
-  editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
+  editRoleModalData.value.permissions.push({ subject: '', actions: [], fields: [] })
 }
 
 function removeEditRoleModalPermission(idx: number) {
@@ -623,7 +643,7 @@ const saveEditRoleModal = async () => {
     return
   }
   const cleanPermissions = permissions
-    .filter(p => p.subject && p.actions)
+    .filter(p => p.subject && p.actions && p.actions.length > 0)
     .map(p => ({
       subject: p.subject,
       actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
@@ -655,7 +675,7 @@ const roleColumns = [
 function resetRoleForm() {
   newRoleName.value = ''
   newRoleDescription.value = ''
-  dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+  dynamicPermissions.value = [{ subject: '', actions: [], fields: [] }]
 }
 
 const showNewRoleModal = ref(false)
@@ -722,6 +742,97 @@ function onRowClick(event: { item: RoleFromApi }) {
 // Opcional: resalta la fila seleccionada
 function getRowClass(row: RoleFromApi) {
   return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
+}
+
+// Diccionarios de traducción para subject, actions y fields
+const subjectLabels: Record<string, string> = {
+  SystemUser: 'Usuario del Sistema',
+  LabUser: 'Usuario de Laboratorio',
+  Lab: 'Laboratorio',
+  Role: 'Rol',
+  ActionHistory: 'Historial de Acciones',
+  Patient: 'Paciente',
+  MedicHistory: 'Historia Médica',
+  RequestMedicTest: 'Solicitud de Examen',
+  MedicTestCatalog: 'Catálogo de Exámenes',
+  all: 'Todos'
+}
+
+const actionsLabels: Record<string, string> = {
+  create: 'Crear',
+  read: 'Leer',
+  update: 'Actualizar',
+  delete: 'Eliminar',
+  manage: 'Gestionar',
+  set_state: 'Cambiar Estado'
+}
+
+const fieldsLabels: Record<string, string> = {
+  // SystemUser
+  uuid: 'UUID',
+  ci: 'Cédula',
+  name: 'Nombre',
+  lastName: 'Apellido',
+  email: 'Correo',
+  password: 'Contraseña',
+  salt: 'Salt',
+  isActive: 'Activo',
+  lastAccess: 'Último Acceso',
+  // LabUser
+  systemUserUuid: 'Usuario Sistema UUID',
+  roleId: 'ID de Rol',
+  // Lab
+  dbName: 'Nombre BD',
+  status: 'Estado',
+  rif: 'RIF',
+  dir: 'Dirección',
+  phoneNums: 'Teléfonos',
+  logoPath: 'Logo',
+  createdAt: 'Creado',
+  // Role
+  role: 'Rol',
+  description: 'Descripción',
+  permissions: 'Permisos',
+  // ActionHistory
+  action: 'Acción',
+  details: 'Detalles',
+  entity: 'Entidad',
+  recordEntityId: 'ID de Entidad',
+  operationData: 'Datos de Operación',
+  madeAt: 'Fecha',
+  labUserId: 'ID Usuario Lab',
+  // Patient
+  secondName: 'Segundo Nombre',
+  secondLastName: 'Segundo Apellido',
+  gender: 'Género',
+  birthDate: 'Fecha de Nacimiento',
+  // MedicHistory
+  allergies: 'Alergias',
+  pathologies: 'Patologías',
+  patientId: 'ID Paciente',
+  // RequestMedicTest
+  requestedAt: 'Solicitado',
+  completedAt: 'Completado',
+  state: 'Estado',
+  priority: 'Prioridad',
+  resultProperties: 'Propiedades de Resultado',
+  observation: 'Observación',
+  medicHistoryId: 'ID Historia Médica',
+  medicTestCatalogId: 'ID Catálogo Examen',
+  // MedicTestCatalog
+  price: 'Precio',
+  supplies: 'Insumos',
+}
+
+// Helpers para mostrar los labels traducidos
+function getSubjectLabel(subject: string) {
+  return subjectLabels[subject] || subject
+}
+function getActionLabel(action: string) {
+  return actionsLabels[action] || action
+}
+function getFieldLabel(field: string) {
+  return fieldsLabels[field] || field
 }
 </script>
 

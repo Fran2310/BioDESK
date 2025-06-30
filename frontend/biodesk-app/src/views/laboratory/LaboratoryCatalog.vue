@@ -25,8 +25,7 @@
           :columns="columns"
           :items="filteredExams"
           :loading="loading"
-          :virtual-scroller="true"
-          class="shadow rounded min-h-[200px]"
+                    class="shadow rounded min-h-[200px]"
         >
 
         <template #cell(supplies)="{ value }">
@@ -118,87 +117,103 @@
 
             <!-- Propiedades-->
 
+
             <div class="flex flex-col">
               <label class="block mb-3 especial">PROPIEDADES</label>
-              <VaCard
-                stripe
-                stripe-color="#2F6F79"
-              >
-                <!-- Fila para agregar nueva propiedad -->
-                <div class="flex gap-4"> 
-                  <div class="grid grid-cols-3 gap-2 m-2">
-                    <va-input
-                      v-model="newProperty.name"
-                      placeholder="Nombre"
-                      size="small"
-                      class="col-span-2 w-1/1"
-                    />
-                    <va-input
-                      v-model="newProperty.unit"
-                      placeholder="Unidad"
-                      size="small"
-                      class="col-span-1 w-1/1"
-                    />
-                    <va-select
-                      v-model="newProperty.variation.ageGroup"
-                      :options="ageGroups"
-                      placeholder="Edad"
-                      size="small"
-                      class="col-span-2 w-1/1"
-                    />
-                    <va-select
-                      v-model="newProperty.variation.gender"
-                      :options="genderOptions"
-                      placeholder="Sexo"
-                      size="small"
-                      class="w-1/1"
-                    />
-                    <va-input
-                      v-model="newProperty.variation.range"
-                      placeholder="Rango"
-                      size="small"
-                      class="col-span-2 w-3/4"
-                    />
-                  </div>
+              <VaCard stripe stripe-color="#2F6F79">
+                <!-- Inputs Nombre y Unidad -->
+                <div class="grid grid-cols-3 gap-2 m-2">
+                  <va-input
+                    v-model="newProperty.name"
+                    placeholder="Nombre"
+                    size="small"
+                    class="col-span-2 w-full"
+                  />
+                  <va-input
+                    v-model="newProperty.unit"
+                    placeholder="Unidad"
+                    size="small"
+                    class="col-span-1 w-full"
+                  />
+                </div>
+                <!-- Variaciones: Edad, Sexo, Rango y botón en una fila -->
+                <div
+                  v-for="(variation, index) in newProperty.variations"
+                  :key="index"
+                  class="grid grid-cols-4 gap-2 m-2 items-center"
+                >
+                  <va-select
+                    v-model="variation.ageGroup"
+                    :options="ageGroups"
+                    placeholder="Edad"
+                    size="small"
+                    class="w-full"
+                  />
+                  <va-select
+                    v-model="variation.gender"
+                    :options="genderOptions"
+                    placeholder="Sexo"
+                    size="small"
+                    class="w-full"
+                  />
+                  <va-input
+                    v-model="variation.range"
+                    placeholder="Rango"
+                    size="small"
+                    class="w-full"
+                  />
+                  <va-button
+                    icon="delete"
+                    color="danger"
+                    size="small"
+                    @click="removeLocalVariation(index)"
+                    class="w-1/2 justify-self-center"
+                  />
                 </div>
               </VaCard>
-                <va-button
-                  color="primary"
-                  size="small"
-                  @click="addPropertyDirect"
-                  class="custom-button w-1/5"
-                 > Añadir propiedad</va-button>
-                <div
-                  v-for="(reference, idx) in referenceData"
-                  :key="idx"
-                  class="property-block"
-                >
-                  <div
-                    class="property-details"
-                  >
-                    <div class="property-name">
-                      {{ reference.name }}
-                    </div>
-                    <div class="property-unit">
-                      {{ reference.unit }}
-                    </div>
-                     <div class="property-range">
-                      {{ reference.variations[0]?.ageGroup }}
-                    </div>
-                      <div class="property-range">
-                      {{ reference.variations[0]?.gender }}
-                    </div>
-                     <div class="property-range">
-                      {{ reference.variations[0]?.range }}
-                    </div>
+
+              <div class="flex justify-end mt-2">
+                <va-button color="primary" size="small" @click="addVariation">
+                  Añadir Variación
+                </va-button>
+              </div>
+
+              <va-button
+                color="primary"
+                size="small"
+                @click="addPropertyDirect"
+                class="custom-button w-1/5"
+              >
+                Añadir propiedad
+              </va-button>
+
+              <!-- Lista de propiedades añadidas -->
+              <div
+                v-for="(reference, idx) in referenceData"
+                :key="idx"
+                class="property-block "
+              >
+                <div class="grid grid-cols-7 gap-2 items-center">
+                  <div class="col-span-2 property-name">{{ reference.name }}</div>
+                  <div class="col-span-1 property-unit">{{ reference.unit }}</div>
+                  <div class="col-span-1 property-range">
+                    {{ reference.variations[0]?.ageGroup }}
+                  </div>
+                  <div class="col-span-1 property-range">
+                    {{ reference.variations[0]?.gender }}
+                  </div>
+                  <div class="col-span-1 property-range">
+                    {{ reference.variations[0]?.range }}
                   </div>
                   <va-button
                     icon="delete"
                     color="danger"
                     size="small"
                     @click="removeReference(idx)"
+                    class="col-span-1"
                   />
                 </div>
+              </div>
             </div>
 
             <div class="flex gap-2 justify-end mt-4">
@@ -298,23 +313,29 @@ const genderOptions = ['MALE', 'FEMALE', 'ANY']
 const newProperty = ref({
   name: '',
   unit: '',
-  variation: { ageGroup: '', gender: '', range: '' }
+  variations: []
 })
+
+function addVariation() {
+  newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' })
+}
+
+function removeLocalVariation(index) {
+  newProperty.value.variations.splice(index, 1)
+}
 
 function addPropertyDirect() {
   if (
     newProperty.value.name &&
     newProperty.value.unit &&
-    newProperty.value.variation.ageGroup &&
-    newProperty.value.variation.gender &&
-    newProperty.value.variation.range
+    newProperty.value.variations.length > 0
   ) {
     referenceData.value.push({
       name: newProperty.value.name,
       unit: newProperty.value.unit,
-      variations: [{ ...newProperty.value.variation }]
+      variations: [...newProperty.value.variations]
     })
-    newProperty.value = { name: '', unit: '', variation: { ageGroup: '', gender: '', range: '' } }
+    newProperty.value = { name: '', unit: '', variations: [] }
   }
 }
 
@@ -482,6 +503,21 @@ li {
   font-size: 1rem;
   color: #666;
 }
+
+.property-name,
+.property-unit,
+.property-range,
+va-button {
+  margin: 0;
+  padding: 0;
+}
+
+va-button {
+  line-height: 1;
+  height: auto;
+}
+
+
 </style>
 
 
