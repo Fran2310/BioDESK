@@ -8,12 +8,12 @@
 </template>
 
 <script lang="ts" setup>
-withDefaults(
-  defineProps<{
-    color?: string
-  }>(),
-  {
-    color: 'inherit',
-  },
-)
+  withDefaults(
+    defineProps<{
+      color?: string;
+    }>(),
+    {
+      color: 'inherit',
+    }
+  );
 </script>

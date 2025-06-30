@@ -12,10 +12,7 @@
           />
         </Transition>
         <RouterLink to="/" aria-label="Visit home page">
-          <!-- <VuesticLogo /> -->
-
-          <BioDESKLogo :style= "{height: '3em'}"/>
-
+          <Logo :height="'3em'" />
         </RouterLink>
       </div>
     </template>
@@ -26,57 +23,57 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useGlobalStore } from '../../stores/global-store'
-import AppNavbarActions from './components/AppNavbarActions.vue'
-import BioDESKLogo from '../../components/BioDESKLogo.vue'
+  import { storeToRefs } from 'pinia';
+  import { useGlobalStore } from '../../stores/global-store';
+  import AppNavbarActions from './components/AppNavbarActions.vue';
+  import Logo from '../icons/Logo.vue';
 
-defineProps({
-  isMobile: { type: Boolean, default: false },
-})
+  defineProps({
+    isMobile: { type: Boolean, default: false },
+  });
 
-const GlobalStore = useGlobalStore()
+  const GlobalStore = useGlobalStore();
 
-const { isSidebarMinimized } = storeToRefs(GlobalStore)
+  const { isSidebarMinimized } = storeToRefs(GlobalStore);
 </script>
 
 <style lang="scss" scoped>
-.va-navbar {
-  z-index: 2;
+  .va-navbar {
+    z-index: 2;
 
-  @media screen and (max-width: 950px) {
-    .left {
-      width: 100%;
+    @media screen and (max-width: 950px) {
+      .left {
+        width: 100%;
+      }
+
+      .app-navbar__actions {
+        display: flex;
+        justify-content: space-between;
+      }
+    }
+  }
+
+  .left {
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+
+    & > * {
+      margin-right: 1rem;
     }
 
-    .app-navbar__actions {
-      display: flex;
-      justify-content: space-between;
+    & > *:last-child {
+      margin-right: 0;
     }
   }
-}
 
-.left {
-  display: flex;
-  align-items: center;
-  margin-left: 1rem;
-
-  & > * {
-    margin-right: 1rem;
+  .icon-fade-enter-active,
+  .icon-fade-leave-active {
+    transition: transform 0.5s ease;
   }
 
-  & > *:last-child {
-    margin-right: 0;
+  .icon-fade-enter,
+  .icon-fade-leave-to {
+    transform: scale(0.5);
   }
-}
-
-.icon-fade-enter-active,
-.icon-fade-leave-active {
-  transition: transform 0.5s ease;
-}
-
-.icon-fade-enter,
-.icon-fade-leave-to {
-  transform: scale(0.5);
-}
 </style>

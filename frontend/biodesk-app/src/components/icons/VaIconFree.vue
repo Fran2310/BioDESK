@@ -1,5 +1,9 @@
 <template>
-  <svg class="va-icon-free" viewBox="0 0 44.99 51.04" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    class="va-icon-free"
+    viewBox="0 0 44.99 51.04"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <defs />
     <title>overview_icon_2</title>
     <g id="Layer_2" data-name="Layer 2">
@@ -22,12 +26,12 @@
   </svg>
 </template>
 
-<style lang="scss">
-.va-icon-free {
-  display: inline-block;
-  width: 55px;
-  height: 47.8px;
-
+<style scoped>
+  .va-icon-free {
+    display: inline-block;
+    width: 55px;
+    height: 47.8px;
+  }
   .cls-1 {
     fill: #4ae387;
   }
@@ -42,5 +46,4 @@
   .cls-3 {
     fill: #34495e;
   }
-}
 </style>

@@ -44,7 +44,7 @@
   import { useBreakpoint } from 'vuestic-ui';
   import { useWindowSize } from '@vueuse/core'; // 🆕 Hook para tamaño de ventana
   import { computed } from 'vue';
-  import Logo from '@/components/Logo.vue';
+  import Logo from '@/components/icons/Logo.vue';
 
   const breakpoint = useBreakpoint();
   const { width } = useWindowSize();

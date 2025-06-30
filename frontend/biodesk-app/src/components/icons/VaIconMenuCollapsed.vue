@@ -1,5 +1,11 @@
 <template>
-  <svg class="va-icon-menu-collapsed" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    class="va-icon-menu-collapsed"
+    height="24"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="none" fill-rule="nonzero">
       <path d="M0 0h24v24H0z" />
       <rect :fill="color" height="2" rx="1" width="20" x="2" y="3" />
@@ -13,20 +19,20 @@
 </template>
 
 <script lang="ts" setup>
-withDefaults(
-  defineProps<{
-    color?: string
-  }>(),
-  {
-    color: 'inherit',
-  },
-)
+  withDefaults(
+    defineProps<{
+      color?: string;
+    }>(),
+    {
+      color: 'inherit',
+    }
+  );
 </script>
 
-<style lang="scss">
-.va-icon-menu-collapsed {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-}
+<style>
+  .va-icon-menu-collapsed {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+  }
 </style>

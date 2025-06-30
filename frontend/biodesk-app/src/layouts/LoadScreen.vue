@@ -28,7 +28,7 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import { useWindowSize } from '@vueuse/core'; // 🆕 Hook de VueUse para tamaño de ventana
-  import LogoAnimate from '@/components/LogoAnimate.vue';
+  import LogoAnimate from '@/components/icons/LogoAnimate.vue';
 
   const router = useRouter();
   const isLeaving = ref(false);
