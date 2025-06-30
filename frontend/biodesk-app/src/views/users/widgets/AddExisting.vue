@@ -9,6 +9,8 @@ import type { LabData } from '@/services/interfaces/lab'
 import { roleApi } from '@/services/api'
 import type { GetExtendQuerys } from '@/services/interfaces/global';
 
+import type { AssignUserToLabData } from '@/services/interfaces/user'
+
 const props = defineProps({
   user: {
     type: Object as PropType<CreateUserWithRoleIdData | null>,
@@ -20,13 +22,9 @@ const props = defineProps({
   },
 })
 
-const defaultNewUser: CreateUserWithRoleIdData = {
-  name: '',
-  lastName: '',
-  roleId: undefined,
+const defaultNewUser: AssignUserToLabData = {
   email: '',
-  ci: '',
-  password: ''
+  roleId: undefined,
 }
 
 const newUser = ref<CreateUserWithRoleIdData>({ ...defaultNewUser } as CreateUserWithRoleIdData)
@@ -65,7 +63,7 @@ const onSave = () => {
   if (form.validate()) {
     emit('save', newUser.value)
 
-    userApi.createUserWithRoleId(newUser.value)
+    userApi.assignUserToLab(newUser.value)
   }
 }
 
@@ -94,37 +92,25 @@ onMounted(() => {
     <div class="self-stretch flex-col justify-start items-start gap-4 flex">
       <div class="flex gap-4 flex-col sm:flex-row w-full">
         <VaInput
-          v-model="newUser.name"
-          label="Nombre"
-          class="w-full sm:w-1/2"
-          :rules="[validator.required]"
-          name="name"
-        />
-        <VaInput
-          v-model="newUser.lastName"
-          label="Apellido"
-          class="w-full sm:w-1/2"
-          :rules="[validator.required]"
-          name="lastName"
-        />
-      </div>
-      <div class="flex gap-4 flex-col sm:flex-row w-full">
-        <VaInput
           v-model="newUser.email"
           label="Email"
           class="w-full sm:w-1/2"
           :rules="[validator.required, validator.email]"
           name="email"
         />
-        <VaInput
-          v-model="newUser.password"
-          label="Contraseña"
+        <VaSelect
+          v-model="newUser.roleId"
+          label="Rol"
           class="w-full sm:w-1/2"
-          :rules="[validator.required, validator.hasUppercase, validator.hasNumber, validator.minLength]"
-          name="password"
-        />  
+          name="roleId"
+          :options="roles"
+          :rules="[validator.required]"
+          :loading="rolesLoading"
+          :disabled="rolesLoading"
+          text-by="role"
+          value-by="id"
+        />
       </div>
-
       <div class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center">
         <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancel</VaButton>
         <VaButton :disabled="!isValid" @click="onSave">{{ saveButtonLabel }}</VaButton>

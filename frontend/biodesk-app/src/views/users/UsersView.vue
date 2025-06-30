@@ -1,7 +1,6 @@
 <script setup lang="ts">
-  import { ref, watchEffect } from 'vue';
-  import UsersTable from './widgets/UsersTable.vue';
-  import EditUserForm from './widgets/EditUserForm.vue';
+  import { ref } from 'vue';
+  import AddNewUser from './widgets/AddNewUser.vue'
   import AddExisting from './widgets/AddExisting.vue';
   import { useModal, useToast } from 'vuestic-ui';
   import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
@@ -11,11 +10,6 @@
 
   const userToEdit = ref<CreateUserWithRoleIdData | null>(null);
 
-  const showEditUserModal = (user: CreateUserWithRoleIdData) => {
-    userToEdit.value = user;
-    doShowEditUserModal.value = true;
-  };
-
   const showAddNewUserModal = () => {
     userToEdit.value = null;
     doShowEditUserModal.value = true;
@@ -23,7 +17,7 @@
 
   const showAddExistingModal = (user: CreateUserWithRoleIdData) => {
     userToEdit.value = null;
-    doShowEditUserModal.value = true;
+    doShowAddExistingModal.value = true;
   };
 
   const { init: notify } = useToast();
@@ -109,7 +103,7 @@
     <h1 class="va-h5">
       {{ userToEdit ? 'Editar usuario' : 'Añadir usuario' }}
     </h1>
-    <EditUserForm
+    <AddNewUser
       ref="editFormRef"
       :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
@@ -133,7 +127,7 @@
     :before-cancel="beforeEditFormModalClose"
   >
     <h1 class="va-h5">
-      {{ userToEdit ? 'Editar usuario' : 'Añadir usuario' }}
+      {{ userToEdit ? 'Editar usuario Existente' : 'Añadir usuario Existente' }}
     </h1>
     <AddExisting
       ref="editFormRef"
