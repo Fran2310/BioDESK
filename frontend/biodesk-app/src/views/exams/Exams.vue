@@ -157,24 +157,21 @@ function handleRowClick(event: any) {
   }
 }
 
-function onPageChange(newPage: number) {
-  pagination.page = newPage
-  if (filters.value.search.trim()) {
-    searchExams()
-  } else {
-    fetchExams()
+watch(
+  () => [pagination.value.page, pagination.value.perPage],
+  () => {
+    // Always reset to page 1 if perPage changes and current page is out of range
+    const maxPage = Math.ceil(pagination.value.total / pagination.value.perPage) || 1
+    if (pagination.value.page > maxPage) {
+      pagination.value.page = 1
+    }
+    if (filters.value.search.trim()) {
+      searchExams()
+    } else {
+      fetchExams()
+    }
   }
-}
-
-function onPerPageChange(newPerPage: number) {
-  pagination.page = 1
-  pagination.perPage = newPerPage
-  if (filters.value.search.trim()) {
-    searchExams()
-  } else {
-    fetchExams()
-  }
-}
+)
 </script>
 
 <template>
@@ -278,7 +275,7 @@ function onPerPageChange(newPerPage: number) {
           <div>
             <b>{{ pagination.total }} results.</b>
             Results per page
-            <VaSelect v-model="pagination.perPage" class="!w-20" :options="[5, 10, 20, 50]" @update:modelValue="onPerPageChange" />
+            <VaSelect v-model="pagination.perPage" class="!w-20" :options="[5, 10, 20, 50]" />
           </div>
           <div v-if="totalPages > 1" class="flex">
             <VaButton
@@ -303,7 +300,6 @@ function onPerPageChange(newPerPage: number) {
               :visible-pages="5"
               :boundary-links="false"
               :direction-links="false"
-              @update:modelValue="onPageChange"
             />
           </div>
         </div>
