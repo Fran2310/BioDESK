@@ -155,7 +155,7 @@ const priorities = [
 
             <VaSelect
               v-model="form.medicHistoryId"
-              label="Buscar paciente por CI"
+              label="Buscar paciente"
               :options="patients"
               text-by="display"
               value-by="medicHistory.id"
@@ -181,29 +181,26 @@ const priorities = [
               text-by="name"
               value-by="id"
             >
-            <template #prependInner>
+              <template #prependInner>
                 <VaIcon name="science" />
-            </template>
+              </template>
             </VaSelect>
-
           </div>
 
           <!-- Notes -->
           <VaTextarea
-              label="Notas"
-              v-model="form.resultProperties.notes"
-              auto-grow
-              :rows="3"
-              counter
-              max-length="500"
-            />
-          </div>
+            label="Notas"
+            v-model="form.resultProperties.notes"
+            auto-grow
+            :rows="3"
+            counter
+            max-length="500"
+          />
 
-          <!-- Result Properties Section -->
+          <!-- Esto no va acá, Miguel 
           <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-medium mb-4">Result Properties</h3>
 
-            <!-- Glucose & Hemoglobin in Row -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <VaInput label="Glucose" v-model="form.resultProperties.glucose" placeholder="e.g. 90 mg/dL">
                 <template #prependInner>
@@ -218,27 +215,29 @@ const priorities = [
               </VaInput>
             </div>
 
-            <!-- Observation -->
-             <div>
-            <VaTextarea
-              label="Observation"
-              v-model="form.observation"
-              auto-grow
-              :rows="3"
-              counter
-              max-length="500"
-            />
+            <div>
+              <VaTextarea
+                label="Observation"
+                v-model="form.observation"
+                auto-grow
+                :rows="3"
+                counter
+                max-length="500"
+              />
+            </div>
           </div>
-            
+          -->
+
           <!-- Submit Button -->
           <div class="flex justify-end mt-6">
             <VaButton color="primary" :loading="isLoading" @click="submitForm" class="ml-2">
-              Submit Request
+              Crear Petición
             </VaButton>
           </div>
 
           <!-- Error Message -->
           <div v-if="error" class="text-danger text-center">{{ error }}</div>
+          
         </div>
       </VaCardContent>
     </VaCard>
