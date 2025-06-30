@@ -40,6 +40,10 @@ export default {
           name: 'RoleManagement',
           displayName: 'Roles',
         },
+        {
+          name: 'ProfileUserView',
+          displayName: 'Perfil de usuario',
+        },
       ],
     },
     {

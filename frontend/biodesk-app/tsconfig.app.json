@@ -6,6 +6,7 @@
     "jsx": "preserve",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "target": "esnext",
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
