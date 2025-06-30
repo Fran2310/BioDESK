@@ -19,6 +19,13 @@ export default {
       },
     },
     {
+      name: 'Dashboard',
+      displayName: 'Dashboard',
+      meta: {
+        icon: 'dashboard',
+      },
+    },
+    {
       name: 'Patients',
       displayName: 'Pacientes',
       meta: {

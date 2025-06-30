@@ -29,7 +29,7 @@ const dataForGraphs = computed(() => props.rawData);
       <div
         v-else
         key="content"
-        class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 justify-center px-4 sm:px-6"
+        class="grid grid-cols-2 md:grid-cols-1 gap-6 sm:gap-8 justify-center px-4 sm:px-6"
       >
         <div class="min-w-0 max-w-full md:max-w-[600px] w-full">
           <GraphRequestsTrend

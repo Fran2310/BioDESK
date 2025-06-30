@@ -42,8 +42,6 @@ import GraphWrapper from './graphs/GraphWrapper.vue';
 </script>
 
 <template>
-  <h1 class="page-title font-bold text-center mb-4">Dashboard</h1>
-
   <section class="flex flex-col gap-4 items-center">
     <GraphWrapper :raw-data="rawData" :loading="loading" />
 
