@@ -9,6 +9,9 @@ import type { LabData } from '@/services/interfaces/lab'
 import { roleApi } from '@/services/api'
 import type { GetExtendQuerys } from '@/services/interfaces/global';
 
+import { useToast } from 'vuestic-ui';
+const { init: notify } = useToast();
+
 import type { AssignUserToLabData } from '@/services/interfaces/user'
 
 const props = defineProps({
@@ -30,6 +33,7 @@ const defaultNewUser: AssignUserToLabData = {
 const newUser = ref<CreateUserWithRoleIdData>({ ...defaultNewUser } as CreateUserWithRoleIdData)
 const roles = ref<{ id: number, role: string, description: string; permissions:object }[]>([])
 const rolesLoading = ref(true)
+const isSavingUser = ref(false) // Añade esto con tus otras refs
 
 const isFormHasUnsavedChanges = computed(() => {
   return Object.keys(newUser.value).some((key) => {
@@ -59,13 +63,28 @@ const form = useForm('add-user-form')
 
 const emit = defineEmits(['close', 'save'])
 
-const onSave = () => {
-  if (form.validate()) {
-    emit('save', newUser.value)
 
-    userApi.assignUserToLab(newUser.value)
+const onSave = async () => {
+  if (form.validate()) {
+    isSavingUser.value = true
+    try {
+      await userApi.assignUserToLab(newUser.value)
+      emit('save', newUser.value)
+      notify({
+        message: 'Usuario asignado con éxito', // TODO Refactorizar eso
+        color: 'success',
+      })
+    } catch (error) {
+      notify({
+        message: error.message, // TODO Refactorizar eso
+        color: 'danger',
+      })
+    } finally {
+      isSavingUser.value = false // Desactiva el estado de carga siempre
+    }
   }
 }
+
 
 async function fetchRoles() {
   const queries: GetExtendQuerys = {
@@ -112,9 +131,13 @@ onMounted(() => {
         />
       </div>
       <div class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center">
-        <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancel</VaButton>
-        <VaButton :disabled="!isValid" @click="onSave">{{ saveButtonLabel }}</VaButton>
-      </div>
+        <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancelar</VaButton>
+        <VaButton 
+          :disabled="!isValid || isSavingUser" 
+          :loading="isSavingUser"
+          @click="onSave"
+          >{{ saveButtonLabel }}
+        </VaButton>      </div>
     </div>
   </VaForm>
 </template>

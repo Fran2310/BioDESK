@@ -25,8 +25,8 @@
   const { init: notify } = useToast();
 
   const onUserSaved = async (user: CreateUserWithRoleIdData) => {
-    if (userToEdit.value) {
-      console.log('userToEdit.value: ', userToEdit.value);
+    if (user) {
+      console.log('user: ', user);
     } else {
       console.log('Añadir usuario');
     }
@@ -64,7 +64,7 @@
 <template>
   <VaCard>
     <VaCardContent>
-      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
+      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between items-end">
         <div class="flex flex-col md:flex-row gap-2 justify-start">
           <!--<VaInput v-model="filters.search" placeholder="Buscar">
             <template #prependInner>
@@ -72,10 +72,10 @@
             </template>
           </VaInput>-->
         </div>
-        <VaButton @click="showAddExistingModal"
-          >Añadir Usuario Existente</VaButton
-        >
-        <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
+        <div class="flex gap-2">
+          <VaButton @click="showAddExistingModal">Añadir Usuario Existente</VaButton>
+          <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
+        </div>
       </div>
       <Table/>
     </VaCardContent>

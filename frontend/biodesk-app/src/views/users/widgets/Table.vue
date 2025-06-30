@@ -2,7 +2,7 @@
   <VaDataTable
     :columns="columns"
     :items="mappedUsers"
-    :per-page="5"
+    :per-page="10"
     v-model:page="page"
     :loading="usersLoading"
   >
@@ -37,20 +37,20 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-end">
+      <div class="flex gap-2 justify-center items-center">
         <VaButton
           preset="primary"
           size="small"
-          icon="mso-edit"
-          aria-label="Edit user"
+          icon="edit"
+          aria-label="Edit patient"
           @click="editUser(rowData)"
         />
         <VaButton
           preset="primary"
           size="small"
-          icon="mso-delete"
+          icon="va-delete"
           color="danger"
-          aria-label="Delete user"
+          aria-label="Delete patient"
           @click="deleteUser(rowData)"
         />
       </div>
