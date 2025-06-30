@@ -85,9 +85,10 @@ const router = createRouter({
         },
 
         {
-          path: 'exams',
+          path: 'exams/:medicHistoryId?',
           name: 'Exams',
           component: Exams,
+          props: true,
         },
 
         {
