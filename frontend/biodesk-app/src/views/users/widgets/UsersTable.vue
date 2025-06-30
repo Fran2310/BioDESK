@@ -97,7 +97,7 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-end">
+      <div class="flex gap-2 justify-center">
         <VaButton
           preset="primary"
           size="small"

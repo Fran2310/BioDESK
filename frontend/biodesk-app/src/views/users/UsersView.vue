@@ -1,20 +1,16 @@
 <script setup lang="ts">
-  import { ref, watchEffect } from 'vue';
-  import UsersTable from './widgets/UsersTable.vue';
-  import EditUserForm from './widgets/EditUserForm.vue';
+  import { ref } from 'vue';
+  import AddNewUser from './widgets/AddNewUser.vue'
   import AddExisting from './widgets/AddExisting.vue';
   import { useModal, useToast } from 'vuestic-ui';
   import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
+
+  import Table from './widgets/Table.vue'
 
   const doShowEditUserModal = ref(false);
   const doShowAddExistingModal = ref(false);
 
   const userToEdit = ref<CreateUserWithRoleIdData | null>(null);
-
-  const showEditUserModal = (user: CreateUserWithRoleIdData) => {
-    userToEdit.value = user;
-    doShowEditUserModal.value = true;
-  };
 
   const showAddNewUserModal = () => {
     userToEdit.value = null;
@@ -23,14 +19,14 @@
 
   const showAddExistingModal = (user: CreateUserWithRoleIdData) => {
     userToEdit.value = null;
-    doShowEditUserModal.value = true;
+    doShowAddExistingModal.value = true;
   };
 
   const { init: notify } = useToast();
 
   const onUserSaved = async (user: CreateUserWithRoleIdData) => {
-    if (userToEdit.value) {
-      console.log('userToEdit.value: ', userToEdit.value);
+    if (user) {
+      console.log('user: ', user);
     } else {
       console.log('Añadir usuario');
     }
@@ -66,11 +62,9 @@
 </script>
 
 <template>
-  <h1 class="font-bold text-5xl">Usuarios</h1>
-
   <VaCard>
     <VaCardContent>
-      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
+      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between items-end">
         <div class="flex flex-col md:flex-row gap-2 justify-start">
           <!--<VaInput v-model="filters.search" placeholder="Buscar">
             <template #prependInner>
@@ -78,22 +72,12 @@
             </template>
           </VaInput>-->
         </div>
-        <VaButton @click="showAddExistingModal"
-          >Añadir Usuario Existente</VaButton
-        >
-        <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
+        <div class="flex gap-2">
+          <VaButton @click="showAddExistingModal">Añadir Usuario Existente</VaButton>
+          <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
+        </div>
       </div>
-      <!--
-      <UsersTable
-        v-model:sort-by="sorting.sortBy"
-        v-model:sorting-order="sorting.sortingOrder"
-        :users="users"
-        :loading="isLoading"
-        :pagination="pagination"
-        @editUser="showEditUserModal"
-        @deleteUser="onUserDelete"
-      />
-      -->
+      <Table/>
     </VaCardContent>
   </VaCard>
 
@@ -109,7 +93,7 @@
     <h1 class="va-h5">
       {{ userToEdit ? 'Editar usuario' : 'Añadir usuario' }}
     </h1>
-    <EditUserForm
+    <AddNewUser
       ref="editFormRef"
       :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
@@ -133,7 +117,7 @@
     :before-cancel="beforeEditFormModalClose"
   >
     <h1 class="va-h5">
-      {{ userToEdit ? 'Editar usuario' : 'Añadir usuario' }}
+      {{ userToEdit ? 'Editar usuario Existente' : 'Añadir usuario Existente' }}
     </h1>
     <AddExisting
       ref="editFormRef"
