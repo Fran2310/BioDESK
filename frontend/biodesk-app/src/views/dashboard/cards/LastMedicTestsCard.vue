@@ -1,67 +1,71 @@
 <template>
   <div class="p-4">
     <h2 class="text-xl font-semibold mb-4 text-center">Solicitudes de Exámenes</h2>
+    
+    <transition name="fade" mode="out-in">
+      <div v-if="loading" key="loading" class="grid grid-cols-3 md:grid-cols-1 gap-4 sm:gap-6">
+        <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 75px;"></div>
+        <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 75px;"></div>
+        <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 75px;"></div>
+      </div>
 
-    <div v-if="loading" class="text-center py-8">
-      <span>Cargando solicitudes...</span>
-    </div>
-
-    <div v-else>
-      <div class="space-y-2">
-        <div
-          v-for="request in requests"
-          :key="request.id"
-          class="flex items-start gap-3 bg-white rounded shadow-sm p-3 hover:bg-gray-50 transition"
-        >
-          <!-- Icono de estado -->
-          <VaIcon
-            :name="iconForState(request.state)"
-            size="20px"
-            :color="colorForState(request.state)"
-            class="mt-1 shrink-0"
-          />
-
-          <!-- Contenido -->
-          <div class="flex-1">
-            <p class="text-sm text-gray-700">
-              <span :class="colorClassForState(request.state)" class="font-semibold capitalize">
-                {{ stateLabel(request.state) }}
-              </span>
-              solicitud de examen
-              <span class="font-medium">#{{ request.id }}</span>
-              <span
-                :class="badgeClassForPriority(request.priority)"
-                class="ml-2 text-xs px-2 py-0.5 rounded"
-              >
-                {{ request.priority }}
-              </span>
-            </p>
-            <p class="text-xs text-gray-500">
-              Solicitado: {{ relativeTime(request.requestedAt) }}
-              <span v-if="request.completedAt"> | Completado: {{ relativeTime(request.completedAt) }}</span>
-            </p>
-          </div>
-
-          <va-popover 
-          placement="left-start" 
-          trigger="hover"
-          class="popover-fix"
+      <div v-else>
+        <div class="space-y-2">
+          <div
+            v-for="request in requests"
+            :key="request.id"
+            class="flex items-start gap-3 bg-white rounded shadow-sm p-3 hover:bg-gray-50 transition"
           >
-            <template #body>
-              <div class="p-2 ">
-                <div><strong>Solicitado:</strong> {{ formatDate(request.requestedAt) }}</div>
-                <div v-if="request.completedAt"><strong>Completado:</strong> {{ formatDate(request.completedAt) }}</div>
-              </div>
-            </template>
-            <va-icon 
-            name="info" 
-            color="secondary" 
-            class="hover:text-primary cursor-pointer"
-            size="small" />
-          </va-popover>
+            <!-- Icono de estado -->
+            <VaIcon
+              :name="iconForState(request.state)"
+              size="20px"
+              :color="colorForState(request.state)"
+              class="mt-1 shrink-0"
+            />
+
+            <!-- Contenido -->
+            <div class="flex-1">
+              <p class="text-sm text-gray-700">
+                <span :class="colorClassForState(request.state)" class="font-semibold capitalize">
+                  {{ stateLabel(request.state) }}
+                </span>
+                solicitud de examen
+                <span class="font-medium">#{{ request.id }}</span>
+                <span
+                  :class="badgeClassForPriority(request.priority)"
+                  class="ml-2 text-xs px-2 py-0.5 rounded"
+                >
+                  {{ request.priority }}
+                </span>
+              </p>
+              <p class="text-xs text-gray-500">
+                Solicitado: {{ relativeTime(request.requestedAt) }}
+                <span v-if="request.completedAt"> | Completado: {{ relativeTime(request.completedAt) }}</span>
+              </p>
+            </div>
+
+            <va-popover 
+            placement="left-start" 
+            trigger="hover"
+            class="popover-fix"
+            >
+              <template #body>
+                <div class="p-2 ">
+                  <div><strong>Solicitado:</strong> {{ formatDate(request.requestedAt) }}</div>
+                  <div v-if="request.completedAt"><strong>Completado:</strong> {{ formatDate(request.completedAt) }}</div>
+                </div>
+              </template>
+              <va-icon 
+              name="info" 
+              color="secondary" 
+              class="hover:text-primary cursor-pointer"
+              size="small" />
+            </va-popover>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -184,5 +188,14 @@ onMounted(() => {
 
 
 <style scoped>
-/* Puedes agregar líneas verticales de timeline si deseas visualmente */
+/* Transición de fade para cambiar suavemente entre los estados de carga, vacío y contenido */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

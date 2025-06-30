@@ -2,8 +2,11 @@
   <div class="p-4">
     <h2 class="text-xl font-semibold mb-4 text-center">Logs del Sistema</h2>
 
-    <div v-if="loading" class="text-center py-8">
-      <span>Cargando registros...</span>
+    <transition name="fade" mode="out-in">
+    <div v-if="loading" key="loading" class="grid grid-cols-3 md:grid-cols-1 gap-4 sm:gap-6">
+      <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 75px;"></div>
+      <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 75px;"></div>
+      <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 75px;"></div>
     </div>
 
     <div v-else>
@@ -46,6 +49,7 @@
         </div>
       </div>
     </div>
+  </transition>
   </div>
 </template>
 
@@ -145,5 +149,14 @@ onMounted(() => {
 
 
 <style scoped>
-/* Puedes agregar líneas verticales de timeline si deseas visualmente */
+/* Transición de fade para cambiar suavemente entre los estados de carga, vacío y contenido */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
