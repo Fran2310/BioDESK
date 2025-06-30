@@ -121,6 +121,19 @@ const formatDate = (dateStr: string) => {
 }
 
 
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+function onViewExams(patient) {
+  if (patient && patient.id) {
+    router.push({ name: 'Exams', params: { patientId: patient.id } })
+  }
+}
+function onAddExam(patient) {
+  // Implement navigation to NewExam or open modal as needed
+  // router.push({ name: 'NewExam', query: { patientId: patient.id } })
+  console.log('Add Exam for patient:', patient)
+}
 </script>
 
 <template>
@@ -268,9 +281,9 @@ const formatDate = (dateStr: string) => {
       </div>
 
       <template #footer>
-      
         <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
-        
+        <VaButton color="primary" class="ml-2" @click="onAddExam(selectedPatient)">Add Exam</VaButton>
+        <VaButton color="primary" class="ml-2" @click="onViewExams(selectedPatient)">View Exams</VaButton>
       </template>
         
           
