@@ -211,10 +211,6 @@ const onUserDelete = async (user: any) => {
     try {
       await userApi.deleteSoftUser(user.systemUser.uuid)
     } catch (error) {
-      notify({
-        message: error.message, // TODO Refactorizar eso
-        color: 'danger',
-      })
     }
     notify({
         message: 'Usuario removido exitosamente', // TODO Refactorizar eso
@@ -222,6 +218,14 @@ const onUserDelete = async (user: any) => {
     })
   }
 }
+
+// Al final del <script setup>
+function refresh() {
+  fetchUsers(); // o tu función que recarga la tabla
+}
+
+defineExpose({ refresh });
+
 </script>
 
 <style scoped>

@@ -24,12 +24,15 @@
 
   const { init: notify } = useToast();
 
+  const usersTableRef = ref();
+
   const onUserSaved = async (user: CreateUserWithRoleIdData) => {
     if (user) {
       console.log('user: ', user);
     } else {
       console.log('Añadir usuario');
     }
+    usersTableRef.value?.refresh();
   };
 
   const onUserDelete = async (user: CreateUserWithRoleIdData) => {
@@ -38,6 +41,7 @@
       message: `${user.name} ${user.lastName} ha sido eliminado`,
       color: 'success',
     });
+    usersTableRef.value?.refresh();
   };
 
   const editFormRef = ref();
@@ -77,7 +81,7 @@
           <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
         </div>
       </div>
-      <Table/>
+      <Table ref="usersTableRef" />
     </VaCardContent>
   </VaCard>
 
@@ -99,10 +103,7 @@
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
       @close="cancel"
       @save="
-        (user) => {
-          onUserSaved(user);
-          ok();
-        }
+        usersTableRef.value?.refresh();
       "
     />
   </VaModal>
@@ -125,10 +126,7 @@
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
       @close="cancel"
       @save="
-        (user) => {
-          onUserSaved(user);
-          ok();
-        }
+        usersTableRef.value?.refresh(); // TODO no funciona lo de recargar tras un cambio
       "
     />
   </VaModal>
