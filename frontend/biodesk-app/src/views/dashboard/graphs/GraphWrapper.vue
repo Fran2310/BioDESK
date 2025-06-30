@@ -8,10 +8,7 @@ const props = defineProps<{
   loading: boolean,
 }>();
 
-// Usamos una computada para darle más semántica y reactividad.
-// Esto es opcional, podrías usar props.rawData directamente en el template.
 const dataForGraphs = computed(() => props.rawData);
-
 </script>
 
 <template>
@@ -20,7 +17,11 @@ const dataForGraphs = computed(() => props.rawData);
     :aria-busy="props.loading"
   >
     <transition name="fade" mode="out-in">
-      <div v-if="props.loading" key="loading" class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div
+        v-if="props.loading"
+        key="loading"
+        class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 justify-center px-4 sm:px-6"
+      >
         <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 350px;"></div>
         <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 350px;"></div>
       </div>
@@ -28,12 +29,21 @@ const dataForGraphs = computed(() => props.rawData);
       <div
         v-else
         key="content"
-        class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6"
+        class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 justify-center px-4 sm:px-6"
       >
-        <div class="min-w-0"> <GraphRequestsTrend :data="dataForGraphs" :loading="props.loading" class="w-full h-full" />
+        <div class="min-w-0 max-w-full md:max-w-[600px] w-full">
+          <GraphRequestsTrend
+            :data="dataForGraphs"
+            :loading="props.loading"
+            class="w-full h-full"
+          />
         </div>
-        <div class="min-w-0">
-          <GraphRequestsPie :data="dataForGraphs" :loading="props.loading" class="w-full h-full" />
+        <div class="min-w-0 max-w-full md:max-w-[600px] w-full">
+          <GraphRequestsPie
+            :data="dataForGraphs"
+            :loading="props.loading"
+            class="w-full h-full"
+          />
         </div>
       </div>
     </transition>
@@ -41,7 +51,6 @@ const dataForGraphs = computed(() => props.rawData);
 </template>
 
 <style scoped>
-/* Transición de fade para cambiar suavemente entre los estados de carga, vacío y contenido */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;

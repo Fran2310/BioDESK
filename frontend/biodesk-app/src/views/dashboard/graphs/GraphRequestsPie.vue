@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded p-4 min-h-[400px] flex flex-col">
+  <div class="bg-white rounded p-4 flex flex-col">
     <h3 class="text-lg font-semibold mb-2">Distribución de estados de solicitudes</h3>
 
     <div
@@ -14,7 +14,7 @@
       ref="chartContainer"
       :option="chartOptions"
       autoresize
-      class="flex-1"
+      style="width: 100%; height: 100%;"
     />
   </div>
 </template>
