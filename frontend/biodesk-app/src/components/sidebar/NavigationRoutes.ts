@@ -26,6 +26,23 @@ export default {
       },
     },
     {
+      name: 'Sistema',
+      displayName: 'Sistema',
+      meta: {
+        icon: 'group',
+      },
+      children: [
+        {
+          name: 'UsersView',
+          displayName: 'Usuarios',
+        },
+        {
+          name: 'RoleManagement',
+          displayName: 'Roles',
+        },
+      ],
+    },
+    {
       name: 'Patients',
       displayName: 'Pacientes',
       meta: {
@@ -33,7 +50,7 @@ export default {
       },
     },
     {
-      name: 'Exams',
+      name: '',
       displayName: 'Exámenes',
       meta: {
         icon: 'troubleshoot',
@@ -42,6 +59,10 @@ export default {
         {
           name: 'Exams',
           displayName: 'Exámenes',
+        },
+        {
+          name: 'LaboratoryCatalog',
+          displayName: 'Catálogo',
         },
         {
           name: 'NewRequest',
