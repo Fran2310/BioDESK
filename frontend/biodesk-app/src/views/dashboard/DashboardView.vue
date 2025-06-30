@@ -1,40 +1,44 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import LastMedicTestsCard from './cards/LastMedicTestsCard.vue';
-import TimelineCard from './cards/TimelineCard.vue';
+  import { ref, onMounted } from 'vue';
+  import LastMedicTestsCard from './cards/LastMedicTestsCard.vue';
+  import TimelineCard from './cards/TimelineCard.vue';
 
-import { medicTestRequestApi } from '@/services/api';
-import { useLabStore } from '@/stores/labStore';
-import type { LabData } from '@/services/interfaces/lab';
-import type { GetExtendQuerys } from '@/services/interfaces/global';
-import GraphWrapper from './cards/GraphWrapper.vue';
+  import { medicTestRequestApi } from '@/services/api';
+  import { useLabStore } from '@/stores/labStore';
+  import type { LabData } from '@/services/interfaces/lab';
+  import type { GetExtendQuerys } from '@/services/interfaces/global';
+  import GraphWrapper from './cards/GraphWrapper.vue';
 
-const loading = ref(true);
-const rawData = ref<any[]>([]);
+  const loading = ref(true);
+  const rawData = ref<any[]>([]);
 
-async function fetchRequests() {
-  loading.value = true;
-  try {
-    const labData: LabData = {
-      id: 29,
-      name: "Laboratorium",
-      status: "active",
-      rif: "j853946049",
-      logoPath: null,
-    };
-    useLabStore().setCurrentLab(labData);
+  async function fetchRequests() {
+    loading.value = true;
+    try {
+      const labData: LabData = {
+        id: 29,
+        name: 'Laboratorium',
+        status: 'active',
+        rif: 'j853946049',
+        logoPath: null,
+      };
+      useLabStore().setCurrentLab(labData);
 
-    const queries: GetExtendQuerys = { offset: 0, limit: 500, includeData: true };
-    const res = await medicTestRequestApi.getMedicTestRequests(queries);
-    rawData.value = res.data.data;
-  } catch (error) {
-    console.error('Error al cargar solicitudes:', error);
-  } finally {
-    loading.value = false;
+      const queries: GetExtendQuerys = {
+        offset: 0,
+        limit: 500,
+        includeData: true,
+      };
+      const res = await medicTestRequestApi.getMedicTestRequests(queries);
+      rawData.value = res.data.data;
+    } catch (error) {
+      console.error('Error al cargar solicitudes:', error);
+    } finally {
+      loading.value = false;
+    }
   }
-}
 
-onMounted(fetchRequests);
+  onMounted(fetchRequests);
 </script>
 
 <template>
