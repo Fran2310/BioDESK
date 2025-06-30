@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import GraphRequestsTrend from './cards/GraphRequestsTrend.vue';
 import LastMedicTestsCard from './cards/LastMedicTestsCard.vue';
 import TimelineCard from './cards/TimelineCard.vue';
 
@@ -10,7 +11,7 @@ import TimelineCard from './cards/TimelineCard.vue';
   <section class="flex flex-col gap-4">
     <!-- Sección 1: Superior, centrada, ancho completo -->
     <div class="w-full flex justify-center">
-      <p class="w-full max-w-4xl" >seccion 1</p>
+      <GraphRequestsTrend class="w-full max-w-4xl"/>
     </div>
 
     <!-- Sección 2 y 3: fila debajo de sección 1 -->
