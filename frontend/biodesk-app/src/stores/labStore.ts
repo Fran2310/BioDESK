@@ -19,7 +19,9 @@ import { defineStore } from 'pinia';
 export const useLabStore = defineStore('lab', {
   state: (): LabsUserData => ({
     labs: [],
-    currentLab: null,
+    currentLab: sessionStorage.getItem('currentLab')
+      ? JSON.parse(sessionStorage.getItem('currentLab')!)
+      : null,
   }),
 
   actions: {
@@ -34,8 +36,9 @@ export const useLabStore = defineStore('lab', {
      * Selecciona el laboratorio activo.
      * @param lab Laboratorio a establecer como actual.
      */
-    setCurrentLab(lab: LabData) {
-      this.currentLab = lab;
+    setCurrentLab(labData: LabData) {
+      this.currentLab = labData;
+      sessionStorage.setItem('currentLab', JSON.stringify(labData));
     },
     /**
      * Agrega un laboratorio a la lista.
@@ -50,6 +53,7 @@ export const useLabStore = defineStore('lab', {
     clearLabs() {
       this.labs = [];
       this.currentLab = null;
+      sessionStorage.removeItem('currentLab');
     },
   },
 });
