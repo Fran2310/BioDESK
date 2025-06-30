@@ -8,6 +8,7 @@ import PatientsPage from '@/views/patients/PatientsPage.vue';
 import AppLayoutVuestic from '@/layouts/AppLayoutVuestic.vue';
 import Exams from '@/views/exams/Exams.vue';
 import NewRequest from '@/views/new-request/NewRequest.vue';
+import UsersView from '@/views/users/UsersView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL_APP_DEV),
@@ -77,6 +78,11 @@ const router = createRouter({
           // Carga dinámica (recomendado para mejor rendimiento)
           component: () => import('@/views/dashboard/DashboardView.vue'),
         },
+        {
+          path: 'users',
+          name: 'UsersView',
+          component: UsersView
+        }
         // Aquí se agregan mas hijos de app layout
         {
           path: 'patients',
