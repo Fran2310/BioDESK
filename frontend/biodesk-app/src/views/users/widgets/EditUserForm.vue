@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { type PropType, computed, ref, watch } from 'vue'
+import { type PropType, computed, ref, onMounted } from 'vue'
 import { useForm } from 'vuestic-ui'
-import type { User, UserRole } from '../types'
-import UserAvatar from './UserAvatar.vue'
 import { validator } from '../../../services/utils'
+import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
+import { userApi } from '@/services/api'
+import { useLabStore } from '@/stores/labStore';
+import type { LabData } from '@/services/interfaces/lab'
+import { roleApi } from '@/services/api'
+import type { GetExtendQuerys } from '@/services/interfaces/global';
 
 const props = defineProps({
   user: {
-    type: Object as PropType<User | null>,
+    type: Object as PropType<CreateUserWithRoleIdData | null>,
     default: null,
   },
   saveButtonLabel: {
@@ -16,24 +20,23 @@ const props = defineProps({
   },
 })
 
-const defaultNewUser: Omit<User, 'id'> = {
-  avatar: '',
-  fullname: '',
-  role: 'user',
-  username: '',
-  email: ''
+const defaultNewUser: CreateUserWithRoleIdData = {
+  name: '',
+  lastName: '',
+  roleId: undefined,
+  email: '',
+  ci: '',
+  password: ''
 }
 
-const newUser = ref<User>({ ...defaultNewUser } as User)
+const newUser = ref<CreateUserWithRoleIdData>({ ...defaultNewUser } as CreateUserWithRoleIdData)
+const roles = ref<{ id: number, role: string, description: string; permissions:object }[]>([])
+const rolesLoading = ref(true)
 
 const isFormHasUnsavedChanges = computed(() => {
   return Object.keys(newUser.value).some((key) => {
-    if (key === 'avatar') {
-      return false
-    }
-
     return (
-      newUser.value[key as keyof Omit<User, 'id'>] !== (props.user ?? defaultNewUser)?.[key as keyof Omit<User, 'id'>]
+      newUser.value[key as keyof Omit<CreateUserWithRoleIdData, 'id'>] !== (props.user ?? defaultNewUser)?.[key as keyof Omit<CreateUserWithRoleIdData, 'id'>]
     )
   })
 })
@@ -42,15 +45,15 @@ defineExpose({
   isFormHasUnsavedChanges,
 })
 
-const avatar = ref<File>()
-
-const makeAvatarBlobUrl = (avatar: File) => {
-  return URL.createObjectURL(avatar)
-}
-
-watch(avatar, (newAvatar) => {
-  newUser.value.avatar = newAvatar ? makeAvatarBlobUrl(newAvatar) : ''
-})
+const labData: LabData = {
+    id: 29,
+    name: "Laboratorium",
+    status: "active",
+    rif: "j853946049",
+    logoPath: '',
+};
+const lab = useLabStore();
+lab.setCurrentLab(labData);
 
 const form = useForm('add-user-form')
 
@@ -59,51 +62,69 @@ const emit = defineEmits(['close', 'save'])
 const onSave = () => {
   if (form.validate()) {
     emit('save', newUser.value)
+
+    userApi.createUserWithRoleId(newUser.value)
   }
 }
 
-const roleSelectOptions: { text: Capitalize<Lowercase<UserRole>>; value: UserRole }[] = [
-  { text: 'Admin', value: 'admin' },
-  { text: 'User', value: 'user' },
-  { text: 'Owner', value: 'owner' },
-]
+async function fetchRoles() {
+  const queries: GetExtendQuerys = {
+  offset: 0,
+  limit: 10,
+  includeData: true
+  };
+  const response = await roleApi.getRoles(queries)
+  roles.value = Array.isArray(response.data.data) ? response.data.data : []
+  rolesLoading.value = false
+  
+  if (!newUser.value.roleId && roles.value.length > 0) {
+    newUser.value.roleId = roles.value[0].id
+  }
+  console.log(roles.value)
+}
+onMounted(() => {
+  fetchRoles();
+});
 </script>
 
 <template>
   <VaForm v-slot="{ isValid }" ref="add-user-form" class="flex-col justify-start items-start gap-4 inline-flex w-full">
-    <VaFileUpload
-      v-model="avatar"
-      type="single"
-      hide-file-list
-      class="self-stretch justify-start items-center gap-4 inline-flex"
-    >
-      <UserAvatar :user="newUser" size="large" />
-      <VaButton preset="primary" size="small">Add image</VaButton>
-      <VaButton
-        v-if="avatar"
-        preset="primary"
-        color="danger"
-        size="small"
-        icon="delete"
-        class="z-10"
-        @click.stop="avatar = undefined"
-      />
-    </VaFileUpload>
     <div class="self-stretch flex-col justify-start items-start gap-4 flex">
       <div class="flex gap-4 flex-col sm:flex-row w-full">
         <VaInput
-          v-model="newUser.fullname"
-          label="Full name"
+          v-model="newUser.name"
+          label="Nombre"
           class="w-full sm:w-1/2"
           :rules="[validator.required]"
-          name="fullName"
+          name="name"
         />
         <VaInput
-          v-model="newUser.username"
-          label="Username"
+          v-model="newUser.lastName"
+          label="Apellido"
           class="w-full sm:w-1/2"
           :rules="[validator.required]"
-          name="username"
+          name="lastName"
+        />
+      </div>
+      <div class="flex gap-4 flex-col sm:flex-row w-full">
+        <VaInput
+          v-model="newUser.ci"
+          label="Cédula"
+          class="w-full sm:w-1/2"
+          :rules="[validator.required]"
+          name="ci"
+        />
+        <VaSelect
+          v-model="newUser.roleId"
+          label="Rol"
+          class="w-full sm:w-1/2"
+          name="roleId"
+          :options="roles"
+          :rules="[validator.required]"
+          :loading="rolesLoading"
+          :disabled="rolesLoading"
+          text-by="role"
+          value-by="id"
         />
       </div>
       <div class="flex gap-4 flex-col sm:flex-row w-full">
@@ -114,15 +135,13 @@ const roleSelectOptions: { text: Capitalize<Lowercase<UserRole>>; value: UserRol
           :rules="[validator.required, validator.email]"
           name="email"
         />
-        <VaSelect
-            v-model="newUser.role"
-            label="Role"
-            class="w-full"
-            :options="roleSelectOptions"
-            :rules="[validator.required]"
-            name="role"
-            value-by="value"
-          />
+        <VaInput
+          v-model="newUser.password"
+          label="Contraseña"
+          class="w-full sm:w-1/2"
+          :rules="[validator.required, validator.hasUppercase, validator.hasNumber, validator.minLength]"
+          name="password"
+        />  
       </div>
 
       <div class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center">

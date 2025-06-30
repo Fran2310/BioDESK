@@ -17,7 +17,7 @@ const showEditUserModal = (user: User) => {
   doShowEditUserModal.value = true
 }
 
-const showAddUserModal = () => {
+const showAddNewUserModal = () => {
   userToEdit.value = null
   doShowEditUserModal.value = true
 }
@@ -41,7 +41,7 @@ const onUserSaved = async (user: User) => {
   }
 
   if (userToEdit.value) {
-    await usersApi.update(user)
+    await usersApi.update(user as User)
     if (!error.value) {
       notify({
         message: `${user.fullname} has been updated`,
@@ -49,7 +49,7 @@ const onUserSaved = async (user: User) => {
       })
     }
   } else {
-    await usersApi.add(user)
+    await usersApi.add(user )
 
     if (!error.value) {
       notify({
@@ -101,7 +101,8 @@ const beforeEditFormModalClose = async (hide: () => unknown) => {
             </template>
           </VaInput>
         </div>
-        <VaButton @click="showAddUserModal">Add User</VaButton>
+        <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
+        <VaButton @click="">Añadir Usuario Existente</VaButton>
       </div>
 
       <UsersTable

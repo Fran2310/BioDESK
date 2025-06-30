@@ -26,7 +26,7 @@ export interface CreateUserWithRoleData {
 }
 
 export interface CreateUserWithRoleIdData extends CreateUserData {
-  roleId: number;
+  roleId: number | undefined;
 }
 
 export interface AssignUserToLabData extends GetUserQuerys {
