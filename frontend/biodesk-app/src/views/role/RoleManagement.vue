@@ -303,18 +303,18 @@ import {
   getPermissions,
   updateRoleApi,
   deleteRoleApi,
-} from '../services/roleService' // Asegúrate de que la ruta sea correcta
+} from '../../services/roleService' // Asegúrate de que la ruta sea correcta
 
 import type {
   RoleFromApi,
   ApiRolePermission,
   CreateRolePayload,
   FlatPermissionsArray
-} from '../services/roleService' 
+} from '../../services/roleService' 
 
 import { VaProgressCircle } from 'vuestic-ui'
 // Importa los types para obtener los fields dinámicamente
-import * as PermissionTypes from '../services/types/permission.type'
+import * as PermissionTypes from '../../services/types/permission.type'
 
 // Helper para convertir un type union a array de strings
 function typeToArray<T>(): string[] {

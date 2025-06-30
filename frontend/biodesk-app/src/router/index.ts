@@ -77,7 +77,7 @@ const router = createRouter({
         {
           path: 'roles',
           name: 'RoleManagement',
-          component: () => import('@/views/RoleManagement.vue'),
+          component: () => import('@/views/role/RoleManagement.vue'),
         },
       ],
     },
