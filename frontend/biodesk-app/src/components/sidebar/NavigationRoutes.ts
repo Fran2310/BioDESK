@@ -32,5 +32,12 @@ export default {
         icon: 'science',
       },
     },
+    {
+      name: 'RoleManagement',
+      displayName: 'Roles',
+      meta: {
+        icon: 'supervisor_account',
+      },
+    },
   ] as INavigationRoute[],
 };

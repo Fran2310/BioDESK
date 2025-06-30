@@ -74,6 +74,11 @@ const router = createRouter({
           name: 'Patients',
           component: PatientsPage,
         },
+        {
+          path: 'roles',
+          name: 'RoleManagement',
+          component: () => import('@/views/RoleManagement.vue'),
+        },
       ],
     },
     // Redirección de la raíz a /auth/login
