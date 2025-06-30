@@ -205,8 +205,10 @@
       pendingRoute.value = { name: 'SelectLab' };
       animatedBlock.value.hide();
     } catch (error: any) {
-      if (labStore.labs.length == 0) {
-        initToast('Aviso', 'No tiene ningun laboratorio asociado', 'warning');
+      if (
+        error.message == 'Este usuario no está asociado a ningún laboratorio.'
+      ) {
+        initToast('Aviso', error.message, 'warning');
         pendingRoute.value = { name: 'SignUpLab' };
         animatedBlock.value.hide();
       } else {

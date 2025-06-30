@@ -17,14 +17,14 @@
     </td>
   </tr>
 </template>
-  
+
 <script setup lang="ts">
-defineProps({
-  date: {
-    type: String,
-    default: '',
-  },
-})
+  defineProps({
+    date: {
+      type: String,
+      default: '',
+    },
+  });
 </script>
 
 <style scoped>
