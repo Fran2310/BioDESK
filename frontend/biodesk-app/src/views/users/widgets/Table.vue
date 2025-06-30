@@ -38,14 +38,7 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-center items-center">
-        <VaButton
-          preset="primary"
-          size="small"
-          icon="edit"
-          aria-label="Edit patient"
-          @click="editUser(rowData)"
-        />
+      <div class="flex gap-2 justify-center">
         <VaButton
           preset="primary"
           size="small"
@@ -203,10 +196,8 @@ function deleteUser(user: any) {
 </script>
 
 <style scoped>
-.va-data-table {
-  ::v-deep(.va-data-table__table-tr) {
-    border-bottom: 1px solid var(--va-background-border);
-  }
+.va-data-table ::v-deep table {
+  table-layout: fixed;
 }
 
 .ellipsis {
