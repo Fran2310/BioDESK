@@ -45,6 +45,7 @@ defineExpose({
   isFormHasUnsavedChanges,
 })
 
+// Inicio Prueba
 const labData: LabData = {
     id: 29,
     name: "Laboratorium",
@@ -54,6 +55,7 @@ const labData: LabData = {
 };
 const lab = useLabStore();
 lab.setCurrentLab(labData);
+// Fin prueba
 
 const form = useForm('add-user-form')
 
@@ -108,27 +110,6 @@ onMounted(() => {
       </div>
       <div class="flex gap-4 flex-col sm:flex-row w-full">
         <VaInput
-          v-model="newUser.ci"
-          label="Cédula"
-          class="w-full sm:w-1/2"
-          :rules="[validator.required]"
-          name="ci"
-        />
-        <VaSelect
-          v-model="newUser.roleId"
-          label="Rol"
-          class="w-full sm:w-1/2"
-          name="roleId"
-          :options="roles"
-          :rules="[validator.required]"
-          :loading="rolesLoading"
-          :disabled="rolesLoading"
-          text-by="role"
-          value-by="id"
-        />
-      </div>
-      <div class="flex gap-4 flex-col sm:flex-row w-full">
-        <VaInput
           v-model="newUser.email"
           label="Email"
           class="w-full sm:w-1/2"
@@ -145,7 +126,7 @@ onMounted(() => {
       </div>
 
       <div class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center">
-        <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancelar</VaButton>
+        <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancel</VaButton>
         <VaButton :disabled="!isValid" @click="onSave">{{ saveButtonLabel }}</VaButton>
       </div>
     </div>

@@ -1,11 +1,11 @@
 import { ref, unref, watch, computed } from 'vue'
 import type { Ref } from 'vue'
 import type { Filters, Pagination, Sorting } from '@/data/views/users'
-import type { User } from '../types'
 import { useUsersStore } from '@/stores/users'
+import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
 
 const makePaginationRef = () => ref<Pagination>({ page: 1, perPage: 10, total: 0 })
-const makeSortingRef = () => ref<Sorting>({ sortBy: 'fullname', sortingOrder: null })
+const makeSortingRef = () => ref<Sorting>({ sortBy: 'ci', sortingOrder: null })
 const makeFiltersRef = () => ref<Partial<Filters>>({ search: '' })
 
 export const useUsers = (options?: {
@@ -82,7 +82,7 @@ export const useUsers = (options?: {
 
     fetch,
 
-    async add(user: User) {
+    async add(user: CreateUserWithRoleIdData) {
       isLoading.value = true
       try {
         return await usersStore.add(user)
@@ -93,7 +93,7 @@ export const useUsers = (options?: {
       }
     },
 
-    async update(user: User) {
+    async update(user: CreateUserWithRoleIdData) {
       isLoading.value = true
       try {
         return await usersStore.update(user)
@@ -104,7 +104,7 @@ export const useUsers = (options?: {
       }
     },
 
-    async remove(user: User) {
+    async remove(user: CreateUserWithRoleIdData) {
       isLoading.value = true
       try {
         return await usersStore.remove(user)
@@ -113,14 +113,6 @@ export const useUsers = (options?: {
       } finally {
         isLoading.value = false
       }
-    },
-
-    async uploadAvatar(avatar: Blob) {
-      const formData = new FormData()
-      formData.append('avatar', avatar)
-      formData.append('id', 'esto es un uuid')
-
-      return usersStore.uploadAvatar(formData)
-    },
+    }
   }
 }

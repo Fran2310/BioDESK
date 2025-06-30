@@ -1,68 +1,61 @@
 <script setup lang="ts">
-import { defineVaDataTableColumns, useModal } from 'vuestic-ui'
-import type { User, UserRole } from '../types'
-import UserAvatar from './UserAvatar.vue'
-import { computed, toRef } from 'vue'
-import type { PropType } from 'vue'
-import type { Pagination, Sorting } from '../../../data/views/users'
-import { useVModel } from '@vueuse/core'
+  import { defineVaDataTableColumns, useModal } from 'vuestic-ui'
+  import { computed, toRef } from 'vue'
+  import type { PropType } from 'vue'
+  import type { Pagination, Sorting } from '../../../data/views/users'
+  import { useVModel } from '@vueuse/core'
+  import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
 
-const columns = defineVaDataTableColumns([
-  { label: 'Full Name', key: 'fullname', sortable: true },
-  { label: 'Email', key: 'email', sortable: true },
-  { label: 'Username', key: 'username', sortable: true },
-  { label: 'Role', key: 'role', sortable: true },
-  { label: ' ', key: 'actions', align: 'right' },
-])
 
-const props = defineProps({
-  users: {
-    type: Array as PropType<User[]>,
-    required: true,
-  },
-  loading: { type: Boolean, default: false },
-  pagination: { type: Object as PropType<Pagination>, required: true },
-  sortBy: { type: String as PropType<Sorting['sortBy']>, required: true },
-  sortingOrder: { type: String as PropType<Sorting['sortingOrder']>, default: null },
-})
+  const columns = defineVaDataTableColumns([
+    { label: 'Nombre', key: 'name', sortable: true },
+    { label: 'Apellido', key: 'lastName', sortable: true },
+    { label: 'Cédula', key: 'ci', sortable: true },
+    { label: 'Rol', key: 'roleId', sortable: true },
+    { label: 'Email', key: 'email', sortable: true },
+    { label: ' ', key: 'actions', align: 'right' },
+  ])
 
-const emit = defineEmits<{
-  (event: 'edit-user', user: User): void
-  (event: 'delete-user', user: User): void
-  (event: 'update:sortBy', sortBy: Sorting['sortBy']): void
-  (event: 'update:sortingOrder', sortingOrder: Sorting['sortingOrder']): void
-}>()
-
-const users = toRef(props, 'users')
-const sortByVModel = useVModel(props, 'sortBy', emit)
-const sortingOrderVModel = useVModel(props, 'sortingOrder', emit)
-
-const roleColors: Record<UserRole, string> = {
-  admin: 'danger',
-  user: 'background-element',
-  owner: 'warning',
-}
-
-const totalPages = computed(() => Math.ceil(props.pagination.total / props.pagination.perPage))
-
-const { confirm } = useModal()
-
-const onUserDelete = async (user: User) => {
-  const agreed = await confirm({
-    title: 'Delete user',
-    message: `Are you sure you want to delete ${user.fullname}?`,
-    okText: 'Delete',
-    cancelText: 'Cancel',
-    size: 'small',
-    maxWidth: '380px',
+  const props = defineProps({
+    users: {
+      type: Array as PropType<CreateUserWithRoleIdData[]>,
+      required: true,
+    },
+    loading: { type: Boolean, default: false },
+    pagination: { type: Object as PropType<Pagination>, required: true },
+    sortBy: { type: String as PropType<Sorting['sortBy']>, required: true },
+    sortingOrder: { type: String as PropType<Sorting['sortingOrder']>, default: null },
   })
 
-  if (agreed) {
-    emit('delete-user', user)
+  const emit = defineEmits<{
+    (event: 'edit-user', user: CreateUserWithRoleIdData): void
+    (event: 'delete-user', user: CreateUserWithRoleIdData): void
+    (event: 'update:sortBy', sortBy: Sorting['sortBy']): void
+    (event: 'update:sortingOrder', sortingOrder: Sorting['sortingOrder']): void
+  }>()
+
+  const users = toRef(props, 'users')
+  const sortByVModel = useVModel(props, 'sortBy', emit)
+  const sortingOrderVModel = useVModel(props, 'sortingOrder', emit)
+
+  const totalPages = computed(() => Math.ceil(props.pagination.total / props.pagination.perPage))
+
+  const { confirm } = useModal()
+
+  const onUserDelete = async (user: CreateUserWithRoleIdData) => {
+    const agreed = await confirm({
+      title: 'Eliminar usuario',
+      message: `Seguro que deseas eliminar a ${user.name} ${user.lastName}?`,
+      okText: 'Eliminar',
+      cancelText: 'Cancelar',
+      size: 'small',
+      maxWidth: '380px',
+    })
+
+    if (agreed) {
+      emit('delete-user', user)
+    }
   }
-}
-
-
 </script>
 
 <template>
@@ -73,16 +66,27 @@ const onUserDelete = async (user: User) => {
     :items="users"
     :loading="$props.loading"
   >
-    <template #cell(fullname)="{ rowData }">
+    <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis">
-        <UserAvatar :user="rowData as User" size="small" />
-        {{ rowData.fullname }}
+        {{ rowData.name }}
       </div>
     </template>
 
-    <template #cell(username)="{ rowData }">
+    <template #cell(lastName)="{ rowData }">
       <div class="max-w-[120px] ellipsis">
-        {{ rowData.username }}
+        {{ rowData.lastName }}
+      </div>
+    </template>
+
+    <template #cell(ci)="{ rowData }">
+      <div class="ellipsis max-w-[230px]">
+        {{ rowData.ci }}
+      </div>
+    </template>
+
+    <template #cell(roleId)="{ rowData }">
+      <div class="ellipsis max-w-[230px]">
+        {{ rowData.roleId }}
       </div>
     </template>
 
@@ -92,10 +96,6 @@ const onUserDelete = async (user: User) => {
       </div>
     </template>
 
-    <template #cell(role)="{ rowData }">
-      <VaBadge :text="rowData.role" :color="roleColors[rowData.role as UserRole]" />
-    </template>
-
     <template #cell(actions)="{ rowData }">
       <div class="flex gap-2 justify-end">
         <VaButton
@@ -103,7 +103,7 @@ const onUserDelete = async (user: User) => {
           size="small"
           icon="mso-edit"
           aria-label="Edit user"
-          @click="$emit('edit-user', rowData as User)"
+          @click="$emit('edit-user', rowData as CreateUserWithRoleIdData)"
         />
         <VaButton
           preset="primary"
@@ -111,7 +111,7 @@ const onUserDelete = async (user: User) => {
           icon="mso-delete"
           color="danger"
           aria-label="Delete user"
-          @click="onUserDelete(rowData as User)"
+          @click="onUserDelete(rowData as CreateUserWithRoleIdData)"
         />
       </div>
     </template>
@@ -119,8 +119,8 @@ const onUserDelete = async (user: User) => {
 
   <div class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2">
     <div>
-      <b>{{ $props.pagination.total }} results.</b>
-      Results per page
+      <b>{{ $props.pagination.total }} resultados.</b>
+      Resultados por página
       <VaSelect v-model="$props.pagination.perPage" class="!w-20" :options="[10, 50, 100]" />
     </div>
 
@@ -128,7 +128,7 @@ const onUserDelete = async (user: User) => {
       <VaButton
         preset="secondary"
         icon="va-arrow-left"
-        aria-label="Previous page"
+        aria-label="Página anterior"
         :disabled="$props.pagination.page === 1"
         @click="$props.pagination.page--"
       />
@@ -136,7 +136,7 @@ const onUserDelete = async (user: User) => {
         class="mr-2"
         preset="secondary"
         icon="va-arrow-right"
-        aria-label="Next page"
+        aria-label="Página siguiente"
         :disabled="$props.pagination.page === totalPages"
         @click="$props.pagination.page++"
       />
