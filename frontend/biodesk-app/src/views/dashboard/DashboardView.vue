@@ -3,11 +3,11 @@
   import LastMedicTestsCard from './cards/LastMedicTestsCard.vue';
   import TimelineCard from './cards/TimelineCard.vue';
 
-  import { medicTestRequestApi } from '@/services/api';
-  import { useLabStore } from '@/stores/labStore';
-  import type { LabData } from '@/services/interfaces/lab';
-  import type { GetExtendQuerys } from '@/services/interfaces/global';
-  import GraphWrapper from './cards/GraphWrapper.vue';
+import { medicTestRequestApi } from '@/services/api';
+import { useLabStore } from '@/stores/labStore';
+import type { LabData } from '@/services/interfaces/lab';
+import type { GetExtendQuerys } from '@/services/interfaces/global';
+import GraphWrapper from './graphs/GraphWrapper.vue';
 
   const loading = ref(true);
   const rawData = ref<any[]>([]);
