@@ -1,19 +1,17 @@
 <template>
-  <VaNavbar class="app-layout-navbar py-2 px-0">
+  <VaNavbar class="app-layout-navbar py-0 px-0 bg-primary" color="primary">
     <template #left>
       <div class="left">
         <Transition v-if="isMobile" name="icon-fade" mode="out-in">
           <VaIcon
-            color="primary"
+            color="base"
             :name="isSidebarMinimized ? 'menu' : 'close'"
-            size="24px"
-            style="margin-top: 3px"
+            size="32px"
             @click="isSidebarMinimized = !isSidebarMinimized"
           />
         </Transition>
-        <RouterLink to="/" aria-label="Visit home page">
-          <Logo :height="'3em'" />
-        </RouterLink>
+
+        <Logo :height="'3.5em'" :color="'#ffffff'" />
       </div>
     </template>
     <template #right>
@@ -37,19 +35,18 @@
   const { isSidebarMinimized } = storeToRefs(GlobalStore);
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
   .va-navbar {
     z-index: 2;
+  }
+  @media screen and (max-width: 950px) {
+    .left {
+      width: 100%;
+    }
 
-    @media screen and (max-width: 950px) {
-      .left {
-        width: 100%;
-      }
-
-      .app-navbar__actions {
-        display: flex;
-        justify-content: space-between;
-      }
+    .app-navbar__actions {
+      display: flex;
+      justify-content: space-between;
     }
   }
 
@@ -57,19 +54,11 @@
     display: flex;
     align-items: center;
     margin-left: 1rem;
-
-    & > * {
-      margin-right: 1rem;
-    }
-
-    & > *:last-child {
-      margin-right: 0;
-    }
   }
 
   .icon-fade-enter-active,
   .icon-fade-leave-active {
-    transition: transform 0.5s ease;
+    transition: transform 1s ease;
   }
 
   .icon-fade-enter,

@@ -97,7 +97,7 @@
     "dashboard": "Tablero",
     "users": "Usuarios",
     "patientsdata": "Datos de pacientes",
-    "patients":"Pacientes",
+    "patients": "Pacientes",
     "testreq": "Solicitud de test",
     "history": "Historias médicas",
     "billing": "Facturación",
@@ -129,7 +129,7 @@
   "user": {
     "language": "Cambiar Idioma",
     "logout": "Cerrar sesión",
-    "select-lab": "Seleccionar Laboratorio",
+    "select-lab": "Cambiar Laboratorio",
     "profile": "Mi Perfil",
     "settings": "Configuración",
     "billing": "Facturación",
@@ -215,8 +215,7 @@
     "select": "Seleccionar una opción"
   },
 
-  "form":
-  {
+  "form": {
     "addPatient": "Añadir paciente",
     "editPatient": "Editar paciente",
     "save": "Guardar",
@@ -224,8 +223,7 @@
     "add": "Añadir"
   },
 
-  "patients":
-  {
+  "patients": {
     "name": "Nombre",
     "lastName": "Apellido",
     "secondName": "Segundo nombre",
@@ -238,5 +236,4 @@
     "active": "Activo",
     "actions": "Acciones"
   }
-
 }

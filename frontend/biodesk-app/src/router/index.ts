@@ -82,17 +82,18 @@ const router = createRouter({
           name: 'Exams',
           component: Exams,
         },
-        
+
         {
           path: 'newrequest',
           name: 'NewRequest',
-          component: NewRequest ,
+          component: NewRequest,
         },
 
-        {path: '/settings',
-        name: 'Settings',
-        component: () => import('../views/settings/Settings.vue'),
-      },
+        {
+          path: '/settings',
+          name: 'Settings',
+          component: () => import('../views/settings/Settings.vue'),
+        },
       ],
     },
     // Redirección de la raíz a /auth/login

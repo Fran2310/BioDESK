@@ -1,11 +1,22 @@
 <template>
   <div class="profile-dropdown-wrapper">
-    <VaDropdown v-model="isShown" :offset="[9, 0]" class="profile-dropdown" stick-to-edges>
+    <VaDropdown
+      v-model="isShown"
+      :offset="[9, 0]"
+      class="profile-dropdown"
+      stick-to-edges
+    >
       <template #anchor>
-        <VaButton preset="secondary" color="textPrimary">
+        <VaButton
+          size="medium"
+          preset="secondary"
+          color="textPrimary"
+          round
+          class="h-full"
+        >
           <span class="profile-dropdown__anchor min-w-max">
             <slot />
-            <VaAvatar :size="32" color="primary" icon="person"></VaAvatar>
+            <VaAvatar icon="person" class="w-full"></VaAvatar>
           </span>
         </VaButton>
       </template>
@@ -14,7 +25,10 @@
         :style="{ '--hover-color': hoverColor }"
       >
         <VaList v-for="group in options" :key="group.name">
-          <header v-if="group.name" class="uppercase text-[var(--va-secondary)] opacity-80 font-bold text-xs px-4">
+          <header
+            v-if="group.name"
+            class="uppercase text-[var(--va-secondary)] opacity-80 font-bold text-xs px-4"
+          >
             {{ t(`user.${group.name}`) }}
           </header>
           <VaListItem
@@ -34,89 +48,96 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useColors } from 'vuestic-ui'
+  import { ref, computed } from 'vue';
+  import { useI18n } from 'vue-i18n';
+  import { useColors } from 'vuestic-ui';
 
-const { colors, setHSLAColor } = useColors()
-const hoverColor = computed(() => setHSLAColor(colors.focus, { a: 0.1 }))
+  const { colors, setHSLAColor } = useColors();
+  const hoverColor = computed(() => setHSLAColor(colors.focus, { a: 0.1 }));
 
-const { t } = useI18n()
+  const { t } = useI18n();
 
-type ProfileListItem = {
-  name: string
-  to?: string
-  href?: string
-  icon: string
-}
+  type ProfileListItem = {
+    name: string;
+    to?: string;
+    href?: string;
+    icon: string;
+  };
 
-type ProfileOptions = {
-  name: string
-  separator: boolean
-  list: ProfileListItem[]
-}
+  type ProfileOptions = {
+    name: string;
+    separator: boolean;
+    list: ProfileListItem[];
+  };
 
-withDefaults(
-  defineProps<{
-    options?: ProfileOptions[]
-  }>(),
-  {
-    options: () => [
-      {
-        name: 'account',
-        separator: true,
-        list: [
-          {
-            name: 'profile',
-            to: 'Patients',
-            icon: 'account_circle',
-          },
-          {
-            name: 'settings',
-            to: 'Settings',
-            icon: 'settings',
-          },
-        ],
-      },
-      {
-        name: '',
-        separator: false,
-        list: [
-          {
-            name: 'select-lab',
-            to: 'SelectLab',
-            icon: 'medical_services',
-          },
-          {
-            name: 'logout',
-            to: 'Login',
-            icon: 'logout',
-          },
-        ],
-      },
-    ],
-  },
-)
+  withDefaults(
+    defineProps<{
+      options?: ProfileOptions[];
+    }>(),
+    {
+      options: () => [
+        {
+          name: 'account',
+          separator: true,
+          list: [
+            {
+              name: 'profile',
+              to: 'Patients',
+              icon: 'account_circle',
+            },
+            {
+              name: 'settings',
+              to: 'Settings',
+              icon: 'settings',
+            },
+          ],
+        },
+        {
+          name: '',
+          separator: false,
+          list: [
+            {
+              name: 'select-lab',
+              to: 'SelectLab',
+              icon: 'science',
+            },
+            {
+              name: 'logout',
+              to: 'Login',
+              icon: 'logout',
+            },
+          ],
+        },
+      ],
+    }
+  );
 
-const isShown = ref(false)
+  const isShown = ref(false);
 
-const resolveLinkAttribute = (item: ProfileListItem) => {
-  return item.to ? { to: { name: item.to } } : item.href ? { href: item.href, target: '_blank' } : {}
-}
+  const resolveLinkAttribute = (item: ProfileListItem) => {
+    return item.to
+      ? { to: { name: item.to } }
+      : item.href
+      ? { href: item.href, target: '_blank' }
+      : {};
+  };
 </script>
 
-<style lang="scss">
-.profile-dropdown {
-  cursor: pointer;
-
-  &__content {
-    .menu-item:hover {
-      background: var(--hover-color);
-    }
+<style scoped>
+  .profile-dropdown {
+    cursor: pointer;
   }
 
-  &__anchor {
+  ::v-deep(.va-avatar:hover) {
+    background: var(--hover-color);
+  }
+
+  .profile-dropdown__anchor {
     display: inline-block;
   }
-}
+
+  ::v-deep(.va-icon.material-icons) {
+    font-size: 28px !important;
+    color: var(--va-base);
+  }
 </style>

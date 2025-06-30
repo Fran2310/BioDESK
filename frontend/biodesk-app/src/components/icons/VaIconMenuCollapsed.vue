@@ -29,7 +29,7 @@
   );
 </script>
 
-<style>
+<style scoped>
   .va-icon-menu-collapsed {
     display: inline-block;
     width: 24px;
