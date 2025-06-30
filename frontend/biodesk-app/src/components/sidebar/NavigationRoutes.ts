@@ -44,6 +44,10 @@ export default {
           name: 'ProfileUserView',
           displayName: 'Perfil de usuario',
         },
+        {
+          name: 'ProfileLabView',
+          displayName: 'Perfil de Laboratorio',
+        },
       ],
     },
     {

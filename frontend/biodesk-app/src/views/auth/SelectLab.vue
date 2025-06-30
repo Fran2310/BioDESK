@@ -171,6 +171,7 @@
   import { computed, ref, onMounted, nextTick, watch } from 'vue';
   import { useBreakpoint, VaButton } from 'vuestic-ui';
   import { useAnimatedRouteLeave } from '@/composables/useAnimatedRouteLeave';
+  import { labApi } from '@/services/api';
 
   // Store de laboratorios
   const labStore = useLabStore();
@@ -247,8 +248,11 @@
   }
 
   // Verifica scroll al montar y cuando cambian labs o el breakpoint
-  onMounted(() => {
+  onMounted(async () => {
     checkScroll();
+    const response = await labApi.getUserLabs();
+    //controlar que solo se haga la peticion si es necesario
+    labStore.setLabs(response.data.labs);
   });
   watch(() => labStore.labs.length, checkScroll);
   watch(isDesktop, checkScroll);

@@ -178,6 +178,21 @@ export const labApi = {
   },
 
   /**
+   * Actualiza los datos del laboratorio.
+   *
+   * Permite enviar solo los campos que se desean modificar, ya que utiliza Partial<RegisterLabData>,
+   * haciendo que todos los campos sean opcionales.
+   *
+   * @param data - Objeto con los campos a actualizar del laboratorio (pueden ser uno o varios).
+   * @returns Promesa con la respuesta de la API.
+   */
+  updateLab(data: Partial<RegisterLabData>) {
+    return api.patch('/labs', data, {
+      ...headerLabId(),
+    });
+  },
+
+  /**
    * Sube el logo del laboratorio actualmente seleccionado.
    * @param file Archivo de imagen (logo) a subir.
    * @returns Promesa de la respuesta del backend.
