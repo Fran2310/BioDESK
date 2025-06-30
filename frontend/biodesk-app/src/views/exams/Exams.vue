@@ -205,6 +205,7 @@ watch(
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>
+
             </VaInput>
             <VaButton color="primary" icon="search" class="ml-2" @click="searchExams">
               Search
@@ -269,17 +270,52 @@ watch(
         </div>
 
         <!-- Modal -->
-        <VaModal v-model="showModal" title="Exam Results" hide-default-actions>
+        <VaModal v-model="showModal"  hide-default-actions>
+          <h2 class="va-h3 text-primary" style="margin-top: 0; margin-bottom: 1.5rem; text-align: left;">Detalles del examen</h2>
           <div v-if="selectedExam">
-            <h4>Result Properties:</h4>
-            <ul class="mb-4">
-              <li v-for="(value, key) in selectedExam.resultProperties" :key="key" class="mb-1">
-                <b>{{ key }}:</b> {{ value }}
-              </li>
-            </ul>
+            <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <strong>CI:</strong> <span>{{ selectedExam.ci }}</span>
+              </div>
+              <div>
+                <strong>Nombre:</strong> <span>{{ selectedExam.name }}</span>
+              </div>
+              <div>
+                <strong>Apellido:</strong> <span>{{ selectedExam.lastName }}</span>
+              </div>
+              <div>
+                <strong>Fecha de Solicitud:</strong> <span>{{ formatDate(selectedExam.requestedAt) }}</span>
+              </div>
+              <div>
+                <strong>Estado:</strong> <va-chip size="small" :color="stateColor(selectedExam.state)">{{ selectedExam.state }}</va-chip>
+              </div>
+              <div>
+                <strong>Prioridad:</strong> <va-chip size="small" :color="priorityColor(selectedExam.priority)">{{ selectedExam.priority }}</va-chip>
+              </div>
+            </div>
 
-            <h4>Observation:</h4>
-            <p>{{ selectedExam.observation || 'No observation provided.' }}</p>
+            <h4 class="mt-4 mb-2">Propiedades del Resultado</h4>
+            <div class="mb-4">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th class="border-b pb-1">Propiedad</th>
+                    <th class="border-b pb-1">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(value, key) in selectedExam.resultProperties" :key="key">
+                    <td class="pr-4 font-semibold">{{ key }}</td>
+                    <td>{{ value }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h4 class="mt-4 mb-2">Observación</h4>
+            <div class="p-3 bg-gray-100 rounded border border-gray-200">
+              <span>{{ selectedExam.observation || 'No se proporcionó observación.' }}</span>
+            </div>
           </div>
           <div v-else>
             No exam selected or invalid data.
