@@ -82,7 +82,7 @@
           list: [
             {
               name: 'profile',
-              to: 'Patients',
+              to: 'ProfileUserView',
               icon: 'account_circle',
             },
             {
