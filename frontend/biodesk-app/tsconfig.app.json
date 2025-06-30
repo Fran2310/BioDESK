@@ -4,6 +4,8 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
