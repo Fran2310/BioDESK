@@ -1,8 +1,6 @@
 <template>
-  <div class="bg-white rounded p-4 h-[400px] flex flex-col">
-    <h3 class="text-lg font-semibold mb-2">
-      Distribución de estados de solicitudes
-    </h3>
+  <div class="bg-white rounded p-4 min-h-[400px] flex flex-col">
+    <h3 class="text-lg font-semibold mb-2">Distribución de estados de solicitudes</h3>
 
     <div
       v-if="loading"

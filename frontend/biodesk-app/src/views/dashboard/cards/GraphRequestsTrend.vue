@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded p-4 h-[500px] flex flex-col">
+  <div class="bg-white rounded p-4 min-h-[400px] flex flex-col">
     <h3 class="text-lg font-semibold mb-2">Tendencia de solicitudes</h3>
 
     <div v-if="loading" class="text-center py-8 flex-1 flex items-center justify-center">
