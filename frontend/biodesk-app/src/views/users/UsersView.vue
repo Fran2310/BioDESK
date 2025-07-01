@@ -1,11 +1,11 @@
 <script setup lang="ts">
   import { ref } from 'vue';
-  import AddNewUser from './widgets/AddNewUser.vue'
+  import AddNewUser from './widgets/AddNewUser.vue';
   import AddExisting from './widgets/AddExisting.vue';
   import { useModal, useToast } from 'vuestic-ui';
   import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
 
-  import Table from './widgets/Table.vue'
+  import Table from './widgets/Table.vue';
 
   const doShowEditUserModal = ref(false);
   const doShowAddExistingModal = ref(false);
@@ -68,7 +68,9 @@
 <template>
   <VaCard>
     <VaCardContent>
-      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between items-end">
+      <div
+        class="flex flex-col md:flex-row gap-2 mb-2 justify-between items-end"
+      >
         <div class="flex flex-col md:flex-row gap-2 justify-start">
           <!--<VaInput v-model="filters.search" placeholder="Buscar">
             <template #prependInner>
@@ -77,7 +79,9 @@
           </VaInput>-->
         </div>
         <div class="flex gap-2">
-          <VaButton @click="showAddExistingModal">Añadir Usuario Existente</VaButton>
+          <VaButton @click="showAddExistingModal"
+            >Añadir Usuario Existente</VaButton
+          >
           <VaButton @click="showAddNewUserModal">Añadir Nuevo Usuario</VaButton>
         </div>
       </div>
@@ -102,9 +106,7 @@
       :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
       @close="cancel"
-      @save="
-        usersTableRef.value?.refresh();
-      "
+      @save="usersTableRef.value?.refresh()"
     />
   </VaModal>
 
@@ -126,7 +128,7 @@
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
       @close="cancel"
       @save="
-        usersTableRef.value?.refresh(); // TODO no funciona lo de recargar tras un cambio
+        usersTableRef.value?.refresh() // TODO no funciona lo de recargar tras un cambio
       "
     />
   </VaModal>
