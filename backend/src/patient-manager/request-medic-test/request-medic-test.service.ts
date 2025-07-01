@@ -111,6 +111,16 @@ export class RequestMedicTestService {
         skip: offset,
         take: limit,
         omit: omitFields,
+        include: includeData
+        ? { 
+            medicTestCatalog: true,
+            medicHistory: { // Esto se puede optimizar no enviando nada de este
+              include: {
+                patient: true // Esto se puede optimizar solo enviando unos cuantos datos del paciente
+              }
+            }
+          }
+        : undefined,
         // Este 'where' es fundamental para filtrar solo los exámenes de un historial médico
         where: {
           medicHistoryId: medicHistoryId,
