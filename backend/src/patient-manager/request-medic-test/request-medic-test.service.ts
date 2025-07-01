@@ -173,6 +173,9 @@ export class RequestMedicTestService {
         skip: offset,
         take: limit,
         omit: omitFields,
+        include: includeData
+        ? { medicTestCatalog: true }
+        : undefined,
         orderBy: {
           requestedAt: 'desc', // O 'id' si prefieres, para una paginación consistente
         },
