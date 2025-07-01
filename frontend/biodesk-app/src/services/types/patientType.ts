@@ -4,4 +4,4 @@ import type { PatientData } from '@/services/interfaces/patient'
 export type Patient = PatientData & { id: string | number }
 
 // Patient type with medical history (for detail views)
-export type PatientWithHistory = Patient & { medicHistory: any }
+export type PatientWithHistoryId = Patient & { medicHistoryId: any }
