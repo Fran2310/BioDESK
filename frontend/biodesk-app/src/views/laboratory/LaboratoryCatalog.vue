@@ -13,15 +13,20 @@
             clearable
           />
           <va-spacer />
-          <va-button color="#2F6F79" @click="examForm.showAddModal = true">
+          <VaButton color="primary" @click="examForm.showAddModal = true">
             Agregar examen
-          </va-button>
+          </VaButton>
         </div>
       </va-card-content>
     </va-card>
+
     <va-card>
       <va-card-content>
+        <div v-if="tableState.loading" class="flex justify-center items-center py-8">
+          <va-progress-circle indeterminate size="large" color="primary" />
+        </div>
         <va-data-table
+          v-else
           :columns="columns"
           :items="filteredExams"
           :loading="loading"
@@ -33,21 +38,24 @@
         </template>
 
           <template #cell(actions)="{ row }">
-            <va-button
+            <VaButton
+              color="primary"
+              class="ml-2"
               size="small"
-              color="warning"
-              class="mr-2"
+              icon="delete"
               @click="editExam(row)"
             >
               Editar
-            </va-button>
-            <va-button
-              size="small"
+            </VaButton>
+            <VaButton
               color="danger"
+              class="ml-2"
+              size="small"
+              icon="delete"
               @click="deleteExam(row, fetchExams, showError)"
             >
               Eliminar
-            </va-button>
+            </VaButton>
           </template>
         </va-data-table>
       </va-card-content>
@@ -191,28 +199,48 @@
               <div
                 v-for="(reference, idx) in referenceData"
                 :key="idx"
-                class="property-block "
+                class="property-block mt-4"
               >
-                <div class="grid grid-cols-7 gap-2 items-center">
-                  <div class="col-span-2 property-name">{{ reference.name }}</div>
-                  <div class="col-span-1 property-unit">{{ reference.unit }}</div>
-                  <div class="col-span-1 property-range">
-                    {{ reference.variations[0]?.ageGroup }}
+                <!-- Encabezado -->
+                <div class="grid grid-cols-3 gap-2 items-center mb-2">
+                  <div class="col-span-2 font-semibold property-name">
+                    {{ reference.name }}
                   </div>
-                  <div class="col-span-1 property-range">
-                    {{ reference.variations[0]?.gender }}
+                  <div class="col-span-1 property-unit">
+                    {{ reference.unit }}
                   </div>
-                  <div class="col-span-1 property-range">
-                    {{ reference.variations[0]?.range }}
-                  </div>
-                  <va-button
-                    icon="delete"
-                    color="danger"
-                    size="small"
-                    @click="removeReference(idx)"
-                    class="col-span-1"
-                  />
                 </div>
+
+                <!-- Variaciones como chips -->
+                <VaChip
+                  v-for="(variation, vIdx) in reference.variations"
+                  :key="vIdx"
+                  outline
+                  size="small"
+                  class="flex items-center gap-2 px-2"
+                >
+                  <!-- Circulito según género -->
+                    <span
+                      :class="[
+                        'inline-block w-3 h-3 rounded-full mr-2',
+                        variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
+                        variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
+                        variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
+                        'bg-purple-300'
+                      ]"
+                    ></span>
+
+                  {{ variation.gender }}/{{ variation.ageGroup }}
+                </VaChip>
+
+                <!-- Botón eliminar propiedad -->
+                <VaButton
+                  icon="delete"
+                  color="danger"
+                  size="small"
+                  @click="removeReference(idx)"
+                  class="ml-2 self-start"
+                />
               </div>
             </div>
 
@@ -286,7 +314,7 @@ const search = ref(tableState.search)
 watch(search, (val) => {
   tableState.search = val
 })
-
+const loadingCatalog = ref(false)
 const loading = tableState.loading
 const supplies = examForm.supplies
 const newSupply = examForm.newSupply
@@ -352,6 +380,8 @@ function handleSaveReference() {
 onMounted(() => {
   fetchExams()
 })
+
+
 
 </script>
 

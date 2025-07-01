@@ -2,25 +2,25 @@
   <div class="role-management">
     <!-- Roles existentes -->
     <va-card class="max-w-full w-full mb-4">
-      <va-card-title>
-        <span class="text-2xl font-bold">Roles existentes</span>
-      </va-card-title>
-      <va-card-content>
-        <div class="flex flex-wrap gap-4 items-center mb-4">
-          <va-input
-            v-model="search"
-            placeholder="Buscar rol..."
-            class="w-64"
-            clearable
-          />
-          <va-spacer />
-          <va-button color="#2F6F79" @click="showNewRoleModal = true">
-            Crear un nuevo rol
-          </va-button>
-        </div>
-      </va-card-content>
+        <va-card-title>
+            <span class="text-2xl font-bold">Roles existentes</span>
+        </va-card-title>
+        <va-card-content>
+            <div class="flex flex-wrap gap-4 items-center mb-4">
+                <va-input
+                    v-model="search"
+                    placeholder="Buscar rol..."
+                    class="w-64"
+                    clearable   
+                />
+                <va-spacer />
+                <VaButton color="primary" @click="showNewRoleModal = true">
+                Crear un nuevo rol
+                </VaButton>
+            </div> 
+        </va-card-content>
     </va-card>
-
+          
     <va-card class="max-w-full w-full">
       <va-card-content>
         <div v-if="loadingRoles" class="flex justify-center items-center py-8">
@@ -34,32 +34,17 @@
           :virtual-scroller="false"
           @row:click="onRowClick"
           :row-class="getRowClass"
-          :loading="loadingRoles"
         >
           <template #cell(role)="{ rowData }">
-            <span class="font-bold text-left w-full block">{{
-              rowData.role
-            }}</span>
+            <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
           </template>
           <template #cell(description)="{ rowData }">
-            <span class="text-left w-full block">{{
-              rowData.description
-            }}</span>
+            <span class="text-left w-full block">{{ rowData.description }}</span>
           </template>
           <template #cell(actions)="{ rowData }">
             <div class="flex gap-2 justify-start" @click.stop>
-              <va-button
-                size="small"
-                color="warning"
-                @click="openEditRoleModal(rowData)"
-                >Editar</va-button
-              >
-              <va-button
-                size="small"
-                color="danger"
-                @click="deleteRole(rowData.id)"
-                >Eliminar</va-button
-              >
+              <VaButton icon="edit" size="small" color="warning" @click="openEditRoleModal(rowData)">Editar</VaButton>
+              <VaButton icon="delete" size="small" color="danger" @click="deleteRole(rowData.id)">Eliminar</VaButton>
             </div>
           </template>
         </va-data-table>
@@ -101,60 +86,37 @@
               >
                 <va-select
                   v-model="perm.subject"
-                  :options="
-                    subjectOptions.map((s) => ({
-                      label: getSubjectLabel(s),
-                      value: s,
-                    }))
-                  "
+                  :options="subjectOptions"
                   class="input-xs"
-                  placeholder="Herramienta"
+                  placeholder="Subject"
                   size="small"
                   clearable
-                  style="min-width: 120px; max-width: 180px"
-                  :text-by="'label'"
-                  :track-by="'value'"
+                  style="min-width: 120px; max-width: 180px;"
                 />
                 <va-select
                   v-model="perm.actions"
-                  :options="
-                    actionsOptions.map((a) => ({
-                      label: getActionLabel(a),
-                      value: a,
-                    }))
-                  "
+                  :options="actionsOptions"
                   class="input-xs"
-                  placeholder="Acciones"
+                  placeholder="Actions"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: any) => a.value"
+                  :reduce="(a: string) => a"
                   :map-options="false"
-                  style="min-width: 120px; max-width: 180px"
-                  :text-by="'label'"
-                  :track-by="'value'"
+                  style="min-width: 120px; max-width: 180px;"
                 />
                 <va-select
                   v-model="perm.fields"
-                  :options="
-                    getFieldsOptions(perm.subject).map((f) => ({
-                      label: getFieldLabel(f),
-                      value: f,
-                    }))
-                  "
+                  :options="getFieldsOptions(perm.subject)"
                   class="input-xs"
-                  placeholder="Campos"
+                  placeholder="Fields"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: any) => a.value"
+                  :reduce="(a: string) => a"
                   :map-options="false"
-                  :disabled="
-                    !perm.subject || getFieldsOptions(perm.subject).length === 0
-                  "
-                  style="min-width: 120px; max-width: 180px"
-                  :text-by="'label'"
-                  :track-by="'value'"
+                  :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
+                  style="min-width: 120px; max-width: 180px;"
                 />
                 <va-button
                   color="danger"
@@ -165,7 +127,7 @@
                   aria-label="Eliminar permiso"
                 />
               </div>
-              <va-button
+              <VaButton
                 color="primary"
                 size="small"
                 class="mt-2"
@@ -174,16 +136,11 @@
                 type="button"
               >
                 Agregar Permiso
-              </va-button>
+              </VaButton>
             </div>
             <div class="flex justify-end gap-2 mt-6">
-              <va-button
-                color="secondary"
-                type="reset"
-                @click="closeNewRoleModal"
-                >Cancelar</va-button
-              >
-              <va-button color="success" type="submit">Guardar</va-button>
+              <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
+              <VaButton color="primary" type="submit">Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -225,60 +182,37 @@
               >
                 <va-select
                   v-model="perm.subject"
-                  :options="
-                    subjectOptions.map((s) => ({
-                      label: getSubjectLabel(s),
-                      value: s,
-                    }))
-                  "
+                  :options="subjectOptions"
                   class="input-xs"
-                  placeholder="Herramienta"
+                  placeholder="Subject"
                   size="small"
                   clearable
-                  style="min-width: 120px; max-width: 180px"
-                  :text-by="'label'"
-                  :track-by="'value'"
+                  style="min-width: 120px; max-width: 180px;"
                 />
                 <va-select
                   v-model="perm.actions"
-                  :options="
-                    actionsOptions.map((a) => ({
-                      label: getActionLabel(a),
-                      value: a,
-                    }))
-                  "
+                  :options="actionsOptions"
                   class="input-xs"
-                  placeholder="Acciones"
+                  placeholder="Actions"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: any) => a.value"
+                  :reduce="(a: string) => a"
                   :map-options="false"
-                  style="min-width: 120px; max-width: 180px"
-                  :text-by="'label'"
-                  :track-by="'value'"
+                  style="min-width: 120px; max-width: 180px;"
                 />
                 <va-select
                   v-model="perm.fields"
-                  :options="
-                    getFieldsOptions(perm.subject).map((f) => ({
-                      label: getFieldLabel(f),
-                      value: f,
-                    }))
-                  "
+                  :options="getFieldsOptions(perm.subject)"
                   class="input-xs"
-                  placeholder="Campos"
+                  placeholder="Fields"
                   size="small"
                   multiple
                   clearable
-                  :reduce="(a: any) => a.value"
+                  :reduce="(a: string) => a"
                   :map-options="false"
-                  :disabled="
-                    !perm.subject || getFieldsOptions(perm.subject).length === 0
-                  "
-                  style="min-width: 120px; max-width: 180px"
-                  :text-by="'label'"
-                  :track-by="'value'"
+                  :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
+                  style="min-width: 120px; max-width: 180px;"
                 />
                 <va-button
                   color="danger"
@@ -289,7 +223,7 @@
                   aria-label="Eliminar permiso"
                 />
               </div>
-              <va-button
+              <VaButton
                 color="primary"
                 size="small"
                 class="mt-2"
@@ -298,16 +232,11 @@
                 type="button"
               >
                 Agregar Permiso
-              </va-button>
+              </VaButton>
             </div>
             <div class="flex justify-end gap-2 mt-6">
-              <va-button
-                color="secondary"
-                type="reset"
-                @click="closeEditRoleModal"
-                >Cancelar</va-button
-              >
-              <va-button color="success" type="submit">Guardar</va-button>
+              <VaButton color="danger" type="reset" @click="closeEditRoleModal">Cancelar</VaButton>
+              <VaButton color="primary" type="submit">Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -323,9 +252,7 @@
         <va-card-content>
           <div v-if="selectedRole">
             <div class="mb-2"><b>Nombre:</b> {{ selectedRole.role }}</div>
-            <div class="mb-2">
-              <b>Descripción:</b> {{ selectedRole.description }}
-            </div>
+            <div class="mb-2"><b>Descripción:</b> {{ selectedRole.description }}</div>
             <div class="mb-2"><b>ID:</b> {{ selectedRole.id }}</div>
             <div class="mb-2"><b>Permisos:</b></div>
             <table class="w-full border mt-2">
@@ -338,41 +265,18 @@
               </thead>
               <tbody>
                 <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
-                  <td class="border px-2 py-1">
-                    {{ getSubjectLabel(perm.subject) }}
-                  </td>
-                  <td class="border px-2 py-1">
+                  <td class="border px-2 py-1 mr-1">{{ perm.subject }}</td>
+                  <td class="border px-2 py-1 mr-1">
                     <span v-if="Array.isArray(perm.actions)">
-                      {{
-                        perm.actions
-                          .map((a: string) => getActionLabel(a))
-                          .join(', ')
-                      }}
+                      {{ perm.actions.join(', ') }}
                     </span>
                     <span v-else>
-                      {{ getActionLabel(String(perm.actions)) }}
+                      {{ perm.actions }}
                     </span>
                   </td>
-                  <td class="border px-2 py-1">
+                  <td class="border px-2 py-1 mr-1">
                     <span v-if="'fields' in perm && perm.fields">
-                      <span v-if="Array.isArray(perm.fields)">
-                        {{
-                          perm.fields
-                            .map((f: string) => getFieldLabel(f))
-                            .join(', ')
-                        }}
-                      </span>
-                      <span v-else-if="typeof perm.fields === 'string'">
-                        {{
-                          String(perm.fields)
-                            .split(',')
-                            .map((f) => getFieldLabel(f.trim()))
-                            .join(', ')
-                        }}
-                      </span>
-                      <span v-else>
-                        {{ getFieldLabel(String(perm.fields)) }}
-                      </span>
+                      {{ perm.fields }}
                     </span>
                     <span v-else>-</span>
                   </td>
@@ -382,9 +286,7 @@
           </div>
         </va-card-content>
         <template #footer>
-          <va-button color="primary" @click="showRoleDetailsModal = false"
-            >Cerrar</va-button
-          >
+          <va-button color="primary" @click="showRoleDetailsModal = false">Cerrar</va-button>
         </template>
       </va-card>
     </va-modal>
@@ -392,627 +294,466 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, watch, computed } from 'vue';
-  // Importa las funciones del servicio y los tipos que acabamos de definir
-  import {
-    getRoles,
-    createRoleApi,
-    assignPermissionsApi,
-    getPermissions,
-    updateRoleApi,
-    deleteRoleApi,
-  } from '../../services/roleService'; // Asegúrate de que la ruta sea correcta
+import { ref, onMounted, watch, computed } from 'vue'
+// Importa las funciones del servicio y los tipos que acabamos de definir
+import {
+  getRoles,
+  createRoleApi,
+  assignPermissionsApi,
+  getPermissions,
+  updateRoleApi,
+  deleteRoleApi,
+} from '../../services/roleService' // Asegúrate de que la ruta sea correcta
 
-  import type {
-    RoleFromApi,
-    ApiRolePermission,
-    CreateRolePayload,
-    FlatPermissionsArray,
-  } from '../../services/roleService';
+import type {
+  RoleFromApi,
+  ApiRolePermission,
+  CreateRolePayload,
+  FlatPermissionsArray
+} from '../../services/roleService' 
 
-  import { VaProgressCircle } from 'vuestic-ui';
-  // Importa los types para obtener los fields dinámicamente
-  import * as PermissionTypes from '../../services/types/permission.type';
+import { VaButton, VaProgressCircle } from 'vuestic-ui'
+// Importa los types para obtener los fields dinámicamente
+import * as PermissionTypes from '../../services/types/permission.type'
 
-  // Helper para convertir un type union a array de strings
-  function typeToArray<T>(): string[] {
-    // TypeScript types no existen en runtime, así que esto es solo para claridad.
-    // Debes definir manualmente los arrays si quieres tipado estricto.
-    return [];
+// Helper para convertir un type union a array de strings
+function typeToArray<T>(): string[] {
+  // TypeScript types no existen en runtime, así que esto es solo para claridad.
+  // Debes definir manualmente los arrays si quieres tipado estricto.
+  return [];
+}
+
+// Construye el mapa de fields usando arrays explícitos (garantiza string[])
+const fieldsOptionsMap: Record<string, string[]> = {
+  SystemUser: [
+    'uuid', 'ci', 'name', 'lastName', 'email', 'password', 'salt', 'isActive', 'lastAccess'
+  ],
+  LabUser: [
+    'systemUserUuid', 'roleId'
+  ],
+  Lab: [
+    'name', 'dbName', 'status', 'rif', 'dir', 'phoneNums', 'logoPath', 'createdAt'
+  ],
+  Role: [
+    'role', 'description', 'permissions'
+  ],
+  ActionHistory: [
+    'action', 'details', 'entity', 'recordEntityId', 'operationData', 'madeAt', 'labUserId'
+  ],
+  Patient: [
+    'ci', 'name', 'lastName', 'secondName', 'secondLastName', 'gender', 'email', 'phoneNums', 'dir', 'birthDate'
+  ],
+  MedicHistory: [
+    'allergies', 'pathologies', 'patientId'
+  ],
+  RequestMedicTest: [
+    'requestedAt', 'completedAt', 'state', 'priority', 'resultProperties', 'observation', 'medicHistoryId', 'medicTestCatalogId'
+  ],
+  MedicTestCatalog: [
+    'name', 'description', 'price', 'supplies'
+  ],
+  all: [],
+};
+
+// Helper para obtener las opciones de fields según el subject seleccionado
+function getFieldsOptions(subject: string): string[] {
+  if (!subject) return [];
+  const options = fieldsOptionsMap[subject];
+  return Array.isArray(options) ? options : [];
+}
+
+const newRoleName = ref('')
+const newRoleDescription = ref('')
+const selectedPermissions = ref<string[]>([]) // Esto sigue siendo string[] ('subject:action')
+const roles = ref<RoleFromApi[]>([]) // Ahora tipado correctamente
+const permissionGroups = ref<Record<string, any[]>>({}) // Tipado más específico
+const selectedRoleId = ref<string | null>(null)
+
+// Edición de roles
+const editingRoleId = ref<string | null>(null)
+const editRoleFields = ref<Record<string, { name: string; description: string }>>({});
+const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
+
+const dynamicPermissions = ref([
+  { subject: '', actions: '', fields: '' }
+]);
+
+const loadingRoles = ref(false)
+
+const fetchAllRoles = async () => {
+  loadingRoles.value = true
+  try {
+    const res = await getRoles();
+    console.log('Respuesta de getRoles:', res); // <-- ¿Es un array?
+    roles.value = res || [];
+  } catch (error) {
+    console.error('Error fetching roles:', error);
+    alert('Error al cargar roles.');
+  } finally {
+    loadingRoles.value = false
   }
+}
 
-  // Construye el mapa de fields usando arrays explícitos (garantiza string[])
-  const fieldsOptionsMap: Record<string, string[]> = {
-    SystemUser: [
-      'uuid',
-      'ci',
-      'name',
-      'lastName',
-      'email',
-      'password',
-      'salt',
-      'isActive',
-      'lastAccess',
-    ],
-    LabUser: ['systemUserUuid', 'roleId'],
-    Lab: [
-      'name',
-      'dbName',
-      'status',
-      'rif',
-      'dir',
-      'phoneNums',
-      'logoPath',
-      'createdAt',
-    ],
-    Role: ['role', 'description', 'permissions'],
-    ActionHistory: [
-      'action',
-      'details',
-      'entity',
-      'recordEntityId',
-      'operationData',
-      'madeAt',
-      'labUserId',
-    ],
-    Patient: [
-      'ci',
-      'name',
-      'lastName',
-      'secondName',
-      'secondLastName',
-      'gender',
-      'email',
-      'phoneNums',
-      'dir',
-      'birthDate',
-    ],
-    MedicHistory: ['allergies', 'pathologies', 'patientId'],
-    RequestMedicTest: [
-      'requestedAt',
-      'completedAt',
-      'state',
-      'priority',
-      'resultProperties',
-      'observation',
-      'medicHistoryId',
-      'medicTestCatalogId',
-    ],
-    MedicTestCatalog: ['name', 'description', 'price', 'supplies'],
-    all: [],
-  };
-
-  // Helper para obtener las opciones de fields según el subject seleccionado
-  function getFieldsOptions(subject: string): string[] {
-    if (!subject) return [];
-    const options = fieldsOptionsMap[subject];
-    return Array.isArray(options) ? options : [];
+const fetchAllPermissions = async () => {
+  loadingRoles.value = true
+  try {
+    // Usa el helper del servicio, que ya llama a getRoles y agrupa los permisos
+    permissionGroups.value = await getPermissions();
+    // Si quieres también refrescar la lista de roles:
+    roles.value = await getRoles();
+  } catch (error) {
+    console.error('Error fetching permissions:', error);
+    alert('Error al cargar permisos.');
+  } finally {
+    loadingRoles.value = false
   }
+}
 
-  const newRoleName = ref('');
-  const newRoleDescription = ref('');
-  const selectedPermissions = ref<string[]>([]); // Esto sigue siendo string[] ('subject:action')
-  const roles = ref<RoleFromApi[]>([]); // Ahora tipado correctamente
-  const permissionGroups = ref<Record<string, any[]>>({}); // Tipado más específico
-  const selectedRoleId = ref<string | null>(null);
-
-  // Edición de roles
-  const editingRoleId = ref<string | null>(null);
-  const editRoleFields = ref<
-    Record<string, { name: string; description: string }>
-  >({});
-  const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
-
-  const dynamicPermissions = ref([{ subject: '', actions: [], fields: [] }]);
-
-  const loadingRoles = ref(false);
-
-  const fetchAllRoles = async () => {
-    loadingRoles.value = true;
-    try {
-      const res = await getRoles();
-      console.log('Respuesta de getRoles:', res); // <-- ¿Es un array?
-      roles.value = res || [];
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-      alert('Error al cargar roles.');
-    } finally {
-      loadingRoles.value = false;
-    }
-  };
-
-  const fetchAllPermissions = async () => {
-    loadingRoles.value = true;
-    try {
-      // Usa el helper del servicio, que ya llama a getRoles y agrupa los permisos
-      permissionGroups.value = await getPermissions();
-      // Si quieres también refrescar la lista de roles:
-      roles.value = await getRoles();
-    } catch (error) {
-      console.error('Error fetching permissions:', error);
-      alert('Error al cargar permisos.');
-    } finally {
-      loadingRoles.value = false;
-    }
-  };
-
-  // Utilidad para agrupar permisos y convertirlos al formato correcto
-  function groupPermissions(flatPermissions: string[]) {
-    const grouped: Record<string, Set<string>> = {};
-    flatPermissions.forEach((perm) => {
-      const [subject, action] = perm.split(':');
-      if (!grouped[subject]) grouped[subject] = new Set();
-      grouped[subject].add(action);
-    });
-    return Object.entries(grouped).map(([subject, actions]) => ({
-      subject,
-      actions: Array.from(actions).join(','), // string separado por comas
-      // fields: "*" // Si necesitas enviar fields, agrégalo aquí
-    }));
-  }
-
-  function groupPermissionsWithFields(flatPermissions: string[]) {
-    const grouped: Record<string, Set<string>> = {};
-    flatPermissions.forEach((perm) => {
-      const [subject, action] = perm.split(':');
-      if (!grouped[subject]) grouped[subject] = new Set();
-      grouped[subject].add(action);
-    });
-    // Devuelve el formato esperado por la API, incluyendo fields
-    return Object.entries(grouped).map(([subject, actions]) => ({
-      subject,
-      actions: Array.from(actions).join(','), // string separado por comas
-      fields:
-        Object.entries(permissionFields.value)
-          .filter(([key]) => key.startsWith(subject + ':'))
-          .map(([, fields]) => fields)
-          .filter(Boolean)[0] || undefined, // Toma el campo si existe
-    }));
-  }
-
-  function addPermission() {
-    dynamicPermissions.value.push({ subject: '', actions: [], fields: [] });
-  }
-
-  function removePermission(idx: number) {
-    dynamicPermissions.value.splice(idx, 1);
-  }
-
-  const createRole = async () => {
-    if (!newRoleName.value || !newRoleDescription.value) {
-      alert('El nombre y la descripción del rol son obligatorios.');
-      return;
-    }
-    const permissions = dynamicPermissions.value
-      .filter((p) => p.subject && p.actions && p.actions.length > 0)
-      .map((p) => ({
-        subject: p.subject,
-        actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
-        ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
-          ? { fields: p.fields.join(',') }
-          : {}),
-      }));
-    if (permissions.length === 0) {
-      alert('Debes agregar al menos un permiso válido.');
-      return;
-    }
-    try {
-      const payload = {
-        name: newRoleName.value,
-        description: newRoleDescription.value,
-        permissions,
-      };
-      await createRoleApi(payload);
-      newRoleName.value = '';
-      newRoleDescription.value = '';
-      dynamicPermissions.value = [{ subject: '', actions: [], fields: [] }];
-      await fetchAllRoles(); // Recargar roles
-      alert('Rol creado con éxito.');
-    } catch (error) {
-      console.error('Error creating role:', error);
-      alert('Error al crear el rol.');
-    }
-  };
-
-  const assignPermissions = async () => {
-    if (!selectedRoleId.value) {
-      alert('Por favor, selecciona un rol primero.');
-      return;
-    }
-    try {
-      const permissions = groupPermissions(selectedPermissions.value);
-      await assignPermissionsApi(selectedRoleId.value, permissions);
-      selectedPermissions.value = [];
-      await fetchAllRoles(); // Recargar roles para ver los cambios
-      alert('Permisos asignados con éxito.');
-    } catch (error) {
-      console.error('Error assigning permissions:', error);
-      alert('Error al asignar permisos');
-    }
-  };
-
-  // Edición de roles
-  function startEditRole(role: RoleFromApi) {
-    editingRoleId.value = role.id;
-    editRoleFields.value[role.id] = {
-      name: role.role,
-      description: role.description,
-    };
-  }
-
-  const saveEditRole = async (role: RoleFromApi) => {
-    const fields = editRoleFields.value[role.id];
-    if (!fields.name || !fields.description) {
-      alert('El nombre y la descripción no pueden estar vacíos.');
-      return;
-    }
-    try {
-      // Si quieres permitir editar permisos junto con nombre/desc, usa selectedPermissions
-      const permissions = groupPermissions(selectedPermissions.value);
-      const payload = {
-        name: fields.name,
-        description: fields.description,
-        permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
-      };
-      await updateRoleApi(role.id, payload);
-      editingRoleId.value = null;
-      delete editRoleFields.value[role.id];
-      await fetchAllRoles();
-      alert('Rol actualizado con éxito.');
-    } catch (error) {
-      console.error('Error saving role:', error);
-      alert('Error al actualizar rol.');
-    }
-  };
-
-  const cancelEditRole = () => {
-    editingRoleId.value = null;
-    editRoleFields.value = {};
-  };
-
-  const deleteRole = async (roleId: string) => {
-    if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
-      try {
-        await deleteRoleApi(roleId);
-        await fetchAllRoles();
-        if (selectedRoleId.value === roleId) {
-          selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
-        }
-        alert('Rol eliminado con éxito.');
-      } catch (error) {
-        console.error('Error deleting role:', error);
-        alert('Error al eliminar rol.');
-      }
-    }
-  };
-
-  watch(
-    selectedRoleId,
-    (roleId) => {
-      if (!roleId) {
-        selectedPermissions.value = [];
-        return;
-      }
-      const role = roles.value.find((r: RoleFromApi) => r.id === roleId);
-      if (role && Array.isArray(role.permissions)) {
-        // Aplanar los permisos del rol al formato 'subject:action' para los checkboxes
-        selectedPermissions.value = role.permissions.flatMap(
-          (p: ApiRolePermission) =>
-            p.actions.map((action: string) => `${p.subject}:${action}`)
-        );
-      } else {
-        selectedPermissions.value = [];
-      }
-    },
-    { immediate: true }
-  ); // Ejecutar inmediatamente si ya hay un selectedRoleId al inicio
-
-  onMounted(async () => {
-    await fetchAllPermissions();
+// Utilidad para agrupar permisos y convertirlos al formato correcto
+function groupPermissions(flatPermissions: string[]) {
+  const grouped: Record<string, Set<string>> = {};
+  flatPermissions.forEach((perm) => {
+    const [subject, action] = perm.split(':');
+    if (!grouped[subject]) grouped[subject] = new Set();
+    grouped[subject].add(action);
   });
+  return Object.entries(grouped).map(([subject, actions]) => ({
+    subject,
+    actions: Array.from(actions).join(',') // string separado por comas
+    // fields: "*" // Si necesitas enviar fields, agrégalo aquí
+  }));
+}
 
-  const showEditRoleModal = ref(false);
-  const editRoleModalData = ref<{
-    name: string;
-    description: string;
-    permissions: { subject: string; actions: string[]; fields?: string[] }[];
-  }>({
-    name: '',
-    description: '',
-    permissions: [{ subject: '', actions: [], fields: [] }],
+function groupPermissionsWithFields(flatPermissions: string[]) {
+  const grouped: Record<string, Set<string>> = {};
+  flatPermissions.forEach((perm) => {
+    const [subject, action] = perm.split(':');
+    if (!grouped[subject]) grouped[subject] = new Set();
+    grouped[subject].add(action);
   });
-  const editRoleIdForModal = ref<string | null>(null);
+  // Devuelve el formato esperado por la API, incluyendo fields
+  return Object.entries(grouped).map(([subject, actions]) => ({
+    subject,
+    actions: Array.from(actions).join(','), // string separado por comas
+    fields: Object.entries(permissionFields.value)
+      .filter(([key]) => key.startsWith(subject + ':'))
+      .map(([, fields]) => fields)
+      .filter(Boolean)[0] || undefined, // Toma el campo si existe
+  }));
+}
 
-  function openEditRoleModal(role: RoleFromApi) {
-    showEditRoleModal.value = true;
-    editRoleIdForModal.value = role.id;
-    editRoleModalData.value.name = role.role;
-    editRoleModalData.value.description = role.description;
-    editRoleModalData.value.permissions = (role.permissions || []).map((p) => ({
+function addPermission() {
+  dynamicPermissions.value.push({ subject: '', actions: '', fields: '' });
+}
+
+function removePermission(idx: number) {
+  dynamicPermissions.value.splice(idx, 1);
+}
+
+const createRole = async () => {
+  if (!newRoleName.value || !newRoleDescription.value) {
+    alert('El nombre y la descripción del rol son obligatorios.')
+    return
+  }
+  const permissions = dynamicPermissions.value
+    .filter(p => p.subject && p.actions)
+    .map(p => ({
       subject: p.subject,
-      actions: p.actions
-        ? String(p.actions)
-            .split(',')
-            .map((a) => a.trim())
-        : [],
-      fields: (p as any).fields
-        ? String((p as any).fields)
-            .split(',')
-            .map((f: string) => f.trim())
-        : [],
+      actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
+      ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
+        ? { fields: p.fields.join(',') }
+        : {})
     }));
+  if (permissions.length === 0) {
+    alert('Debes agregar al menos un permiso válido.')
+    return
   }
-
-  function closeEditRoleModal() {
-    showEditRoleModal.value = false;
-    editRoleIdForModal.value = null;
-    editRoleModalData.value.name = '';
-    editRoleModalData.value.description = '';
-    editRoleModalData.value.permissions = [
-      { subject: '', actions: [], fields: [] },
-    ];
+  try {
+    const payload = {
+      name: newRoleName.value,
+      description: newRoleDescription.value,
+      permissions,
+    };
+    await createRoleApi(payload)
+    newRoleName.value = ''
+    newRoleDescription.value = ''
+    dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+    await fetchAllRoles() // Recargar roles
+    alert('Rol creado con éxito.')
+  } catch (error) {
+    console.error('Error creating role:', error)
+    alert('Error al crear el rol.')
   }
+}
 
-  function addEditRoleModalPermission() {
-    editRoleModalData.value.permissions.push({
-      subject: '',
-      actions: [],
-      fields: [],
-    });
+const assignPermissions = async () => {
+  if (!selectedRoleId.value) {
+    alert('Por favor, selecciona un rol primero.')
+    return
   }
-
-  function removeEditRoleModalPermission(idx: number) {
-    editRoleModalData.value.permissions.splice(idx, 1);
+  try {
+    const permissions = groupPermissions(selectedPermissions.value);
+    await assignPermissionsApi(selectedRoleId.value, permissions);
+    selectedPermissions.value = []
+    await fetchAllRoles() // Recargar roles para ver los cambios
+    alert('Permisos asignados con éxito.')
+  } catch (error) {
+    console.error('Error assigning permissions:', error)
+    alert('Error al asignar permisos.')
   }
+}
 
-  const saveEditRoleModal = async () => {
-    if (!editRoleIdForModal.value) return;
-    const { name, description, permissions } = editRoleModalData.value;
-    if (!name || !description) {
-      alert('El nombre y la descripción no pueden estar vacíos.');
-      return;
+// Edición de roles
+function startEditRole(role: RoleFromApi) {
+  editingRoleId.value = role.id;
+    editRoleFields.value[role.id] = {
+    name: role.role,
+    description: role.description,
+    };
+}
+
+
+const saveEditRole = async (role: RoleFromApi) => {
+  const fields = editRoleFields.value[role.id]
+  if (!fields.name || !fields.description) {
+    alert('El nombre y la descripción no pueden estar vacíos.')
+    return
+  }
+  try {
+    // Si quieres permitir editar permisos junto con nombre/desc, usa selectedPermissions
+    const permissions = groupPermissions(selectedPermissions.value)
+    const payload = {
+      name: fields.name,
+      description: fields.description,
+      permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
     }
-    const cleanPermissions = permissions
-      .filter((p) => p.subject && p.actions && p.actions.length > 0)
-      .map((p) => ({
-        subject: p.subject,
-        actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
-        ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
-          ? { fields: p.fields.join(',') }
-          : {}),
-      }));
+    await updateRoleApi(role.id, payload)
+    editingRoleId.value = null
+    delete editRoleFields.value[role.id]
+    await fetchAllRoles()
+    alert('Rol actualizado con éxito.')
+  } catch (error) {
+    console.error('Error saving role:', error)
+    alert('Error al actualizar rol.')
+  }
+}
+
+const cancelEditRole = () => {
+  editingRoleId.value = null
+  editRoleFields.value = {}
+}
+
+const deleteRole = async (roleId: string) => {
+  if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
     try {
-      await updateRoleApi(editRoleIdForModal.value, {
-        name,
-        description,
-        permissions: cleanPermissions,
-      });
-      closeEditRoleModal();
-      await fetchAllRoles();
-      alert('Rol actualizado con éxito.');
+      await deleteRoleApi(roleId)
+      await fetchAllRoles()
+      if (selectedRoleId.value === roleId) {
+        selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
+      }
+      alert('Rol eliminado con éxito.')
     } catch (error) {
-      alert('Error al actualizar rol.');
+      console.error('Error deleting role:', error)
+      alert('Error al eliminar rol.')
     }
-  };
-
-  const roleColumns = [
-    {
-      key: 'role',
-      label: 'Nombre',
-      thClass: 'text-center text-lg',
-      tdClass: 'text-left text-base w-[220px]',
-    },
-    {
-      key: 'description',
-      label: 'Descripción',
-      thClass: 'text-center text-lg',
-      tdClass: 'text-left text-base w-[320px]',
-    },
-    // { key: 'permissions', label: 'Permisos', ... } // Eliminado
-    {
-      key: 'actions',
-      label: 'Acciones',
-      thClass: 'text-center text-lg',
-      tdClass: 'text-left text-base w-[180px]',
-    },
-  ];
-
-  function resetRoleForm() {
-    newRoleName.value = '';
-    newRoleDescription.value = '';
-    dynamicPermissions.value = [{ subject: '', actions: [], fields: [] }];
   }
+}
 
-  const showNewRoleModal = ref(false);
-
-  function closeNewRoleModal() {
-    showNewRoleModal.value = false;
-    resetRoleForm();
+watch(selectedRoleId, (roleId) => {
+  if (!roleId) {
+    selectedPermissions.value = []
+    return
   }
-
-  const search = ref('');
-
-  const filteredRoles = computed(() => {
-    if (!search.value) return roles.value;
-    const term = search.value.toLowerCase();
-    return roles.value.filter(
-      (role) =>
-        (role.role && String(role.role).toLowerCase().includes(term)) ||
-        (role.description &&
-          String(role.description).toLowerCase().includes(term)) ||
-        (Array.isArray(role.permissions) &&
-          role.permissions.some(
-            (p) =>
-              (p.subject && String(p.subject).toLowerCase().includes(term)) ||
-              (Array.isArray(p.actions)
-                ? p.actions.some((a) => String(a).toLowerCase().includes(term))
-                : typeof p.actions === 'string'
-                ? String(p.actions).toLowerCase().includes(term)
-                : false)
-          ))
-    );
-  });
-
-  const subjectOptions = [
-    'SystemUser',
-    'LabUser',
-    'Lab',
-    'Role',
-    'ActionHistory',
-    'Patient',
-    'MedicHistory',
-    'RequestMedicTest',
-    'MedicTestCatalog',
-    'all',
-  ];
-
-  const actionsOptions = [
-    'create',
-    'read',
-    'update',
-    'delete',
-    'manage',
-    'set_state',
-  ];
-
-  const showRoleDetailsModal = ref(false);
-  const selectedRole = ref<RoleFromApi | null>(null);
-
-  function onRowClick(event: { item: RoleFromApi }) {
-    // Evita abrir el modal si el click fue en los botones de acción
-    // (esto ya se maneja con @click.stop en los botones)
-    selectedRole.value = event.item;
-    showRoleDetailsModal.value = true;
+  const role = roles.value.find((r: RoleFromApi) => r.id === roleId)
+  if (role && Array.isArray(role.permissions)) {
+    // Aplanar los permisos del rol al formato 'subject:action' para los checkboxes
+    selectedPermissions.value = role.permissions.flatMap((p: ApiRolePermission) =>
+      p.actions.map((action: string) => `${p.subject}:${action}`)
+    )
+  } else {
+    selectedPermissions.value = []
   }
+}, { immediate: true }) // Ejecutar inmediatamente si ya hay un selectedRoleId al inicio
 
-  // Opcional: resalta la fila seleccionada
-  function getRowClass(row: RoleFromApi) {
-    return selectedRole.value && selectedRole.value.id === row.id
-      ? 'bg-gray-100'
-      : '';
+onMounted(async () => {
+  await fetchAllPermissions()
+})
+
+const showEditRoleModal = ref(false)
+const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string; fields?: string }[] }>({
+  name: '',
+  description: '',
+  permissions: [{ subject: '', actions: '', fields: '' }]
+})
+const editRoleIdForModal = ref<string | null>(null)
+
+function openEditRoleModal(role: RoleFromApi) {
+  showEditRoleModal.value = true
+  editRoleIdForModal.value = role.id
+  editRoleModalData.value.name = role.role
+  editRoleModalData.value.description = role.description
+  editRoleModalData.value.permissions = (role.permissions || []).map(p => ({
+    subject: p.subject,
+    actions: Array.isArray(p.actions) ? p.actions.join(',') : (p.actions ?? ''),
+    fields: (p as any).fields ?? ''
+  }))
+}
+
+function closeEditRoleModal() {
+  showEditRoleModal.value = false
+  editRoleIdForModal.value = null
+  editRoleModalData.value.name = ''
+  editRoleModalData.value.description = ''
+  editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
+}
+
+function addEditRoleModalPermission() {
+  editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
+}
+
+function removeEditRoleModalPermission(idx: number) {
+  editRoleModalData.value.permissions.splice(idx, 1)
+}
+
+const saveEditRoleModal = async () => {
+  if (!editRoleIdForModal.value) return
+  const { name, description, permissions } = editRoleModalData.value
+  if (!name || !description) {
+    alert('El nombre y la descripción no pueden estar vacíos.')
+    return
   }
-
-  // Diccionarios de traducción para subject, actions y fields
-  const subjectLabels: Record<string, string> = {
-    SystemUser: 'Usuario del Sistema',
-    LabUser: 'Usuario de Laboratorio',
-    Lab: 'Laboratorio',
-    Role: 'Rol',
-    ActionHistory: 'Historial de Acciones',
-    Patient: 'Paciente',
-    MedicHistory: 'Historia Médica',
-    RequestMedicTest: 'Solicitud de Examen',
-    MedicTestCatalog: 'Catálogo de Exámenes',
-    all: 'Todos',
-  };
-
-  const actionsLabels: Record<string, string> = {
-    create: 'Crear',
-    read: 'Leer',
-    update: 'Actualizar',
-    delete: 'Eliminar',
-    manage: 'Gestionar',
-    set_state: 'Cambiar Estado',
-  };
-
-  const fieldsLabels: Record<string, string> = {
-    // SystemUser
-    uuid: 'UUID',
-    ci: 'Cédula',
-    name: 'Nombre',
-    lastName: 'Apellido',
-    email: 'Correo',
-    password: 'Contraseña',
-    salt: 'Salt',
-    isActive: 'Activo',
-    lastAccess: 'Último Acceso',
-    // LabUser
-    systemUserUuid: 'Usuario Sistema UUID',
-    roleId: 'ID de Rol',
-    // Lab
-    dbName: 'Nombre BD',
-    status: 'Estado',
-    rif: 'RIF',
-    dir: 'Dirección',
-    phoneNums: 'Teléfonos',
-    logoPath: 'Logo',
-    createdAt: 'Creado',
-    // Role
-    role: 'Rol',
-    description: 'Descripción',
-    permissions: 'Permisos',
-    // ActionHistory
-    action: 'Acción',
-    details: 'Detalles',
-    entity: 'Entidad',
-    recordEntityId: 'ID de Entidad',
-    operationData: 'Datos de Operación',
-    madeAt: 'Fecha',
-    labUserId: 'ID Usuario Lab',
-    // Patient
-    secondName: 'Segundo Nombre',
-    secondLastName: 'Segundo Apellido',
-    gender: 'Género',
-    birthDate: 'Fecha de Nacimiento',
-    // MedicHistory
-    allergies: 'Alergias',
-    pathologies: 'Patologías',
-    patientId: 'ID Paciente',
-    // RequestMedicTest
-    requestedAt: 'Solicitado',
-    completedAt: 'Completado',
-    state: 'Estado',
-    priority: 'Prioridad',
-    resultProperties: 'Propiedades de Resultado',
-    observation: 'Observación',
-    medicHistoryId: 'ID Historia Médica',
-    medicTestCatalogId: 'ID Catálogo Examen',
-    // MedicTestCatalog
-    price: 'Precio',
-    supplies: 'Insumos',
-  };
-
-  // Helpers para mostrar los labels traducidos
-  function getSubjectLabel(subject: string) {
-    return subjectLabels[subject] || subject;
+  const cleanPermissions = permissions
+    .filter(p => p.subject && p.actions)
+    .map(p => ({
+      subject: p.subject,
+      actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
+      ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
+        ? { fields: p.fields.join(',') }
+        : {})
+    }))
+  try {
+    await updateRoleApi(editRoleIdForModal.value, {
+      name,
+      description,
+      permissions: cleanPermissions
+    })
+    closeEditRoleModal()
+    await fetchAllRoles()
+    alert('Rol actualizado con éxito.')
+  } catch (error) {
+    alert('Error al actualizar rol.')
   }
-  function getActionLabel(action: string) {
-    return actionsLabels[action] || action;
-  }
-  function getFieldLabel(field: string) {
-    return fieldsLabels[field] || field;
-  }
+}
+
+const roleColumns = [
+  { key: 'role', label: 'Nombre', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[220px]' },
+  { key: 'description', label: 'Descripción', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[320px]' },
+  // { key: 'permissions', label: 'Permisos', ... } // Eliminado
+  { key: 'actions', label: 'Acciones', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[180px]' },
+]
+
+function resetRoleForm() {
+  newRoleName.value = ''
+  newRoleDescription.value = ''
+  dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+}
+
+const showNewRoleModal = ref(false)
+
+function closeNewRoleModal() {
+  showNewRoleModal.value = false
+  resetRoleForm()
+}
+
+const search = ref('')
+
+const filteredRoles = computed(() => {
+  if (!search.value) return roles.value
+  const term = search.value.toLowerCase()
+  return roles.value.filter(role =>
+    (role.role && String(role.role).toLowerCase().includes(term)) ||
+    (role.description && String(role.description).toLowerCase().includes(term)) ||
+    (Array.isArray(role.permissions) &&
+      role.permissions.some(p =>
+        (p.subject && String(p.subject).toLowerCase().includes(term)) ||
+        (Array.isArray(p.actions)
+          ? p.actions.some(a => String(a).toLowerCase().includes(term))
+          : typeof p.actions === 'string'
+            ? String(p.actions).toLowerCase().includes(term)
+            : false
+        )
+      )
+    )
+  )
+})
+
+const subjectOptions = [
+  'SystemUser',
+  'LabUser',
+  'Lab',
+  'Role',
+  'ActionHistory',
+  'Patient',
+  'MedicHistory',
+  'RequestMedicTest',
+  'MedicTestCatalog',
+  'all'
+];
+
+const actionsOptions = [
+  'create',
+  'read',
+  'update',
+  'delete',
+  'manage',
+  'set_state'
+];
+
+const showRoleDetailsModal = ref(false)
+const selectedRole = ref<RoleFromApi | null>(null)
+
+function onRowClick(event: { item: RoleFromApi }) {
+  // Evita abrir el modal si el click fue en los botones de acción
+  // (esto ya se maneja con @click.stop en los botones)
+  selectedRole.value = event.item
+  showRoleDetailsModal.value = true
+}
+
+// Opcional: resalta la fila seleccionada
+function getRowClass(row: RoleFromApi) {
+  return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
+}
 </script>
 
 <style scoped>
-  .role-management {
-    max-width: 100vw;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-  .va-card-title {
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  .input-xs {
-    min-width: 120px;
-    max-width: 180px;
-  }
+.role-management {
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 2rem;
+}
+.va-card-title {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+.input-xs {
+  min-width: 120px;
+  max-width: 180px;
+}
 
-  /* Centrar los títulos de la tabla y alinear el contenido a la izquierda */
-  .custom-roles-table ::v-deep th {
-    text-align: center !important;
-  }
-  .custom-roles-table ::v-deep td {
-    text-align: left !important;
-  }
+/* Centrar los títulos de la tabla y alinear el contenido a la izquierda */
+.custom-roles-table ::v-deep th {
+  text-align: center !important;
+}
+.custom-roles-table ::v-deep td {
+  text-align: left !important;
+}
 
-  /* Aumenta el tamaño de fuente de los encabezados de la tabla */
-  .va-data-table thead th,
-  ::v-deep(.va-data-table__table-th) {
-    font-size: 0.9rem !important;
-    font-weight: bold !important;
-    /* Puedes ajustar el tamaño aquí */
-  }
+/* Aumenta el tamaño de fuente de los encabezados de la tabla */
+.va-data-table thead th,
+::v-deep(.va-data-table__table-th) {
+  font-size: 0.9rem !important;
+  font-weight: bold !important;
+  /* Puedes ajustar el tamaño aquí */
+}
 </style>
