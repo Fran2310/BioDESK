@@ -16,6 +16,7 @@
           class="w-full h-full min-h-[55vh] min-w-650 relative flex flex-col items-center justify-center"
           color="primary"
           controls-hidden
+          linear
         >
           <!--STEP 0-->
           <template #step-content-0>
@@ -31,7 +32,8 @@
                   autocomplete="email"
                   placeholder="xample@xample.com"
                   :rules="[validator.required, validator.email]"
-                  class="mb-4 mt-2 w-full"
+                  class="mt-2 w-full"
+                  style="min-height: 4.5rem"
                   label="Email"
                   type="email"
                   color="primary"
@@ -82,8 +84,8 @@
                   placeholder="XXXXXX"
                   :rules="[validator.required, validator.alphanumericUppercase]"
                   class="w-full"
+                  style="min-height: 4.5rem"
                   label="Código"
-                  counter
                   color="primary"
                 >
                   <template #prependInner>
@@ -105,6 +107,7 @@
                     :type="isPasswordVisible.value ? 'text' : 'password'"
                     color="primary"
                     class="w-full"
+                    style="min-height: 5.75rem"
                     counter
                     label="Nueva contraseña"
                     @clickAppendInner.stop="
@@ -143,6 +146,7 @@
                     :type="isPasswordVisible.value ? 'text' : 'password'"
                     color="primary"
                     class="w-full"
+                    style="min-height: 5.75rem"
                     counter
                     label="Repetir contraseña"
                     @clickAppendInner.stop="
@@ -166,7 +170,7 @@
                   </VaInput>
                 </VaValue>
                 <!-- Botón de envío -->
-                <div class="flex justify-center w-full mt-4">
+                <div class="flex justify-center w-full">
                   <VaButton
                     gradient
                     class="w-full"
@@ -215,6 +219,7 @@
   // Watch para controlar la animación y bloquear avance manual
   watch(step, (newStep, oldStep) => {
     // Bloquear avance manual al step 1 si no se ha enviado el código
+
     if (newStep === 1 && !codeSent.value) {
       step.value = oldStep; // Revertir el cambio
       initToast(
@@ -224,6 +229,7 @@
       );
       return;
     }
+
     previousStep.value = oldStep;
     transitionName.value = newStep > oldStep ? 'slide-left' : 'slide-right';
   });
