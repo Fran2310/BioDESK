@@ -88,31 +88,36 @@ const submitForm = async () => {
 </script>
 
 <template>
-  <div class="p-4 md:p-6 max-w-3xl mx-auto">
-    <h1 class="text-center text-2xl font-semibold mb-4">Subir Resultados del Examen</h1>
+  <div class="p-6 md:p-10 max-w-5xl mx-auto">
+    <h1 class="text-center text-3xl font-bold mb-6 text-primary">
+      Subir Resultados del Examen
+    </h1>
 
-    <VaCard>
+    <VaCard class="shadow-2xl border border-gray-100 rounded-2xl">
       <VaCardContent>
-        <div v-if="isLoading" class="flex justify-center items-center py-12">
-          <VaProgressCircle indeterminate />
+        <div v-if="isLoading" class="flex justify-center items-center py-20">
+          <VaProgressCircle indeterminate size="large" color="primary" />
         </div>
 
-        <div v-else>
-          <div class="space-y-6">
+        <div v-else class="space-y-10 animate-fade-in">
+          <!-- Result Properties Dinámicos -->
+          <div>
+            <h2 class="text-xl font-semibold text-primary mb-4 flex items-center gap-2">
+              <i class="va-icon va-icon-lab" /> Parámetros del Examen
+            </h2>
 
-            <!-- Result Properties Dinámicos -->
-            <div class="grid grid-cols-1 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div
                 v-for="property in catalog?.properties"
                 :key="`prop-${property.id}-${property.name}`"
-                class="p-4 border border-gray-200 rounded-lg shadow-sm"
+                class="p-5 bg-white border border-gray-200 rounded-xl shadow transition hover:shadow-md"
               >
                 <div class="flex justify-between items-center mb-2">
-                  <h3 class="font-semibold text-lg text-primary">
+                  <h3 class="font-medium text-lg text-primary">
                     {{ property.name }}
                   </h3>
                   <span v-if="property.unit" class="text-sm text-gray-500 italic">
-                    Unidad: {{ property.unit }}
+                    {{ property.unit }}
                   </span>
                 </div>
 
@@ -120,12 +125,12 @@ const submitForm = async () => {
                   v-model="form.resultProperties[property.name]"
                   :placeholder="`Ingrese valor de ${property.name}`"
                   type="text"
+                  class="mb-2"
                 />
 
-                <!-- Referencias -->
                 <div
                   v-if="property.valueReferences?.length"
-                  class="text-xs text-gray-600 mt-2"
+                  class="text-xs text-gray-600 mt-1"
                 >
                   <strong>Valores de referencia:</strong>
                   <ul class="list-disc ml-5 mt-1">
@@ -139,32 +144,53 @@ const submitForm = async () => {
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Notas / Observaciones -->
-            <div>
-              <h3 class="font-semibold text-lg text-primary mb-1">Observaciones</h3>
-              <VaTextarea
-                v-model="form.observation"
-                placeholder="Notas adicionales del laboratorio"
-                auto-grow
-                :rows="3"
-                max-length="500"
-              />
-            </div>
+          <!-- Notas / Observaciones -->
+          <div>
+            <h2 class="text-xl font-semibold text-primary mb-2 flex items-center gap-2">
+              <i class="va-icon va-icon-edit-note" /> Observaciones
+            </h2>
 
-            <!-- Acciones -->
-            <div class="flex justify-end gap-2 mt-4">
-              <VaButton color="secondary" @click="router.back()">Cancelar</VaButton>
-              <VaButton color="primary" :loading="isLoading" @click="submitForm">
-                Guardar Resultados
-              </VaButton>
-            </div>
+            <VaTextarea
+              v-model="form.observation"
+              placeholder="Notas adicionales del laboratorio"
+              auto-grow
+              :rows="4"
+              max-length="500"
+            />
+          </div>
 
-            <!-- Error -->
-            <div v-if="error" class="text-danger text-center mt-2">{{ error }}</div>
+          <!-- Acciones -->
+          <div class="flex justify-end gap-4 pt-4">
+            <VaButton
+              color="danger"
+              size="medium"
+              class="rounded font-semibold"
+              @click="router.back()"
+            >
+              <template #prepend>
+                <va-icon name="va-close" class="mr-2"/>
+              </template>
+              Cancelar
+            </VaButton>
+
+            <VaButton
+              color="primary"
+              size="medium"
+              class="rounded font-semibold"
+              :loading="isLoading"
+              @click="submitForm"
+            >
+              <template #prepend>
+                <va-icon name="va-check-circle" class="mr-2"/>
+              </template>
+              Guardar Resultados
+            </VaButton>
           </div>
         </div>
       </VaCardContent>
     </VaCard>
   </div>
 </template>
+

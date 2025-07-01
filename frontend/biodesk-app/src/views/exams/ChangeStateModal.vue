@@ -186,7 +186,5 @@ function priorityColor(priority: string) {
       <VaButton color="secondary" @click="closeModal">Cancelar</VaButton>
       <VaButton color="primary" :loading="isLoading" @click="submitStateChange">Guardar</VaButton>
     </div>
-
-    <div v-if="error" class="text-danger text-center">{{ error }}</div>
   </div>
 </template>
