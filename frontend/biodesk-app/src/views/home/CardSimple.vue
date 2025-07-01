@@ -78,7 +78,7 @@
         filter: brightness(0.90);
         background-color: var(--va-background-border);
         transition: filter 0.1s, background-color 0.1s;
-        transform: scale(0.95)
+        transform: scale(0.97)
     }
 
     .text-card {
