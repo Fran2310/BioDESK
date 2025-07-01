@@ -1,90 +1,102 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'vuestic-ui'
-import { medicTestRequestApi, medicTestCatalogApi } from '@/services/api'
-import type { PatchMedicTestRequestData } from '@/services/interfaces/medicTestRequest'
+  import { ref, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { useToast } from 'vuestic-ui';
+  import { medicTestRequestApi, medicTestCatalogApi } from '@/services/api';
+  import type { PatchMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
 
-const route = useRoute()
-const router = useRouter()
-const { init: notify } = useToast()
+  const route = useRoute();
+  const router = useRouter();
+  const { init: notify } = useToast();
 
-const id = Number(route.params.id)
+  const id = Number(route.params.id);
 
-const request = ref<PatchMedicTestRequestData | null>(null)
-const catalog = ref<any>(null)
+  const request = ref<PatchMedicTestRequestData | null>(null);
+  const catalog = ref<any>(null);
 
-const isLoading = ref(true)
-const error = ref<string | null>(null)
+  const isLoading = ref(true);
+  const error = ref<string | null>(null);
 
-function goToExams() {
-    router.push({ name: 'Exams'});
+  function goToExams() {
+    router.push({ name: 'Exams' });
   }
 
-const form = ref({
-  resultProperties: {} as Record<string, string>,
-  observation: ''
-})
+  const form = ref({
+    resultProperties: {} as Record<string, string>,
+    observation: '',
+  });
 
-const fetchRequest = async () => {
-  try {
-    const res = await medicTestRequestApi.getMedicTestRequestById(String(id))
-    request.value = res.data
-    form.value.observation = request.value.observation || ''
+  const fetchRequest = async () => {
+    try {
+      const res = await medicTestRequestApi.getMedicTestRequestById(String(id));
+      request.value = res.data;
+      form.value.observation = request.value.observation || '';
 
-    await fetchCatalog(res.data.medicTestCatalogId)
+      await fetchCatalog(res.data.medicTestCatalogId);
 
-    // Inicializar campos dinámicamente desde propiedades del catálogo
-    catalog.value.properties.forEach((prop: any) => {
-      const propName = String(prop.name) // Asegurar que es string
-      form.value.resultProperties[propName] = request.value.resultProperties?.[propName] || ''
-    })
-  } catch (e: any) {
-    error.value = e.message || 'Error al cargar los resultados.'
-    notify({ message: error.value, color: 'danger' })
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const fetchCatalog = async (catalogId: number) => {
-  try {
-    const res = await medicTestCatalogApi.getMedicTestCatalogById(String(catalogId), true)
-    catalog.value = res.data
-  } catch (e: any) {
-    error.value = e.message || 'Error al cargar el catálogo.'
-    notify({ message: error.value, color: 'danger' })
-  }
-}
-
-onMounted(() => {
-  fetchRequest()
-})
-
-const submitForm = async () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const payload = {
-      resultProperties: Object.fromEntries(
-        Object.entries(form.value.resultProperties).filter(([_, v]) => v.trim() !== '')
-      ),
-      observation: form.value.observation
+      // Inicializar campos dinámicamente desde propiedades del catálogo
+      catalog.value.properties.forEach((prop: any) => {
+        const propName = String(prop.name); // Asegurar que es string
+        form.value.resultProperties[propName] =
+          request.value.resultProperties?.[propName] || '';
+      });
+    } catch (e: any) {
+      error.value = e.message || 'Error al cargar los resultados.';
+      notify({ message: error.value, color: 'danger' });
+    } finally {
+      isLoading.value = false;
     }
+  };
 
-    await medicTestRequestApi.updateMedicTestRequest(String(id), payload)
-    await medicTestRequestApi.updateMedicTestRequestState(String(id), 'TO_VERIFY') // De una vez actualizar su estado
+  const fetchCatalog = async (catalogId: number) => {
+    try {
+      const res = await medicTestCatalogApi.getMedicTestCatalogById(
+        String(catalogId),
+        true
+      );
+      catalog.value = res.data;
+    } catch (e: any) {
+      error.value = e.message || 'Error al cargar el catálogo.';
+      notify({ message: error.value, color: 'danger' });
+    }
+  };
 
-    notify({ message: 'Resultados actualizados correctamente.', color: 'success' })
-    goToExams()
-  } catch (e: any) {
-    error.value = e.message || 'Error al actualizar los resultados.'
-    notify({ message: error.value, color: 'danger' })
-  } finally {
-    isLoading.value = false
-  }
-}
+  onMounted(() => {
+    fetchRequest();
+  });
+
+  const submitForm = async () => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const payload = {
+        resultProperties: Object.fromEntries(
+          Object.entries(form.value.resultProperties).filter(
+            ([_, v]) => v.trim() !== ''
+          )
+        ),
+        observation: form.value.observation,
+      };
+
+      await medicTestRequestApi.updateMedicTestRequest(String(id), payload);
+      await medicTestRequestApi.updateMedicTestRequestState(
+        String(id),
+        'TO_VERIFY'
+      ); // De una vez actualizar su estado
+
+      notify({
+        message: 'Resultados actualizados correctamente.',
+        color: 'success',
+      });
+      goToExams();
+    } catch (e: any) {
+      error.value = e.message || 'Error al actualizar los resultados.';
+      notify({ message: error.value, color: 'danger' });
+    } finally {
+      isLoading.value = false;
+    }
+  };
 </script>
 
 <template>
@@ -102,7 +114,9 @@ const submitForm = async () => {
         <div v-else class="space-y-10 animate-fade-in">
           <!-- Result Properties Dinámicos -->
           <div>
-            <h2 class="text-xl font-semibold text-primary mb-4 flex items-center gap-2">
+            <h2
+              class="text-xl font-semibold text-primary mb-4 flex items-center gap-2"
+            >
               <i class="va-icon va-icon-lab" /> Parámetros del Examen
             </h2>
 
@@ -116,7 +130,10 @@ const submitForm = async () => {
                   <h3 class="font-medium text-lg text-primary">
                     {{ property.name }}
                   </h3>
-                  <span v-if="property.unit" class="text-sm text-gray-500 italic">
+                  <span
+                    v-if="property.unit"
+                    class="text-sm text-gray-500 italic"
+                  >
                     {{ property.unit }}
                   </span>
                 </div>
@@ -134,10 +151,7 @@ const submitForm = async () => {
                 >
                   <strong>Valores de referencia:</strong>
                   <ul class="list-disc ml-5 mt-1">
-                    <li
-                      v-for="(ref, i) in property.valueReferences"
-                      :key="i"
-                    >
+                    <li v-for="(ref, i) in property.valueReferences" :key="i">
                       {{ ref.range }} ({{ ref.gender }}, {{ ref.ageGroup }})
                     </li>
                   </ul>
@@ -147,8 +161,10 @@ const submitForm = async () => {
           </div>
 
           <!-- Notas / Observaciones -->
-          <div>
-            <h2 class="text-xl font-semibold text-primary mb-2 flex items-center gap-2">
+          <div class="w-full">
+            <h2
+              class="text-xl font-semibold text-primary mb-2 flex items-center gap-2"
+            >
               <i class="va-icon va-icon-edit-note" /> Observaciones
             </h2>
 
@@ -158,6 +174,7 @@ const submitForm = async () => {
               auto-grow
               :rows="4"
               max-length="500"
+              class="w-full"
             />
           </div>
 
@@ -170,7 +187,7 @@ const submitForm = async () => {
               @click="router.back()"
             >
               <template #prepend>
-                <va-icon name="va-close" class="mr-2"/>
+                <va-icon name="va-close" class="mr-2" />
               </template>
               Cancelar
             </VaButton>
@@ -183,7 +200,7 @@ const submitForm = async () => {
               @click="submitForm"
             >
               <template #prepend>
-                <va-icon name="va-check-circle" class="mr-2"/>
+                <va-icon name="va-check-circle" class="mr-2" />
               </template>
               Guardar Resultados
             </VaButton>
@@ -193,4 +210,3 @@ const submitForm = async () => {
     </VaCard>
   </div>
 </template>
-
