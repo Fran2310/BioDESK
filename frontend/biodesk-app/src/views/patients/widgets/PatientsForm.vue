@@ -140,14 +140,14 @@
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaInput
             v-model="newUser.name"
-            label="Name"
+            label="Nombre"
             class="w-full sm:w-1/2"
             :rules="[validator.required]"
             name="name"
           />
           <VaInput
             v-model="newUser.lastName"
-            label="Last Name"
+            label="Apellido"
             class="w-full sm:w-1/2"
             :rules="[validator.required]"
             name="lastName"
@@ -157,13 +157,13 @@
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaInput
             v-model="newUser.secondName"
-            label="Second Name"
+            label="Segundo Nombre"
             class="w-full sm:w-1/2"
             name="secondName"
           />
           <VaInput
             v-model="newUser.secondLastName"
-            label="Second Last Name"
+            label="Segundo Apellido"
             class="w-full sm:w-1/2"
             name="secondLastName"
           />
@@ -190,7 +190,7 @@
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaDateInput
             v-model="newUser.birthDate"
-            label="Birth Date"
+            label="Fecha de Nacimiento"
             class="w-full sm:w-1/2"
             name="birthDate"
             clearable
@@ -198,7 +198,7 @@
           />
           <VaSelect
             v-model="newUser.gender"
-            label="Gender"
+            label="Género"
             class="w-full sm:w-1/2"
             :options="['ANY', 'MALE', 'FEMALE', 'OTHER']"
             name="gender"
@@ -208,12 +208,12 @@
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <VaInput
             v-model="newUser.dir"
-            label="Address"
+            label="Dirección"
             class="w-full sm:w-1/2"
             name="dir"
           />
           <div class="w-full sm:w-1/2">
-            <label class="block mb-1 font-semibold">Phone Numbers</label>
+            <label class="block mb-1 font-semibold">Números de Teléfono</label>
             <div
               v-for="(_, index) in newUser.phoneNums"
               :key="index"
@@ -221,7 +221,7 @@
             >
               <VaInput
                 v-model="newUser.phoneNums[index]"
-                label="Phone"
+                label="Teléfono"
                 :rules="[validator.required]"
                 :name="`phone-${index}`"
               />
