@@ -82,3 +82,28 @@ export async function validateLogoFile(file: File) {
     throw error;
   }
 }
+
+/**
+ * Formatea el RIF a Letra-numeros-ultimoNumero.
+ * @param rif RIF a formatear.
+ * @returns RIF formateado.
+ */
+export function formatRif(rif: string): string {
+  // Elimina espacios y guiones
+  const clean = rif.replace(/[\s-]/g, '');
+  // Extrae la letra inicial (si existe)
+  const letterMatch = clean.match(/^[A-Za-z]/);
+  const letter = letterMatch ? letterMatch[0].toUpperCase() : 'J';
+  // Extrae todos los dígitos
+  const digits = clean.replace(/[^0-9]/g, '');
+  if (!digits.length) return rif; // Si no hay dígitos, retorna el original
+
+  // Si hay solo 1 dígito, lo pone como último
+  if (digits.length === 1) return `${letter}-0-${digits}`;
+
+  // Si hay menos de 9, toma todo menos el último como cuerpo, el último como dígito final
+  const cuerpo = digits.length > 1 ? digits.slice(0, -1) : '';
+  const ultimo = digits[digits.length - 1];
+
+  return `${letter}-${cuerpo}-${ultimo}`;
+}

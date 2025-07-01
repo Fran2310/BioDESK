@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-    <VaCard class="mb-4 shadow-lg min-w-full" v-if="userData">
+    <VaCard class="mb-4 shadow-2xl min-w-full" v-if="userData">
       <VaCardTitle class="flex justify-between items-center">
         <div class="text-2xl font-bold">
           {{ fullName }}
