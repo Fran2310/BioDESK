@@ -123,7 +123,11 @@
       </VaCardActions>
     </VaCard>
 
-    <div v-if="loading" class="loading-overlay">
+    <!-- Loading overlay -->
+    <div
+      v-else-if="loading"
+      class="text-center text-gray-500 mt-6 flex justify-center items-center"
+    >
       <VaProgressCircle indeterminate size="large" color="primary" />
     </div>
 
@@ -540,16 +544,6 @@
   .va-card {
     max-width: 600px;
     margin: auto;
-  }
-
-  .loading-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    background: rgba(255, 255, 255, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   ::v-deep(.va-file-upload-list--gallery) {
