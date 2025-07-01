@@ -191,28 +191,48 @@
               <div
                 v-for="(reference, idx) in referenceData"
                 :key="idx"
-                class="property-block "
+                class="property-block mt-4"
               >
-                <div class="grid grid-cols-7 gap-2 items-center">
-                  <div class="col-span-2 property-name">{{ reference.name }}</div>
-                  <div class="col-span-1 property-unit">{{ reference.unit }}</div>
-                  <div class="col-span-1 property-range">
-                    {{ reference.variations[0]?.ageGroup }}
+                <!-- Encabezado -->
+                <div class="grid grid-cols-3 gap-2 items-center mb-2">
+                  <div class="col-span-2 font-semibold property-name">
+                    {{ reference.name }}
                   </div>
-                  <div class="col-span-1 property-range">
-                    {{ reference.variations[0]?.gender }}
+                  <div class="col-span-1 property-unit">
+                    {{ reference.unit }}
                   </div>
-                  <div class="col-span-1 property-range">
-                    {{ reference.variations[0]?.range }}
-                  </div>
-                  <va-button
-                    icon="delete"
-                    color="danger"
-                    size="small"
-                    @click="removeReference(idx)"
-                    class="col-span-1"
-                  />
                 </div>
+
+                <!-- Variaciones como chips -->
+                <VaChip
+                  v-for="(variation, vIdx) in reference.variations"
+                  :key="vIdx"
+                  outline
+                  size="small"
+                  class="flex items-center gap-2 px-2"
+                >
+                  <!-- Circulito según género -->
+                    <span
+                      :class="[
+                        'inline-block w-3 h-3 rounded-full mr-2',
+                        variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
+                        variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
+                        variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
+                        'bg-purple-300'
+                      ]"
+                    ></span>
+
+                  {{ variation.gender }}/{{ variation.ageGroup }}
+                </VaChip>
+
+                <!-- Botón eliminar propiedad -->
+                <va-button
+                  icon="delete"
+                  color="danger"
+                  size="small"
+                  @click="removeReference(idx)"
+                  class="mt-2 self-start"
+                />
               </div>
             </div>
 
