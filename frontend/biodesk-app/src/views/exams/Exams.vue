@@ -68,6 +68,10 @@
   const showStateModal = ref(false);
   const selectedExamId = ref<number | null>(null);
 
+  const showCompleteModal = ref(false);
+  const examToComplete = ref<ExamRow | null>(null);
+  const isCompletingExam = ref(false);
+
   const showDeleteModal = ref(false);
   const examToDelete = ref<ExamRow | null>(null);
 
@@ -234,10 +238,37 @@
     showStateModal.value = false;
   }
 
+  function onCompleteExam(exam: ExamRow) {
+    examToComplete.value = exam;
+    showCompleteModal.value = true;
+  }
+
   function onDeleteExam(exam: ExamRow) {
     examToDelete.value = exam;
     showDeleteModal.value = true;
   }
+
+  async function confirmCompleteExam() {
+  if (!examToComplete.value) return;
+  isCompletingExam.value = true;
+
+  try {
+    await medicTestRequestApi.updateMedicTestRequestState(
+      String(examToComplete.value.id),
+      'COMPLETED'
+    );
+
+    notify({ message: 'Examen completado correctamente.', color: 'success' });
+    refreshExams();
+    showCompleteModal.value = false;
+  } catch (e: any) {
+    notify({ message: e.message, color: 'danger' });
+  } finally {
+    isCompletingExam.value = false;
+    examToComplete.value = null;
+  }
+}
+
 
   async function confirmDeleteExam() {
     if (!examToDelete.value) return;
@@ -342,6 +373,15 @@
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-end">
                 <VaButton
+                  v-if="rowData.state === 'TO_VERIFY'"
+                  preset="primary"
+                  size="small"
+                  icon="check"
+                  color="success"
+                  aria-label="Completar examen"
+                  @click.stop="onCompleteExam(rowData)"
+                />
+                <VaButton
                   v-if="rowData.state === 'IN_PROCESS'"
                   preset="primary"
                   size="small"
@@ -435,6 +475,59 @@
             @close="showStateModal = false"
             @updated="handleStateUpdated"
           />
+        </VaModal>
+
+        <!-- Completar examen Modal -->
+        <VaModal v-model="showCompleteModal" hide-default-actions>
+          <div>
+          <h2 class="va-h4 mb-4 text-success">Confirmar completar examen</h2>
+          <p class="mb-4">¿Está seguro de que desea completar este examen?</p>
+
+          <div v-if="examToComplete" class="space-y-2 mb-4 text-sm">
+            <div>
+              <strong>Paciente:</strong> {{ examToComplete.medicHistory.patient.name }} {{ examToComplete.medicHistory.patient.lastName }}
+              (CI: {{ examToComplete.medicHistory.patient.ci }})
+            </div>
+            <div>
+              <strong>Examen:</strong> {{ examToComplete.medicTestCatalog.name }}
+            </div>
+            <div>
+              <strong>Descripción:</strong> {{ examToComplete.medicTestCatalog.description }}
+            </div>
+            <div class="flex items-center gap-2">
+              <strong>Estado:</strong>
+              <va-chip size="small" :color="stateColor(examToComplete.state)">
+                {{ stateLabels[examToComplete.state] ?? examToComplete.state }}
+              </va-chip>
+            </div>
+            <div class="flex items-center gap-2">
+              <strong>Prioridad:</strong>
+              <va-chip size="small" :color="priorityColor(examToComplete.priority)">
+                {{ priorityLabels[examToComplete.priority] ?? examToComplete.priority }}
+              </va-chip>
+            </div>
+            <div>
+              <strong>Fecha de solicitud:</strong> {{ formatDate(examToComplete.requestedAt) }}
+            </div>
+            <div v-if="examToComplete.observation">
+              <strong>Observación:</strong> {{ examToComplete.observation }}
+            </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+              <VaButton color="secondary" :disabled="isCompletingExam" @click="showCompleteModal = false">
+                Cancelar
+              </VaButton>
+              <VaButton
+                color="success"
+                :loading="isCompletingExam"
+                :disabled="isCompletingExam"
+                @click="confirmCompleteExam"
+              >
+                Completar
+              </VaButton>
+            </div>
+          </div>
         </VaModal>
 
         <!-- Delete Confirmation Modal -->
