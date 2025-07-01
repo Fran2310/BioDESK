@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast, VaModal, VaSelect, VaButton, VaProgressCircle } from 'vuestic-ui'
 
-// Accept medicHistoryId as a prop from the router
-const props = defineProps<{ medicHistoryId?: string }>()
 import { medicTestRequestApi } from '@/services/api'
 import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest'
+import { Priority } from '@/services/types/global.type'
 
-import ChangeStateModal from './ChangeStateModal.vue';
+import ChangeStateModal from './ChangeStateModal.vue'
 
-import { useRouter } from 'vue-router'
+// Toast
+const { init: notify } = useToast();
 
+// Router
 const router = useRouter()
 
-const goToEditExam = (id: number) => {
-  router.push({ name: 'EditExam', params: { id } })
-}
+// Props
+const props = defineProps<{ medicHistoryId?: string }>()
 
 // Types
 interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
@@ -22,7 +24,7 @@ interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
   requestedAt: string;
   completedAt?: string;
   state: string;
-  priority: string;
+  priority: Priority;
   resultProperties: Record<string, string>;
   observation: string;
   byLabUserId: number;
@@ -32,77 +34,38 @@ interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
   lastName?: string;
 }
 
+// States
 const exams = ref<ExamRow[]>([])
 const filters = ref({ search: '' })
 const pagination = ref({ page: 1, perPage: 10, total: 0 })
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+
 const showModal = ref(false)
 const selectedExam = ref<ExamRow | null>(null)
 
+const showStateModal = ref(false)
+const selectedExamId = ref<number | null>(null)
 
+const showDeleteModal = ref(false)
+const examToDelete = ref<ExamRow | null>(null)
 
-// Fetch all exams (default)
-const fetchExams = async () => {
-  isLoading.value = true
-  error.value = null
-  try {
-    const query = {
-      offset: (pagination.value.page - 1) * pagination.value.perPage,
-      limit: pagination.value.perPage,
-      includeData: true
-    }
-    const response = await medicTestRequestApi.getMedicTestRequests(query)
-    const data = response.data
-    exams.value = data.data
-    await mergePatientInfoIntoExams()
-    pagination.value.total = data.total
-  } catch (e: any) {
-    error.value = e.message || 'Failed to fetch exams.'
-  } finally {
-    isLoading.value = false
-  }
+// Labels
+const stateLabels: Record<string, string> = {
+  PENDING: 'Pendiente',
+  IN_PROCESS: 'En proceso',
+  COMPLETED: 'Completado',
+  TO_VERIFY: 'Por verificar',
+  CANCELED: 'Cancelado',
 }
 
-// Fetch exams by medicHistoryId (search)
-const searchExams = async () => {
-  isLoading.value = true
-  error.value = null
-  try {
-    const id = filters.value.search.trim()
-    if (!id) {
-      await fetchExams()
-      return
-    }
-    const query = {
-      offset: (pagination.value.page - 1) * pagination.value.perPage,
-      limit: pagination.value.perPage,
-      includeData: true
-    }
-    const response = await medicTestRequestApi.getMedicTestRequestsByMedicHistoryId(id, query)
-    const data = response.data
-    exams.value = data.data
-    await mergePatientInfoIntoExams()
-    pagination.value.total = data.total
-  } catch (e: any) {
-    error.value = e.message || 'Failed to search exams.'
-  } finally {
-    isLoading.value = false
-  }
+const priorityLabels: Record<string, string> = {
+  HIGH: 'Alta',
+  MEDIUM: 'Media',
+  LOW: 'Baja',
 }
 
-// If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
-onMounted(() => {
-  if (props.medicHistoryId) {
-    filters.value.search = props.medicHistoryId
-    searchExams()
-  } else {
-    fetchExams()
-  }
-})
-
-const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
-
+// Helpers
 function priorityColor(priority: string) {
   switch (priority?.toUpperCase()) {
     case 'HIGH': return 'danger'
@@ -114,10 +77,10 @@ function priorityColor(priority: string) {
 
 function stateColor(state: string) {
   switch (state?.toUpperCase()) {
-    case 'PENDING': return 'warning'; // red
-    case 'TO_VERIFY': return 'info'; // yellow
-    case 'COMPLETED': return 'success'; // green
-    default: return 'info';
+    case 'PENDING': return 'warning'
+    case 'TO_VERIFY': return 'info'
+    case 'COMPLETED': return 'success'
+    default: return 'info'
   }
 }
 
@@ -134,101 +97,138 @@ function formatDate(dateString: string) {
   })
 }
 
-const showStateModal = ref(false)
-const selectedExamId = ref<number | null>(null)
+// Fetch
+const fetchExams = async () => {
+  isLoading.value = true
+  try {
+    const query = {
+      offset: (pagination.value.page - 1) * pagination.value.perPage,
+      limit: pagination.value.perPage,
+      includeData: true
+    }
+    const { data } = await medicTestRequestApi.getMedicTestRequests(query)
+    exams.value = data.data
+    await mergePatientInfoIntoExams()
+    pagination.value.total = data.total
+  } catch (e: any) {
+    notify({ message: e.message, color: 'danger' })
+  } finally {
+    isLoading.value = false
+  }
+}
 
-const openChangeStateModal = (examId: number) => {
+const searchExams = async () => {
+  isLoading.value = true
+  try {
+    const id = filters.value.search.trim()
+    const query = {
+      offset: (pagination.value.page - 1) * pagination.value.perPage,
+      limit: pagination.value.perPage,
+      includeData: true
+    }
+    const { data } = id
+      ? await medicTestRequestApi.getMedicTestRequestsByMedicHistoryId(id, query)
+      : await medicTestRequestApi.getMedicTestRequests(query)
+
+    exams.value = data.data
+    await mergePatientInfoIntoExams()
+    pagination.value.total = data.total
+  } catch (e: any) {
+    notify({ message: e.message, color: 'danger' })
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Lifecycle
+onMounted(() => {
+  if (props.medicHistoryId) {
+    filters.value.search = props.medicHistoryId
+    searchExams()
+  } else {
+    fetchExams()
+  }
+})
+
+watch(() => [pagination.value.page, pagination.value.perPage], () => {
+  const maxPage = Math.ceil(pagination.value.total / pagination.value.perPage) || 1
+  if (pagination.value.page > maxPage) pagination.value.page = 1
+  filters.value.search.trim() ? searchExams() : fetchExams()
+})
+
+// Actions
+function goToEditExam(id: number) {
+  router.push({ name: 'EditExam', params: { id } })
+}
+
+function openChangeStateModal(examId: number) {
   selectedExamId.value = examId
   showStateModal.value = true
 }
 
+function handleRowClick(event: any) {
+  if (event?.item) {
+    selectedExam.value = { ...event.item }
+    showModal.value = true
+  }
+}
 
-// Merge patient info into each exam row
 async function mergePatientInfoIntoExams() {
-  const uniqueHistoryIds = [...new Set(exams.value.map((exam) => exam.medicHistoryId))]
-  const patientInfoMap: Record<number, {ci: string, name: string, lastName: string}> = {}
-  for (const id of uniqueHistoryIds) {
+  const uniqueIds = [...new Set(exams.value.map(e => e.medicHistoryId))]
+  const patientInfoMap: Record<number, { ci: string, name: string, lastName: string }> = {}
+
+  for (const id of uniqueIds) {
     try {
-      const apiModule = await import('@/services/api')
-      const response = await apiModule.patientApi.getPatientById(String(id))
-      const { ci, name, lastName } = response.data
-      patientInfoMap[id] = { ci, name, lastName }
-    } catch (e) {
+      const { data } = await (await import('@/services/api')).patientApi.getPatientById(String(id))
+      patientInfoMap[id] = { ci: data.ci, name: data.name, lastName: data.lastName }
+    } catch {
       patientInfoMap[id] = { ci: '-', name: '-', lastName: '-' }
     }
   }
-  exams.value.forEach((exam) => {
-    const info = patientInfoMap[exam.medicHistoryId]
-    exam.ci = info?.ci || '-'
-    exam.name = info?.name || '-'
-    exam.lastName = info?.lastName || '-'
+
+  exams.value.forEach(e => {
+    const info = patientInfoMap[e.medicHistoryId]
+    e.ci = info?.ci ?? '-'
+    e.name = info?.name ?? '-'
+    e.lastName = info?.lastName ?? '-'
   })
 }
 
-function onEditExam(exam: ExamRow) {
-  console.log('[Exams] Edit button clicked. Exam passed to handler:', exam)
-  // Simulate edit logic here if needed
-  // For demonstration, log the current state of selectedExam before and after
-  console.log('[Exams] selectedExam BEFORE edit:', selectedExam.value)
-  selectedExam.value = exam
-  console.log('[Exams] selectedExam AFTER edit:', selectedExam.value)
-}
-function onDeleteExam(exam: ExamRow) {
-  console.log('[Exams] Delete button clicked. Exam passed to handler:', exam)
-  // Simulate delete logic here if needed
-  // For demonstration, log the current state of exams before and after
-  console.log('[Exams] exams BEFORE delete:', exams.value)
-  // Example: exams.value = exams.value.filter(e => e.id !== exam.id)
-  // console.log('[Exams] exams AFTER delete:', exams.value)
-}
-
-function handleRowClick(event: any) {
-  console.log('[Exams] Row click event received:', event)
-  if (event && event.item) {
-    console.log('[Exams] Row clicked BEFORE assignment:', event.item)
-    selectedExam.value = { ...event.item }
-    showModal.value = true
-    console.log('[Exams] selectedExam AFTER assignment:', selectedExam.value)
-    console.log('[Exams] showModal AFTER assignment:', showModal.value)
-  } else {
-    console.error('Invalid row click event:', event)
-  }
-}
-
-watch(
-  () => [pagination.value.page, pagination.value.perPage],
-  () => {
-    // Always reset to page 1 if perPage changes and current page is out of range
-    const maxPage = Math.ceil(pagination.value.total / pagination.value.perPage) || 1
-    if (pagination.value.page > maxPage) {
-      pagination.value.page = 1
-    }
-    if (filters.value.search.trim()) {
-      searchExams()
-    } else {
-      fetchExams()
-    }
-  }
-)
-
-const stateLabels: Record<string, string> = {
-  PENDING: 'Pendiente',
-  IN_PROCESS: 'En proceso',
-  COMPLETED: 'Completado',
-  TO_VERIFY: 'Por verificar',
-  CANCELED: 'Cancelado',
-}
-
-const priorityLabels: Record<string, string> = {
-  HIGH: 'Alta',
-  MEDIUM: 'Media',
-  LOW: 'Baja',
-}
-
 const refreshExams = async () => {
-  await fetchExams() // o tu función actual para recargar la tabla tras el cambio
+  await fetchExams()
 }
+
+function handleStateUpdated() {
+  refreshExams()
+  showStateModal.value = false
+}
+
+// 🔹 Abrir modal de confirmación
+function onDeleteExam(exam: ExamRow) {
+  examToDelete.value = exam
+  showDeleteModal.value = true
+}
+
+// 🔹 Confirmar eliminación
+async function confirmDeleteExam() {
+  if (!examToDelete.value) return
+
+  try {
+    await medicTestRequestApi.deleteMedicTestRequest(String(examToDelete.value.id))
+    notify({ message: 'Examen eliminado correctamente.', color: 'success' })
+    refreshExams()
+  } catch (e: any) {
+    notify({ message: e.message, color: 'danger' })
+  } finally {
+    showDeleteModal.value = false
+    examToDelete.value = null
+  }
+}
+
+// Pagination
+const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
 </script>
+
 
 <template>
   <div>
@@ -324,7 +324,7 @@ const refreshExams = async () => {
                 {{ stateLabels[selectedExam.state] ?? selectedExam.state }}
               </va-chip></div>
               <div><strong>Prioridad:</strong> <va-chip size="small" :color="priorityColor(selectedExam.priority)">
-                {{  priorityLabels[rowData.priority]  ?? rowData.priority }}
+                {{  priorityLabels[selectedExam.priority]  ?? selectedExam.priority }}
               </va-chip></div>
             </div>
 
@@ -356,17 +356,62 @@ const refreshExams = async () => {
           </div>
         </VaModal>
 
+        
         <!-- Change State Modal mounted globally -->
-        <ChangeStateModal
-          v-if="showStateModal"
-          :request-id="selectedExamId"
-          @close="showStateModal = false"
-          @updated="refreshExams"
-        />
+        <VaModal v-model="showStateModal" hide-default-actions>
+          <ChangeStateModal
+            :request-id="selectedExamId"
+            @close="showStateModal = false"
+            @updated="handleStateUpdated"
+          />
+        </VaModal>
 
-        <!-- Error message -->
+        <!-- Delete Confirmation Modal -->
+        <VaModal v-model="showDeleteModal" hide-default-actions>
+          <div>
+            <h2 class="va-h4 mb-4 text-danger">Confirmar eliminación</h2>
+            <p class="mb-4">
+              ¿Está seguro de que desea eliminar este examen?
+            </p>
+
+            <div v-if="examToDelete" class="space-y-2 mb-4 text-sm">
+              <div>
+                <strong>Paciente:</strong>
+                {{ examToDelete.name }} {{ examToDelete.lastName }} (CI: {{ examToDelete.ci }})
+              </div>
+              <div class="flex items-center gap-2">
+                <strong>Estado:</strong>
+                <va-chip size="small" :color="stateColor(examToDelete.state)">
+                  {{ stateLabels[examToDelete.state] ?? examToDelete.state }}
+                </va-chip>
+              </div>
+              <div class="flex items-center gap-2">
+                <strong>Prioridad:</strong>
+                <va-chip size="small" :color="priorityColor(examToDelete.priority)">
+                  {{ priorityLabels[examToDelete.priority] ?? examToDelete.priority }}
+                </va-chip>
+              </div>
+              <div>
+                <strong>Fecha de solicitud:</strong>
+                {{ formatDate(examToDelete.requestedAt) }}
+              </div>
+              <div v-if="examToDelete.observation">
+                <strong>Observación:</strong>
+                {{ examToDelete.observation }}
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+              <VaButton color="secondary" @click="showDeleteModal = false">Cancelar</VaButton>
+              <VaButton color="danger" @click="confirmDeleteExam">Eliminar</VaButton>
+            </div>
+          </div>
+        </VaModal>
+
+
+        <!-- Error message
         <div v-if="error" class="text-danger mt-2 text-center">{{ error }}</div>
-
+        -->
         <!-- Pagination -->
         <div class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2">
           <div>

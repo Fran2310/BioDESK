@@ -26,14 +26,6 @@ const form = ref({
   }
 })
 
-const states = [
-  { label: 'Pendiente', value: 'PENDING' },
-  { label: 'En progreso', value: 'IN_PROGRESS' },
-  { label: 'Completado', value: 'COMPLETED' },
-  { label: 'Por verificar', value: 'TO_VERIFY' },
-  { label: 'Cancelado', value: 'CANCELED' },
-]
-
 const priorities = [
   { label: 'Alta', value: 'HIGH' },
   { label: 'Media', value: 'MEDIUM' },

@@ -7,22 +7,11 @@ import type { State } from '@/services/types/global.type'
 
 const props = defineProps<{
   requestId?: number
-  show: boolean
 }>();
 
 const { init: notify } = useToast();
 
 const emit = defineEmits(['close', 'updated'])
-
-const show = ref(props.show)
-
-watch(() => props.show, (val) => {
-  show.value = val
-})
-
-watch(show, (val) => {
-  if (!val) emit('close')
-})
 
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -36,12 +25,7 @@ const states = [
   { label: 'Cancelado', value: 'CANCELED' },
 ]
 
-onMounted(() => {
-  show.value = true
-})
-
 const closeModal = () => {
-  show.value = false
   emit('close')
 }
 
@@ -76,29 +60,27 @@ const submitStateChange = async () => {
 </script>
 
 <template>
-  <VaModal v-model="show" hide-default-actions>
-    <h2 class="va-h4 mb-4">Cambiar estado del examen</h2>
+  <h2 class="va-h4 mb-4">Cambiar estado del examen</h2>
 
-    <div v-if="isLoading" class="flex justify-center py-8">
-      <VaProgressCircle indeterminate />
+  <div v-if="isLoading" class="flex justify-center py-8">
+    <VaProgressCircle indeterminate />
+  </div>
+
+  <div v-else class="space-y-4">
+    <VaSelect
+      v-model="selectedState"
+      label="Seleccione el nuevo estado"
+      :options="states"
+      text-by="label"
+      value-by="value"
+      required
+    />
+
+    <div class="flex justify-end gap-2">
+      <VaButton color="secondary" @click="closeModal">Cancelar</VaButton>
+      <VaButton color="primary" :loading="isLoading" @click="submitStateChange">Guardar</VaButton>
     </div>
 
-    <div v-else class="space-y-4">
-      <VaSelect
-        v-model="selectedState"
-        label="Seleccione el nuevo estado"
-        :options="states"
-        text-by="label"
-        value-by="value"
-        required
-      />
-
-      <div class="flex justify-end gap-2">
-        <VaButton color="secondary" @click="closeModal">Cancelar</VaButton>
-        <VaButton color="primary" :loading="isLoading" @click="submitStateChange">Guardar</VaButton>
-      </div>
-
-      <div v-if="error" class="text-danger text-center">{{ error }}</div>
-    </div>
-  </VaModal>
+    <div v-if="error" class="text-danger text-center">{{ error }}</div>
+  </div>
 </template>
