@@ -111,6 +111,16 @@ export class RequestMedicTestService {
         skip: offset,
         take: limit,
         omit: omitFields,
+        include: includeData
+        ? { 
+            medicTestCatalog: true,
+            medicHistory: { // Esto se puede optimizar no enviando nada de este
+              include: {
+                patient: true // Esto se puede optimizar solo enviando unos cuantos datos del paciente
+              }
+            }
+          }
+        : undefined,
         // Este 'where' es fundamental para filtrar solo los exámenes de un historial médico
         where: {
           medicHistoryId: medicHistoryId,
@@ -173,15 +183,25 @@ export class RequestMedicTestService {
         skip: offset,
         take: limit,
         omit: omitFields,
+        include: includeData
+          ? { 
+              medicTestCatalog: true,
+              medicHistory: { // Esto se puede optimizar no enviando nada de este
+                include: {
+                  patient: true // Esto se puede optimizar solo enviando unos cuantos datos del paciente
+                }
+              }
+            }
+          : undefined,
         orderBy: {
-          requestedAt: 'desc', // O 'id' si prefieres, para una paginación consistente
+          requestedAt: 'desc',
         },
-        // Si tienes enums en tu modelo RequestMedicTest y quieres que intelligentSearch los maneje:
         enumFields: {
           state: State,
           priority: Priority,
         }
       };
+      
   
       // Lógica principal: usar intelligentSearch
       // Esta función ahora buscará directamente en el modelo requestMedicTest
@@ -386,13 +406,13 @@ export class RequestMedicTestService {
         data: {
           state,
           byLabUserId: labUser.id,
-          completedAt: state === "COMPLETED" ? new Date().toISOString() : undefined, // Solo se actualiza si el estado es "COMPLETED"
+          completedAt: state === "COMPLETED" ? new Date() : undefined, // Solo se actualiza si el estado es "COMPLETED"
         } 
       });
       
       // Auditoría
       await this.auditService.logAction(labId, performedByUserUuid, {
-        action: 'update',
+        action: 'set_state',
         entity: 'requestMedicTest',
         recordEntityId: updated.id.toString(),
         details: `El usuario ${systemUser.name} ${systemUser.lastName} cambió el estado de un examen médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,

@@ -65,12 +65,7 @@ export class AuthService {
    * @returns Un objeto con el token de acceso y los datos de los laboratorios asociados al usuario.
    */
   async login(user: any) {
-    if (!user?.labs?.length) {
-      throw new UnauthorizedException(
-        'Este usuario no está asociado a ningún laboratorio.',
-      );
-    }
-
+    
     const payload = {
       sub: user.uuid, // solo UUID en el token
     };

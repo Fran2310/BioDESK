@@ -4,12 +4,13 @@ import {
   Controller,
   Get,
   Headers,
+  Patch,
   Post,
   Request,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { CreateLabDto } from 'src/user/dto/create-lab.dto';
+import { CreateLabDto } from './dto/create-lab.dto';
 import { UserService } from 'src/user/user.service';
 import { SkipLabIdCheck } from 'src/auth/decorators/skip-lab-id-check.decorator';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
@@ -25,6 +26,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { LabService } from './services/lab.service';
+import { UpdateLabDto } from './dto/update-lab.dto';
 
 @Controller('labs')
 export class LabController {
@@ -88,6 +90,20 @@ export class LabController {
   ) {
     const labId = Number(req.headers['x-lab-id']);
     return this.labService.getThisLabById(labId);
+  }
+
+  @Patch('')
+  @CheckAbility({ actions: 'manage', subject: 'all'})
+  @ApiBearerAuth()
+  @ApiHeaders([X_LAB_ID_HEADER])
+  @ApiOperation({ summary: 'Actualizar datos del laboratorio dado un x-lab-id' })
+  async updateLabData(
+    @Request() req,
+    @Body() dto: UpdateLabDto,
+  ) {
+    const performedByUserUuid = req.user.sub;
+    const labId = Number(req.headers['x-lab-id']);
+    return this.labService.updateLab(labId, dto, performedByUserUuid);
   }
 
   @Post('logo')

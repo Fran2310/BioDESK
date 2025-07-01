@@ -22,164 +22,168 @@ export async function intelligentSearch<T>(
     include?: Prisma.Args<T, 'findMany'>['include'];
     omit?: Record<string, boolean>;
     enumFields?: { [fieldName: string]: object };
+    inclusive?: boolean; // <- ¡Nuevo!
   } = {},
-  searchTerm?: string,
+  searchTerm?: string, // TODO pasar a array y modificar los DTOs
   searchFields?: string[],
 ): Promise<{ results: T[]; total: number }> {
-  const { take = 20, skip = 0, where, enumFields, ...restOptions } = options;
+  try {
+    const {
+      take = 20,
+      skip = 0,
+      where,
+      enumFields,
+      inclusive = false, // default: intersección
+      ...restOptions
+    } = options;
+      
+    if (!searchTerm?.trim() || !searchFields?.length) {
+      const [total, results] = await Promise.all([
+        model.count({ where }),
+        model.findMany({ where, skip, take, ...restOptions }),
+      ]);
+      return { results, total };
+    }
+  
+    const normalizedTerms = searchTerm
+      .split(',')
+      .map(t => t.trim().toLowerCase())
+      .filter(Boolean);
+  
+    const termConditions: any[] = [];
+  
+    for (const term of normalizedTerms) {
+      const termCondition: any[] = [];
+  
+      for (const field of searchFields) {
+        const enumType = enumFields?.[field];
+  
+        if (enumType) {
+          const matchKey = Object.keys(enumType).find(
+            key => key.toLowerCase() === term
+          );
+          if (matchKey) {
+            termCondition.push({
+              [field]: { equals: (enumType as any)[matchKey] },
+            });
+          }
+        } else {
+          // Coincidencia exacta + por palabra
+          termCondition.push({
+            [field]: {
+              equals: term,
+              mode: 'insensitive',
+            },
+          });
 
-  if (!searchTerm || searchTerm.trim() === '' || !searchFields || searchFields.length === 0) {
-    // Si no hay término de búsqueda O NO HAY CAMPOS DONDE BUSCAR, usar paginación normal
-    const [total, results] = await Promise.all([
-      model.count({ where }),
-      model.findMany({
-        where,
-        skip,
-        take,
-        ...restOptions,
-      }),
-    ]);
-    return { results, total };
-  }
-
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-  const searchWords = normalizedSearchTerm.split(/\s+/).filter(Boolean);
-
-  const searchConditions: any[] = [];
-
-  for (const field of searchFields) {
-    const enumType = enumFields?.[field];
-
-    // LÓGICA CONDICIONAL: ¿Es un campo enum o un string normal?
-    if (enumType) {
-      // ===== LÓGICA PARA ENUMS =====
-
-      // Para enums, solo buscamos coincidencias exactas del término completo.
-      // Buscamos una clave en el objeto enum (ej: 'PENDING') que coincida con el término de búsqueda.
-      const matchingEnumKey = Object.keys(enumType).find(
-        (key) => key.toLowerCase() === normalizedSearchTerm
-      );
-
-      if (matchingEnumKey) {
-        // Si encontramos una coincidencia (ej: "pending" -> "PENDING"), usamos el valor real del enum.
-        const enumValue = (enumType as any)[matchingEnumKey];
-        searchConditions.push({
-          [field]: {
-            equals: enumValue,
-          },
-        });
+          termCondition.push({
+            [field]: {
+              contains: term,
+              mode: 'insensitive',
+            },
+          });
+        }
       }
-    } else {
-      // ===== LÓGICA PARA STRINGS (comportamiento anterior) =====
-
-      // Coincidencia exacta (mayor prioridad)
-      searchConditions.push({
-        [field]: {
-          equals: normalizedSearchTerm,
-          mode: 'insensitive',
-        },
-      });
-
-      // Coincidencia por palabras individuales
-      for (const word of searchWords) {
-        searchConditions.push({
-          [field]: {
-            contains: word,
-            mode: 'insensitive',
-          },
-        });
+  
+      if (termCondition.length > 0) {
+        termConditions.push({ OR: termCondition });
       }
     }
+  
+    if (termConditions.length === 0) {
+      return { results: [], total: 0 };
+    }
+  
+    const baseWhere = where ?? {}; // nunca undefined
+  
+    const whereClause: Prisma.Args<T, 'findMany'>['where'] = inclusive
+      ? {
+          AND: [baseWhere, { OR: termConditions }]
+        }
+      : {
+          AND: [baseWhere, ...termConditions] // ya son objetos AND internos
+        };
+  
+  
+    const allMatchingResults = await model.findMany({
+      where: whereClause,
+      ...restOptions,
+    });
+  
+  
+    const total = allMatchingResults.length;
+    const sortedResults = sortByRelevance(allMatchingResults, searchFields, normalizedTerms);
+    const paginatedResults = sortedResults.slice(skip, skip + take);
+    
+    return {
+      results: paginatedResults,
+      total,
+    };
+  } catch (error) {
+    // Cacha el error
+    console.error("❌ Error en la función intelligentSearch:", error);
+    // Relanza el error para que el código que llama a esta función
+    // pueda manejarlo. Esto es crucial para la gestión de errores en promesas.
+    throw new Error(`Ocurrió un error durante la búsqueda inteligente`);
   }
-
-  // Si después de todo, no se pudo generar ninguna condición válida, regresamos vacío.
-  if (searchConditions.length === 0) {
-    return { results: [], total: 0 };
-  }
-
-  const whereClause: Prisma.Args<T, 'findMany'>['where'] = {
-    AND: [where || {}, { OR: searchConditions }],
-  };
-
-  // El resto de la función permanece igual...
-  const allMatchingResults = await model.findMany({
-    where: whereClause,
-    ...restOptions,
-  });
-
-  const total = allMatchingResults.length;
-  const sortedResults = sortByRelevance(allMatchingResults, searchFields, normalizedSearchTerm);
-  const paginatedResults = sortedResults.slice(skip, skip + take);
-
-  return {
-    results: paginatedResults,
-    total,
-  };
 }
+
 
 // Las funciones sortByRelevance, calculateRelevanceScore y levenshteinDistance no necesitan cambios.
 
 /**
  * Ordena los resultados por relevancia
  */
+/**
+ * Ordena los resultados por relevancia basado en múltiples términos
+ */
 function sortByRelevance<T>(
   items: T[],
   searchFields: string[],
-  searchTerm: string
+  searchTerms: string[]
 ): T[] {
   return [...items].sort((a, b) => {
-    const aScore = calculateRelevanceScore(a, searchFields, searchTerm);
-    const bScore = calculateRelevanceScore(b, searchFields, searchTerm);
-    return bScore - aScore; // Orden descendente (mayor puntuación primero)
+    const aScore = calculateRelevanceScore(a, searchFields, searchTerms);
+    const bScore = calculateRelevanceScore(b, searchFields, searchTerms);
+    return bScore - aScore; // Mayor puntuación primero
   });
 }
 
 /**
- * Calcula la puntuación de relevancia para un item
+ * Calcula un puntaje de relevancia basado en múltiples términos
  */
 function calculateRelevanceScore<T>(
   item: T,
   searchFields: string[],
-  searchTerm: string
+  searchTerms: string[]
 ): number {
   let score = 0;
-  const searchTermLower = searchTerm.toLowerCase();
-  const searchWords = searchTermLower.split(/\s+/).filter(Boolean);
 
-  for (const field of searchFields) {
-    const fieldValue = String((item as any)[field] || '').toLowerCase();
+  for (const term of searchTerms) {
+    for (const field of searchFields) {
+      const fieldValue = String((item as any)[field] || '').toLowerCase();
 
-    // Puntos por coincidencia exacta
-    if (fieldValue === searchTermLower) {
-      score += 100;
-    }
+      // Coincidencia exacta
+      if (fieldValue === term) score += 100;
 
-    // Puntos por coincidencias de palabras
-    for (const word of searchWords) {
-      if (fieldValue.includes(word)) {
-        score += 10;
+      // Coincidencias parciales
+      if (fieldValue.includes(term)) score += 10;
+      if (fieldValue.startsWith(term)) score += 15;
+      if (fieldValue.endsWith(term)) score += 5;
+
+      // Levenshtein similarity
+      if (fieldValue.length > 0) {
+        const distance = levenshteinDistance(fieldValue, term);
+        const maxLength = Math.max(fieldValue.length, term.length);
+        const similarity = 1 - distance / maxLength;
+        score += similarity * 20;
       }
-
-      if (fieldValue.startsWith(word)) {
-        score += 15;
-      }
-
-      if (fieldValue.endsWith(word)) {
-        score += 5;
-      }
-    }
-
-    // Puntos adicionales por proximidad (Levenshtein distance)
-    if (fieldValue.length > 0) {
-      const distance = levenshteinDistance(fieldValue, searchTermLower);
-      const maxLength = Math.max(fieldValue.length, searchTermLower.length);
-      const similarity = 1 - distance / maxLength;
-      score += similarity * 20;
     }
   }
 
   return score;
 }
+
 
 /**
  * Calcula la distancia de Levenshtein (para búsqueda aproximada)

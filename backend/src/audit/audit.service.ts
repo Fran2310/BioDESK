@@ -47,7 +47,8 @@ export class AuditService {
     const baseOptions = {
       skip: offset,
       take: limit,
-      omit: { operationData: !includeData, labUserId: true }
+      omit: { operationData: !includeData, labUserId: true },
+      orderBy: { madeAt: 'desc' } // Mantener el orden de más nuevo al más viejo
     };
   
     const { results: partialLogs, total } = await intelligentSearch(
@@ -69,9 +70,9 @@ export class AuditService {
           }
         }
       },
-      orderBy: { madeAt: 'desc' } // Mantener el orden original
+      orderBy: { madeAt: 'desc' } // Mantener el orden de más nuevo al más viejo
     });
-  
+
     await prisma.$disconnect();
   
     return { total, data, offset, limit };
@@ -91,7 +92,7 @@ export class AuditService {
     labId: number,
     offset = 0,
     limit = 20,
-    includeData = false,
+    includeData = true,
     searchTerm?: string,  // Opcional: para futuras implementaciones
     searchFields?: string[]  // Opcional: para futuras implementaciones
   ): Promise<{ total: number; offset: number; limit: number; data: any[] }> {

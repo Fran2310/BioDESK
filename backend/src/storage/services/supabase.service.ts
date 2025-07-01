@@ -10,6 +10,8 @@ import { FileResponseDto } from '../dto/file-response.dto';
 import { STORAGE_BUCKETS } from '../constants/storage.constants';
 import * as path from 'path'; // path sigue siendo útil para unir rutas
 
+const SIGNED_URL_EXPIRATION_SECONDS = 60 * 60 * 24 * 30; // 30 días hasta que expire
+
 @Injectable()
 export class SupabaseService {
   private readonly supabase: SupabaseClient;
@@ -127,7 +129,7 @@ export class SupabaseService {
       // Para buckets privados, generar una URL firmada
       const { data, error } = await this.supabase.storage
         .from(bucket)
-        .createSignedUrl(relativePath, 60 * 60); // URL válida por 1 hora (3600 segundos)
+        .createSignedUrl(relativePath, SIGNED_URL_EXPIRATION_SECONDS); // URL válida por 30
 
       if (error) {
         if (error.message.includes('not found')) {

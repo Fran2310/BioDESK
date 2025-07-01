@@ -16,8 +16,11 @@ import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db
 import { Lab } from '@prisma/client-system';
 
 import { UserCache } from 'src/shared-cache/dto/user-cache.interface';
-import { CreateLabDto } from 'src/user/dto/create-lab.dto';
+import { CreateLabDto } from '../dto/create-lab.dto';
 import { normalizeDbName } from 'src/common/utils/normalize-db-name';
+import { UpdateLabDto } from '../dto/update-lab.dto';
+import { SystemUserService } from 'src/user/system-user/system-user.service';
+import { AuditService } from 'src/audit/audit.service';
 
 @Injectable()
 export class LabService {
@@ -25,23 +28,30 @@ export class LabService {
   constructor(
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemPrisma: SystemPrismaService,
+    private readonly systemUserService: SystemUserService,
     private readonly sharedCacheService: SharedCacheService,
     private readonly labDbManageService: LabDbManageService,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
    * Valida que los campos únicos del laboratorio (RIF y nombre) no existan en la base de datos.
    * @param dto Datos del laboratorio a validar.
+   * @param idToExclude Id a ignorar en la búsqueda de unicidad.
    * @returns El nombre de la base de datos normalizado.
    * @throws ConflictException si ya existe un laboratorio con el mismo RIF o nombre de base de datos.
    */
-  private async validateUniqueLab(dto: CreateLabDto): Promise<string> {
+  private async validateUniqueLab(
+    dto: CreateLabDto | UpdateLabDto, 
+    idToExclude?: number) {
     const { rif, name } = dto;
-    const dbName = normalizeDbName(name);
 
     const existing = await this.systemPrisma.lab.findFirst({
       where: {
-        OR: [{ rif }, { dbName }],
+        OR: [{ rif }, { name }],
+        NOT: {
+          id: idToExclude,
+        }
       },
     });
 
@@ -51,14 +61,12 @@ export class LabService {
           `Ya existe un laboratorio con el RIF ${rif}.`,
         );
       }
-      if (existing.dbName === dbName) {
+      if (existing.name === name) {
         throw new ConflictException(
           `Ya existe una base de datos para el nombre ${name}.`,
         );
       }
     }
-
-    return dbName;
   }
 
   /**
@@ -133,7 +141,8 @@ export class LabService {
    * @returns El laboratorio creado (modelo completo)
    */
   async createLab(dto: CreateLabDto, userId?: number): Promise<Lab> {
-    const dbName = await this.validateUniqueLab(dto);
+    await this.validateUniqueLab(dto);
+    const dbName = await normalizeDbName(dto.name);
 
     const lab = await this.systemPrisma.lab.create({
       data: {
@@ -199,6 +208,48 @@ export class LabService {
         throw new InternalServerErrorException('Error al validar laboratorio');
       }
     }
+
+  async updateLab(
+    labId: number, 
+    dto: UpdateLabDto, 
+    performedByUserUuid
+    ) {
+    try {
+      await this.validateUniqueLab(dto, labId)
+
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
+      
+      // Verificar existencia del laboratorio
+      const before = await this.getThisLabById(labId);
+      if (!before) {
+        throw new NotFoundException(`Laboratorio no encontrado`);
+      }
+
+      const updated = await this.systemPrisma.lab.update({
+        where: { id: Number(labId) },
+        data: dto
+      });
+
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'update',
+        entity: 'lab',
+        recordEntityId: updated.id.toString(),
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} actualizó los datos del laboratorio`,
+        operationData: {
+          before,
+          after: updated,
+        },
+      });
+
+      return updated;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Error al actualizar el laboratorio: ${error.message}`);
+      throw new ConflictException(`${error.message}`);
+    }
+  }
 
   /**
    * Revierte la creación de un laboratorio eliminando el registro correspondiente y borrando la base de datos asociada.

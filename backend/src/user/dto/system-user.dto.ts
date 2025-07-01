@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CreateUserDto } from '../system-user/dto/create-user.dto';
-import { CreateLabDto } from './create-lab.dto';
+import { CreateLabDto } from 'src/lab/dto/create-lab.dto';
 import { Type } from 'class-transformer';
 
 export class LabInfoDto extends CreateLabDto {

@@ -2,7 +2,7 @@
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { CreateUserDto } from 'src/user/system-user/dto/create-user.dto';
-import { CreateLabDto } from 'src/user/dto/create-lab.dto';
+import { CreateLabDto } from 'src/lab/dto/create-lab.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto extends CreateUserDto {
