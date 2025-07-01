@@ -255,9 +255,11 @@ onMounted(() => {
         // Abrir en nueva pestaña
         window.open(data.url, '_blank')
       } else {
+        notify({ message: 'No se encontró la URL', color: 'danger' });
         console.warn('No se encontró la URL en la respuesta.')
       }
     } catch (e: any) {
+      notify({ message: 'No se encontró la URL', color: 'danger' });
       console.error('Error al obtener la URL:', e)
     }
   }
