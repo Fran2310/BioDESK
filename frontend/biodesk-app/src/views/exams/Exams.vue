@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast, VaModal, VaSelect, VaButton, VaProgressCircle } from 'vuestic-ui'
+import { useToast } from 'vuestic-ui'
 
 import { medicTestRequestApi } from '@/services/api'
 import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest'
@@ -9,16 +9,11 @@ import { Priority } from '@/services/types/global.type'
 
 import ChangeStateModal from './ChangeStateModal.vue'
 
-// Toast
-const { init: notify } = useToast();
-
-// Router
+const { init: notify } = useToast()
 const router = useRouter()
 
-// Props
 const props = defineProps<{ medicHistoryId?: string }>()
 
-// Types
 interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
   id: number;
   requestedAt: string;
@@ -27,19 +22,38 @@ interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
   priority: Priority;
   resultProperties: Record<string, string>;
   observation: string;
-  byLabUserId: number;
+  byLabUserId: number | null;
   medicTestCatalogId: number;
-  ci?: string;
-  name?: string;
-  lastName?: string;
+  medicTestCatalog: {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    supplies: string[];
+  };
+  medicHistory: {
+    id: number;
+    patientId: number;
+    patient: {
+      id: number;
+      ci: string;
+      name: string;
+      lastName: string;
+      secondName: string;
+      secondLastName: string;
+      gender: string;
+      email: string;
+      phoneNums: string[];
+      dir: string;
+      birthDate: string;
+    }
+  };
 }
 
-// States
 const exams = ref<ExamRow[]>([])
 const filters = ref({ search: '' })
 const pagination = ref({ page: 1, perPage: 10, total: 0 })
 const isLoading = ref(false)
-const error = ref<string | null>(null)
 
 const showModal = ref(false)
 const selectedExam = ref<ExamRow | null>(null)
@@ -50,7 +64,6 @@ const selectedExamId = ref<number | null>(null)
 const showDeleteModal = ref(false)
 const examToDelete = ref<ExamRow | null>(null)
 
-// Labels
 const stateLabels: Record<string, string> = {
   PENDING: 'Pendiente',
   IN_PROCESS: 'En proceso',
@@ -65,7 +78,6 @@ const priorityLabels: Record<string, string> = {
   LOW: 'Baja',
 }
 
-// Helpers
 function priorityColor(priority: string) {
   switch (priority?.toUpperCase()) {
     case 'HIGH': return 'danger'
@@ -97,7 +109,6 @@ function formatDate(dateString: string) {
   })
 }
 
-// Fetch
 const fetchExams = async () => {
   isLoading.value = true
   try {
@@ -107,8 +118,12 @@ const fetchExams = async () => {
       includeData: true
     }
     const { data } = await medicTestRequestApi.getMedicTestRequests(query)
-    exams.value = data.data
-    await mergePatientInfoIntoExams()
+    exams.value = data.data.map((e: ExamRow) => ({
+      ...e,
+      ci: e.medicHistory?.patient?.ci ?? '-',
+      name: e.medicHistory?.patient?.name ?? '-',
+      lastName: e.medicHistory?.patient?.lastName ?? '-',
+    }))
     pagination.value.total = data.total
   } catch (e: any) {
     notify({ message: e.message, color: 'danger' })
@@ -130,8 +145,12 @@ const searchExams = async () => {
       ? await medicTestRequestApi.getMedicTestRequestsByMedicHistoryId(id, query)
       : await medicTestRequestApi.getMedicTestRequests(query)
 
-    exams.value = data.data
-    await mergePatientInfoIntoExams()
+    exams.value = data.data.map((e: ExamRow) => ({
+      ...e,
+      ci: e.medicHistory?.patient?.ci ?? '-',
+      name: e.medicHistory?.patient?.name ?? '-',
+      lastName: e.medicHistory?.patient?.lastName ?? '-',
+    }))
     pagination.value.total = data.total
   } catch (e: any) {
     notify({ message: e.message, color: 'danger' })
@@ -140,7 +159,6 @@ const searchExams = async () => {
   }
 }
 
-// Lifecycle
 onMounted(() => {
   if (props.medicHistoryId) {
     filters.value.search = props.medicHistoryId
@@ -156,7 +174,6 @@ watch(() => [pagination.value.page, pagination.value.perPage], () => {
   filters.value.search.trim() ? searchExams() : fetchExams()
 })
 
-// Actions
 function goToEditExam(id: number) {
   router.push({ name: 'EditExam', params: { id } })
 }
@@ -173,27 +190,6 @@ function handleRowClick(event: any) {
   }
 }
 
-async function mergePatientInfoIntoExams() {
-  const uniqueIds = [...new Set(exams.value.map(e => e.medicHistoryId))]
-  const patientInfoMap: Record<number, { ci: string, name: string, lastName: string }> = {}
-
-  for (const id of uniqueIds) {
-    try {
-      const { data } = await (await import('@/services/api')).patientApi.getPatientById(String(id))
-      patientInfoMap[id] = { ci: data.ci, name: data.name, lastName: data.lastName }
-    } catch {
-      patientInfoMap[id] = { ci: '-', name: '-', lastName: '-' }
-    }
-  }
-
-  exams.value.forEach(e => {
-    const info = patientInfoMap[e.medicHistoryId]
-    e.ci = info?.ci ?? '-'
-    e.name = info?.name ?? '-'
-    e.lastName = info?.lastName ?? '-'
-  })
-}
-
 const refreshExams = async () => {
   await fetchExams()
 }
@@ -203,13 +199,11 @@ function handleStateUpdated() {
   showStateModal.value = false
 }
 
-// 🔹 Abrir modal de confirmación
 function onDeleteExam(exam: ExamRow) {
   examToDelete.value = exam
   showDeleteModal.value = true
 }
 
-// 🔹 Confirmar eliminación
 async function confirmDeleteExam() {
   if (!examToDelete.value) return
 
@@ -225,10 +219,8 @@ async function confirmDeleteExam() {
   }
 }
 
-// Pagination
 const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
 </script>
-
 
 <template>
   <div>
@@ -237,13 +229,13 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
         <!-- Search -->
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
           <div class="flex flex-col md:flex-row gap-2 justify-start items-center">
-            <VaInput v-model="filters.search" placeholder="Search by medicHistoryId">
+            <VaInput v-model="filters.search" placeholder="Buscar por medicHistoryId">
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>
             </VaInput>
             <VaButton color="primary" icon="search" class="ml-2" @click="searchExams">
-              Search
+              Buscar
             </VaButton>
           </div>
         </div>
@@ -253,14 +245,15 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
           <VaDataTable
             :columns="[
               { label: 'CI', key: 'ci' },
-              { label: 'Name', key: 'name' },
-              { label: 'Last Name', key: 'lastName' },
-              { label: 'Requested At', key: 'requestedAt' },
-              { label: 'State', key: 'state' },
-              { label: 'Priority', key: 'priority' },
-              { label: 'Actions', key: 'actions', align: 'right' }
+              { label: 'Nombre', key: 'name' },
+              { label: 'Apellido', key: 'lastName' },
+              { label: 'Examen', key: 'examName' },
+              { label: 'Solicitado', key: 'requestedAt' },
+              { label: 'Estado', key: 'state' },
+              { label: 'Prioridad', key: 'priority' },
+              { label: 'Acciones', key: 'actions', align: 'right' }
             ]"
-            :items="exams"
+            :items="exams.map(e => ({ ...e, examName: e.medicTestCatalog.name }))"
             :loading="isLoading"
             @row:click="handleRowClick"
           >
@@ -274,7 +267,7 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
             </template>
             <template #cell(priority)="{ rowData }">
               <va-chip size="small" :color="priorityColor(rowData.priority)">
-                {{  priorityLabels[rowData.priority]  ?? rowData.priority }}
+                {{ priorityLabels[rowData.priority] ?? rowData.priority }}
               </va-chip>
             </template>
             <template #cell(actions)="{ rowData }">
@@ -290,7 +283,7 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
                   preset="primary"
                   size="small"
                   icon="edit"
-                  aria-label="Edit exam"
+                  aria-label="Editar examen"
                   @click.stop="goToEditExam(rowData.id)"
                 />
                 <VaButton
@@ -298,7 +291,7 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
                   size="small"
                   icon="va-delete"
                   color="danger"
-                  aria-label="Delete exam"
+                  aria-label="Eliminar examen"
                   @click.stop="onDeleteExam(rowData)"
                 />
               </div>
@@ -316,20 +309,33 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
           <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
           <div v-if="selectedExam">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div><strong>CI:</strong> <span>{{ selectedExam.ci }}</span></div>
-              <div><strong>Nombre:</strong> <span>{{ selectedExam.name }}</span></div>
-              <div><strong>Apellido:</strong> <span>{{ selectedExam.lastName }}</span></div>
-              <div><strong>Fecha de Solicitud:</strong> <span>{{ formatDate(selectedExam.requestedAt) }}</span></div>
-              <div><strong>Estado:</strong> <va-chip size="small" :color="stateColor(selectedExam.state)">
-                {{ stateLabels[selectedExam.state] ?? selectedExam.state }}
-              </va-chip></div>
-              <div><strong>Prioridad:</strong> <va-chip size="small" :color="priorityColor(selectedExam.priority)">
-                {{  priorityLabels[selectedExam.priority]  ?? selectedExam.priority }}
-              </va-chip></div>
+              <div><strong>Fecha de solicitud:</strong> {{ formatDate(selectedExam.requestedAt) }}</div>
+              <div><strong>CI:</strong> {{ selectedExam.ci }}</div>
+              <div><strong>Nombre:</strong> {{ selectedExam.name }}</div>
+              <div><strong>Apellido:</strong> {{ selectedExam.lastName }}</div>
+              <div><strong>Examen:</strong> {{ selectedExam.medicTestCatalog.name }}</div>
+              <div><strong>Descripción:</strong> {{ selectedExam.medicTestCatalog.description }}</div>
+              <div class="flex items-center gap-2">
+                <strong>Estado:</strong>
+                <va-chip size="small" :color="stateColor(selectedExam.state)">
+                  {{ stateLabels[selectedExam.state] ?? selectedExam.state }}
+                </va-chip>
+              </div>
+              <div class="flex items-center gap-2">
+                <strong>Prioridad:</strong>
+                <va-chip size="small" :color="priorityColor(selectedExam.priority)">
+                  {{ priorityLabels[selectedExam.priority] ?? selectedExam.priority }}
+                </va-chip>
+              </div>
             </div>
 
-            <h4 class="mt-4 mb-2">Propiedades del Resultado</h4>
-            <div class="mb-4">
+            <h4 class="mt-4 mb-2"><strong>Observación:</strong></h4>
+            <div class="p-3 bg-gray-100 rounded border border-gray-200">
+              {{ selectedExam.observation || 'No se proporcionó observación.' }}
+            </div>
+
+            <h4 class="mt-4 mb-2"><strong>Resultados:</strong></h4>
+            <div class="overflow-auto">
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr>
@@ -345,19 +351,13 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
                 </tbody>
               </table>
             </div>
-
-            <h4 class="mt-4 mb-2">Observación</h4>
-            <div class="p-3 bg-gray-100 rounded border border-gray-200">
-              <span>{{ selectedExam.observation || 'No se proporcionó observación.' }}</span>
-            </div>
           </div>
           <div v-else>
-            No exam selected or invalid data.
+            No se ha seleccionado un examen válido.
           </div>
         </VaModal>
 
-        
-        <!-- Change State Modal mounted globally -->
+        <!-- Change State Modal -->
         <VaModal v-model="showStateModal" hide-default-actions>
           <ChangeStateModal
             :request-id="selectedExamId"
@@ -370,14 +370,18 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
         <VaModal v-model="showDeleteModal" hide-default-actions>
           <div>
             <h2 class="va-h4 mb-4 text-danger">Confirmar eliminación</h2>
-            <p class="mb-4">
-              ¿Está seguro de que desea eliminar este examen?
-            </p>
+            <p class="mb-4">¿Está seguro de que desea eliminar este examen?</p>
 
             <div v-if="examToDelete" class="space-y-2 mb-4 text-sm">
               <div>
-                <strong>Paciente:</strong>
-                {{ examToDelete.name }} {{ examToDelete.lastName }} (CI: {{ examToDelete.ci }})
+                <strong>Paciente:</strong> {{ examToDelete.name }} {{ examToDelete.lastName }}
+                (CI: {{ examToDelete.ci }})
+              </div>
+              <div>
+                <strong>Examen:</strong> {{ examToDelete.medicTestCatalog.name }}
+              </div>
+              <div>
+                <strong>Descripción:</strong> {{ examToDelete.medicTestCatalog.description }}
               </div>
               <div class="flex items-center gap-2">
                 <strong>Estado:</strong>
@@ -392,12 +396,10 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
                 </va-chip>
               </div>
               <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(examToDelete.requestedAt) }}
+                <strong>Fecha de solicitud:</strong> {{ formatDate(examToDelete.requestedAt) }}
               </div>
               <div v-if="examToDelete.observation">
-                <strong>Observación:</strong>
-                {{ examToDelete.observation }}
+                <strong>Observación:</strong> {{ examToDelete.observation }}
               </div>
             </div>
 
@@ -408,30 +410,25 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
           </div>
         </VaModal>
 
-
-        <!-- Error message
-        <div v-if="error" class="text-danger mt-2 text-center">{{ error }}</div>
-        -->
         <!-- Pagination -->
         <div class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2">
           <div>
-            <b>{{ pagination.total }} results.</b>
-            Results per page
+            <b>{{ pagination.total }} resultados.</b>
+            Resultados por página
             <VaSelect v-model="pagination.perPage" class="!w-20" :options="[5, 10, 20, 50]" />
           </div>
-          <div v-if="totalPages > 1" class="flex">
+          <div v-if="totalPages > 1" class="flex items-center gap-2">
             <VaButton
               preset="secondary"
               icon="va-arrow-left"
-              aria-label="Previous page"
+              aria-label="Anterior"
               :disabled="pagination.page === 1"
               @click="pagination.page--"
             />
             <VaButton
-              class="mr-2"
               preset="secondary"
               icon="va-arrow-right"
-              aria-label="Next page"
+              aria-label="Siguiente"
               :disabled="pagination.page === totalPages"
               @click="pagination.page++"
             />
