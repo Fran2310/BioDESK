@@ -310,9 +310,9 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
           <div v-if="selectedExam">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div><strong>Fecha de solicitud:</strong> {{ formatDate(selectedExam.requestedAt) }}</div>
-              <div><strong>CI:</strong> {{ selectedExam.ci }}</div>
-              <div><strong>Nombre:</strong> {{ selectedExam.name }}</div>
-              <div><strong>Apellido:</strong> {{ selectedExam.lastName }}</div>
+              <div><strong>CI:</strong> {{ selectedExam.medicHistory.patient.ci }}</div>
+              <div><strong>Nombre:</strong> {{ selectedExam.medicHistory.patient.name }}</div>
+              <div><strong>Apellido:</strong> {{ selectedExam.medicHistory.patient.lastName }}</div>
               <div><strong>Examen:</strong> {{ selectedExam.medicTestCatalog.name }}</div>
               <div><strong>Descripción:</strong> {{ selectedExam.medicTestCatalog.description }}</div>
               <div class="flex items-center gap-2">
@@ -374,8 +374,8 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
 
             <div v-if="examToDelete" class="space-y-2 mb-4 text-sm">
               <div>
-                <strong>Paciente:</strong> {{ examToDelete.name }} {{ examToDelete.lastName }}
-                (CI: {{ examToDelete.ci }})
+                <strong>Paciente:</strong> {{ examToDelete.medicHistory.patient.name }} {{ examToDelete.medicHistory.patient.lastName }}
+                (CI: {{ examToDelete.medicHistory.patient.ci }})
               </div>
               <div>
                 <strong>Examen:</strong> {{ examToDelete.medicTestCatalog.name }}
