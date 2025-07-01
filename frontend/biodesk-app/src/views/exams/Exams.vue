@@ -12,6 +12,8 @@
   import type { GetExtendQuerys } from '@/services/interfaces/global';
   import type { SearchField } from '@/services/types/searchFields.type';
 
+  import { formatCi } from '@/services/utils';
+
   const { init: notify } = useToast();
   const router = useRouter();
 
@@ -142,7 +144,7 @@
       const { data } = await medicTestRequestApi.getMedicTestRequests(query);
       exams.value = data.data.map((e: ExamRow) => ({
         ...e,
-        ci: e.medicHistory?.patient?.ci ?? '-',
+        ci: formatCi(e.medicHistory?.patient?.ci) ?? '-', // Realmente creo que con este format es suficiente
         name: e.medicHistory?.patient?.name ?? '-',
         lastName: e.medicHistory?.patient?.lastName ?? '-',
       }));
@@ -203,7 +205,7 @@
 
       exams.value = data.data.map((e: ExamRow) => ({
         ...e,
-        ci: e.medicHistory?.patient?.ci ?? '-',
+        ci: formatCi(e.medicHistory?.patient?.ci) ?? '-',
         name: e.medicHistory?.patient?.name ?? '-',
         lastName: e.medicHistory?.patient?.lastName ?? '-',
       }));
@@ -219,16 +221,17 @@
     }
   };
 
-  // If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
-  onMounted(() => {
-    if (props.medicHistoryId) {
-      console.log(props.medicHistoryId);
-      filters.value.medicHistoryId = props.medicHistoryId;
-      searchExams();
-    } else {
-      fetchExams();
-    }
-  });
+
+// If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
+onMounted(() => {
+  if (props.medicHistoryId) {
+    console.log(props.medicHistoryId)
+    filters.value.medicHistoryId = props.medicHistoryId
+    searchExams()
+  } else {
+    fetchExams()
+  }
+})
 
   watch(
     () => [pagination.value.page, pagination.value.perPage],
@@ -461,7 +464,7 @@
                 {{ formatDate(selectedExam.requestedAt) }}
               </div>
               <div>
-                <strong>CI:</strong> {{ selectedExam.medicHistory.patient.ci }}
+                <strong>CI:</strong> {{ formatCi(selectedExam.medicHistory.patient.ci) }}
               </div>
               <div>
                 <strong>Nombre:</strong>
@@ -548,7 +551,7 @@
                 <strong>Paciente:</strong>
                 {{ examToComplete.medicHistory.patient.name }}
                 {{ examToComplete.medicHistory.patient.lastName }} (CI:
-                {{ examToComplete.medicHistory.patient.ci }})
+                {{ formatCi(selectedExam.medicHistory.patient.ci) }})
               </div>
               <div>
                 <strong>Examen:</strong>
@@ -618,7 +621,7 @@
                 <strong>Paciente:</strong>
                 {{ examToDelete.medicHistory.patient.name }}
                 {{ examToDelete.medicHistory.patient.lastName }} (CI:
-                {{ examToDelete.medicHistory.patient.ci }})
+                {{ formatCi(selectedExam.medicHistory.patient.ci)}})
               </div>
               <div>
                 <strong>Examen:</strong>
