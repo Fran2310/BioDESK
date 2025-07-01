@@ -13,9 +13,9 @@
             clearable
           />
           <va-spacer />
-          <va-button color="#2F6F79" @click="examForm.showAddModal = true">
+          <VaButton color="primary" @click="examForm.showAddModal = true">
             Agregar examen
-          </va-button>
+          </VaButton>
         </div>
       </va-card-content>
     </va-card>
@@ -33,21 +33,24 @@
         </template>
 
           <template #cell(actions)="{ row }">
-            <va-button
+            <VaButton
+              color="primary"
+              class="ml-2"
               size="small"
-              color="warning"
-              class="mr-2"
+              icon="delete"
               @click="editExam(row)"
             >
               Editar
-            </va-button>
-            <va-button
-              size="small"
+            </VaButton>
+            <VaButton
               color="danger"
+              class="ml-2"
+              size="small"
+              icon="delete"
               @click="deleteExam(row, fetchExams, showError)"
             >
               Eliminar
-            </va-button>
+            </VaButton>
           </template>
         </va-data-table>
       </va-card-content>
@@ -226,12 +229,12 @@
                 </VaChip>
 
                 <!-- Botón eliminar propiedad -->
-                <va-button
+                <VaButton
                   icon="delete"
                   color="danger"
                   size="small"
                   @click="removeReference(idx)"
-                  class="mt-2 self-start"
+                  class="ml-2 self-start"
                 />
               </div>
             </div>
