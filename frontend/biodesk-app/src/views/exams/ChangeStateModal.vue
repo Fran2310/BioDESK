@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { useToast, VaModal, VaSelect, VaButton, VaProgressCircle } from 'vuestic-ui'
+import { ref } from 'vue'
+import { useToast, VaSelect, VaButton, VaProgressCircle } from 'vuestic-ui'
 import { medicTestRequestApi } from '@/services/api'
 
 import type { State } from '@/services/types/global.type'

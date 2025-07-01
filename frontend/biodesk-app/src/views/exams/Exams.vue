@@ -9,6 +9,9 @@ import { Priority } from '@/services/types/global.type'
 
 import ChangeStateModal from './ChangeStateModal.vue'
 
+import type { GetExtendQuerys } from '@/services/interfaces/global'
+import type { SearchField } from '@/services/types/searchFields.type'
+
 const { init: notify } = useToast()
 const router = useRouter()
 
@@ -51,7 +54,10 @@ interface ExamRow extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
 }
 
 const exams = ref<ExamRow[]>([])
-const filters = ref({ search: '' })
+const filters = ref({
+  state: '',
+  priority: '',
+})
 const pagination = ref({ page: 1, perPage: 10, total: 0 })
 const isLoading = ref(false)
 
@@ -135,15 +141,31 @@ const fetchExams = async () => {
 const searchExams = async () => {
   isLoading.value = true
   try {
-    const id = filters.value.search.trim()
-    const query = {
+    const query: GetExtendQuerys = {
       offset: (pagination.value.page - 1) * pagination.value.perPage,
       limit: pagination.value.perPage,
-      includeData: true
+      includeData: true,
     }
-    const { data } = id
-      ? await medicTestRequestApi.getMedicTestRequestsByMedicHistoryId(id, query)
-      : await medicTestRequestApi.getMedicTestRequests(query)
+
+    const fields: SearchField[] = []
+    const terms: string[] = []
+
+    if (filters.value.state) {
+      fields.push('state')
+      terms.push(filters.value.state)
+    }
+
+    if (filters.value.priority) {
+      fields.push('priority')
+      terms.push(filters.value.priority)
+    }
+
+    if (fields.length > 0) {
+      query['search-fields'] = fields
+      query['search-term'] = terms.join(',')
+    }
+
+    const { data } = await medicTestRequestApi.getMedicTestRequests(query)
 
     exams.value = data.data.map((e: ExamRow) => ({
       ...e,
@@ -159,9 +181,9 @@ const searchExams = async () => {
   }
 }
 
+
 onMounted(() => {
   if (props.medicHistoryId) {
-    filters.value.search = props.medicHistoryId
     searchExams()
   } else {
     fetchExams()
@@ -171,7 +193,6 @@ onMounted(() => {
 watch(() => [pagination.value.page, pagination.value.perPage], () => {
   const maxPage = Math.ceil(pagination.value.total / pagination.value.perPage) || 1
   if (pagination.value.page > maxPage) pagination.value.page = 1
-  filters.value.search.trim() ? searchExams() : fetchExams()
 })
 
 function goToEditExam(id: number) {
@@ -220,6 +241,22 @@ async function confirmDeleteExam() {
 }
 
 const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.value.perPage))
+
+
+const states = [
+  { label: 'Pendiente', value: 'PENDING' },
+  { label: 'En proceso', value: 'IN_PROCESS' },
+  { label: 'Completado', value: 'COMPLETED' },
+  { label: 'Por verificar', value: 'TO_VERIFY' },
+  { label: 'Cancelado', value: 'CANCELED' },
+]
+
+const priorities = [
+  { label: 'Alta', value: 'HIGH' },
+  { label: 'Media', value: 'MEDIUM' },
+  { label: 'Baja', value: 'LOW' },
+]
+
 </script>
 
 <template>
@@ -229,11 +266,27 @@ const totalPages = computed(() => Math.ceil(pagination.value.total / pagination.
         <!-- Search -->
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
           <div class="flex flex-col md:flex-row gap-2 justify-start items-center">
-            <VaInput v-model="filters.search" placeholder="Buscar por medicHistoryId">
-              <template #prependInner>
-                <VaIcon name="search" color="secondary" size="small" />
-              </template>
-            </VaInput>
+
+            <VaSelect
+              v-model="filters.state"
+              placeholder="Filtrar por estado"
+              :options="states"
+              text-by="label"
+      value-by="value"
+              clearable
+              class="w-[200px]"
+            />
+
+            <VaSelect
+              v-model="filters.priority"
+              placeholder="Filtrar por prioridad"
+              :options="priorities"
+              text-by="label"
+              value-by="value"
+              clearable
+              class="w-[200px]"
+            />
+
             <VaButton color="primary" icon="search" class="ml-2" @click="searchExams">
               Buscar
             </VaButton>
