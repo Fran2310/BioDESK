@@ -1,25 +1,31 @@
 <template>
-    <div class="card" style="cursor: pointer" @click="toggleOptions">
+    <div class="card" style="cursor: pointer" @click="toggleOptions(); changeArrow()">
         <!-- Ícono -->
         <VaIcon :name="icon" color="primary" class="corner-icon material-symbols-outlined" size="48px"/>
+
+        <!-- <div class="arrow-hide" style="cursor: pointer" :class="showOptions ? 'arrow-show' : 'arrow-hide'" @click="toggleOptions"></div> -->
 
         <!-- Título y subtítulo con animación de slide-out -->
         <transition name="fade" mode="out-in">
             <div v-if="!showOptions" key="main-content" class="main-content">
             <p class="font-semibold text-3xl">{{ props.title }}</p>
             <p class="text-card"> {{ props.subtitle }} </p>
+
             </div>
         </transition>
 
         <!-- Menú de opciones con animación de slide-in -->
         <transition name="slide-fade-right" mode="out-in">
             <div v-if="showOptions" key="options-content" class="options-content">
-            <p class="text-card italic back-title"> Regresar al título... </p>
-            <p v-if="props.option1" class="text-card font-semibold italic underline" style="cursor: pointer" @click="goToX"> {{ props.option1 }} </p>
-            <p v-if="props.option2" class="text-card font-semibold italic underline" style="cursor: pointer" @click="goToY"> {{ props.option2 }} </p>
-            <p v-if="props.option3" class="text-card font-semibold italic underline" style="cursor: pointer" @click="goToZ"> {{ props.option3 }} </p>
+                <p class="text-card italic back-title"> Regresar al título... </p>
+                <p v-if="props.option1" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToX()"> {{ props.option1 }} </p>
+                <p v-if="props.option2" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToY()"> {{ props.option2 }} </p>
+                <p v-if="props.option3" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToZ()"> {{ props.option3 }} </p>
             </div>
         </transition>
+
+        <!-- Flecha -->
+        <VaIcon name="arrow_back" color="primary" size="48px" :class="['corner-icon', 'material-symbols-outlined arrow', arrow ? 'arrow-slideIn' : 'arrow-slideOut']"/>
 
         <!-- Triángulo de la esquina -->
         <div class="triangle"></div>
@@ -43,14 +49,14 @@
         routeName3?: string
     }>()
 
-    // Desplegar el menú
+    //      Desplegar el menú
     const showOptions = ref(false)
 
     function toggleOptions() {
     showOptions.value = !showOptions.value
     }
     
-    // Atajos de navegación
+    //      Atajos de navegación
     const router = useRouter()
 
     function goToX() {
@@ -63,12 +69,16 @@
     router.push({ name: props.routeName3 })
     }
 
-    
+    const arrow = ref(true)
+    function changeArrow() {
+        arrow.value = !arrow.value
+    }
 </script>
 
 
 <style>
     /*      Características de la tarjeta       */
+
     .card {
         position: relative;
         display: grid;
@@ -107,6 +117,13 @@
         transform: scale(1.05);
     }
 
+    .card:active {
+        filter: brightness(0.92);
+        background-color: var(--va-background-border);
+        transition: filter 0.1s, background-color 0.1s;
+        transform: scale(0.95)      /* encojer */
+    }
+
     .text-card {
         font-size: 1.1rem;
         text-align: center;
@@ -138,6 +155,7 @@
     }
 
     /*      Contenido de la tarjeta      */
+
     .main-content, .options-content {
         position: absolute;
         width: 100%;
@@ -164,8 +182,26 @@
         color: var(--va-secondary);
     }
 
-    .underline:hover {
+    .option:hover {
         color: var(--va-primary);
+    }
+
+
+    /*      Flecha      */
+
+    .arrow {        /* posición */
+        position: absolute;
+        top: 80%;
+        left: 45%;
+    }
+
+    .arrow-slideIn {
+        transition: transform 0.3s ease-out;    /* regresar a su orientación original */
+    }
+
+    .arrow-slideOut {       /* rotar la flecha */
+        transform: rotate(180deg);
+        transition: transform 0.3s ease-out;
     }
 
 

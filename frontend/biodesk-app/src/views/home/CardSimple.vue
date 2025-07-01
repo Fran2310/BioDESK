@@ -74,6 +74,13 @@
         transform: scale(1.05);
     }
 
+    .card:active {
+        filter: brightness(0.90);
+        background-color: var(--va-background-border);
+        transition: filter 0.1s, background-color 0.1s;
+        transform: scale(0.95)
+    }
+
     .text-card {
         font-size: 1.1rem;
         text-align: center;
