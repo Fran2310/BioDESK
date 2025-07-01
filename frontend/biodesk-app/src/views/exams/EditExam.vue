@@ -6,6 +6,8 @@ import { medicTestRequestApi } from '@/services/api'
 import { validator } from '@/services/utils'
 import type { PatchMedicTestRequestData } from '@/services/interfaces/medicTestRequest'
 
+import { Priority } from '@/services/types/global.type'
+
 const route = useRoute()
 const router = useRouter()
 const { init: notify } = useToast()
@@ -25,14 +27,6 @@ const form = ref({
     notes: ''
   }
 })
-
-const states = [
-  { label: 'Pendiente', value: 'PENDING' },
-  { label: 'En progreso', value: 'IN_PROGRESS' },
-  { label: 'Completado', value: 'COMPLETED' },
-  { label: 'Por verificar', value: 'TO_VERIFY' },
-  { label: 'Cancelado', value: 'CANCELED' },
-]
 
 const priorities = [
   { label: 'Alta', value: 'HIGH' },
@@ -68,7 +62,7 @@ const submitForm = async () => {
   error.value = null
   try {
     const payload = {
-      priority: form.value.priority,
+      priority: form.value.priority as Priority,
       observation: form.value.observation,
       resultProperties: Object.fromEntries(
         Object.entries(form.value.resultProperties).filter(([_, v]) => v !== '')
