@@ -115,3 +115,21 @@ export function formatRif(rif: string): string {
 
   return `${letter}-${cuerpo}-${ultimo}`;
 }
+
+// Formatea cédulas: separa la letra inicial (si existe) con guion y agrega puntos a los números
+export function formatCi(ci: string): string {
+  // Elimina espacios, puntos y guiones
+  const clean = ci.replace(/[\s.-]/g, '');
+  // Si empieza con letra, sepárala
+  const letterMatch = clean.match(/^[A-Za-z]/);
+  let letter = '';
+  let numbers = clean;
+  if (letterMatch) {
+    letter = letterMatch[0].toUpperCase();
+    numbers = clean.slice(1);
+  }
+  // Agrega puntos cada 3 dígitos desde la derecha
+  const formattedNumbers = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  // Retorna con o sin letra
+  return letter ? `${letter}-${formattedNumbers}` : formattedNumbers;
+}

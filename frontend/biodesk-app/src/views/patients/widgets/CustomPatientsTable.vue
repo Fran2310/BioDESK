@@ -136,6 +136,7 @@
   };
 
   import { useRouter } from 'vue-router';
+  import { formatCi } from '@/services/utils';
   const router = useRouter();
 
   function onViewExams(patient) {
@@ -159,35 +160,36 @@
     :loading="$props.loading"
     :clickable="false"
     @row:click="handleRowClick"
+    class="va-table--hoverable"
   >
     <template #cell(name)="{ rowData }">
-      <div class="flex items-center gap-2 max-w-[230px] ellipsis">
+      <div class="flex items-center gap-2 max-w-[230px] ellipsis capitalize">
         <!-- <UserAvatar :user="rowData as Patient" size="small" /> -->
         {{ rowData.name }}
       </div>
     </template>
 
     <template #cell(lastName)="{ rowData }">
-      <div class="max-w-[120px] ellipsis">
+      <div class="max-w-[120px] ellipsis capitalize">
         {{ rowData.lastName }}
       </div>
     </template>
 
     <template #cell(secondName)="{ rowData }">
-      <div class="ellipsis max-w-[230px]">
+      <div class="ellipsis max-w-[230px] capitalize">
         {{ rowData.secondName ? rowData.secondName : 'N/A' }}
       </div>
     </template>
 
     <template #cell(secondLastName)="{ rowData }">
-      <div class="ellipsis max-w-[230px]">
+      <div class="ellipsis max-w-[230px] capitalize">
         {{ rowData.secondLastName ? rowData.secondLastName : 'N/A' }}
       </div>
     </template>
 
     <template #cell(ci)="{ rowData }">
-      <div class="ellipsis max-w-[230px]">
-        {{ rowData.ci }}
+      <div class="ellipsis max-w-[230px] capitalize">
+        {{ formatCi(rowData.ci) }}
       </div>
     </template>
 
@@ -198,7 +200,7 @@
     </template>
 
     <template #cell(dir)="{ rowData }">
-      <div class="ellipsis max-w-[230px]">
+      <div class="ellipsis max-w-[230px] capitalize">
         {{ rowData.dir }}
       </div>
     </template>
