@@ -246,6 +246,22 @@ onMounted(() => {
     router.push({ name: 'UploadResults', params: { id } });
   }
 
+  const downloadResults = async (id: number) => {
+    try {
+      const response = await storageApi.getStorage(String(id))
+      const data = response.data
+
+      if (data?.url) {
+        // Abrir en nueva pestaña
+        window.open(data.url, '_blank')
+      } else {
+        console.warn('No se encontró la URL en la respuesta.')
+      }
+    } catch (e: any) {
+      console.error('Error al obtener la URL:', e)
+    }
+  }
+
   function openChangeStateModal(examId: number) {
     selectedExamId.value = examId;
     showStateModal.value = true;
@@ -408,6 +424,15 @@ onMounted(() => {
             </template>
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-end">
+                <VaButton
+                  v-if="rowData.state === 'COMPLETED'"
+                  preset="primary"
+                  size="small"
+                  icon="download"
+                  color="info"
+                  aria-label="Completar examen"
+                  @click.stop="downloadResults(rowData.id)"
+                />
                 <VaButton
                   v-if="rowData.state === 'TO_VERIFY'"
                   preset="primary"
