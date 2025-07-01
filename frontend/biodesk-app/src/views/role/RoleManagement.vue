@@ -127,7 +127,7 @@
                   aria-label="Eliminar permiso"
                 />
               </div>
-              <va-button
+              <VaButton
                 color="primary"
                 size="small"
                 class="mt-2"
@@ -136,11 +136,11 @@
                 type="button"
               >
                 Agregar Permiso
-              </va-button>
+              </VaButton>
             </div>
             <div class="flex justify-end gap-2 mt-6">
-              <va-button color="secondary" type="reset" @click="closeNewRoleModal">Cancelar</va-button>
-              <va-button color="success" type="submit">Guardar</va-button>
+              <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
+              <VaButton color="primary" type="submit">Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -223,7 +223,7 @@
                   aria-label="Eliminar permiso"
                 />
               </div>
-              <va-button
+              <VaButton
                 color="primary"
                 size="small"
                 class="mt-2"
@@ -232,11 +232,11 @@
                 type="button"
               >
                 Agregar Permiso
-              </va-button>
+              </VaButton>
             </div>
             <div class="flex justify-end gap-2 mt-6">
-              <va-button color="secondary" type="reset" @click="closeEditRoleModal">Cancelar</va-button>
-              <va-button color="success" type="submit">Guardar</va-button>
+              <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
+              <VaButton color="primary" type="submit">Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -265,8 +265,8 @@
               </thead>
               <tbody>
                 <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
-                  <td class="border px-2 py-1">{{ perm.subject }}</td>
-                  <td class="border px-2 py-1">
+                  <td class="border px-2 py-1 mr-1">{{ perm.subject }}</td>
+                  <td class="border px-2 py-1 mr-1">
                     <span v-if="Array.isArray(perm.actions)">
                       {{ perm.actions.join(', ') }}
                     </span>
@@ -274,7 +274,7 @@
                       {{ perm.actions }}
                     </span>
                   </td>
-                  <td class="border px-2 py-1">
+                  <td class="border px-2 py-1 mr-1">
                     <span v-if="'fields' in perm && perm.fields">
                       {{ perm.fields }}
                     </span>
