@@ -174,17 +174,24 @@ export class RequestMedicTestService {
         take: limit,
         omit: omitFields,
         include: includeData
-        ? { medicTestCatalog: true }
-        : undefined,
+          ? { 
+              medicTestCatalog: true,
+              medicHistory: { // Esto se puede optimizar no enviando nada de este
+                include: {
+                  patient: true // Esto se puede optimizar solo enviando unos cuantos datos del paciente
+                }
+              }
+            }
+          : undefined,
         orderBy: {
-          requestedAt: 'desc', // O 'id' si prefieres, para una paginación consistente
+          requestedAt: 'desc',
         },
-        // Si tienes enums en tu modelo RequestMedicTest y quieres que intelligentSearch los maneje:
         enumFields: {
           state: State,
           priority: Priority,
         }
       };
+      
   
       // Lógica principal: usar intelligentSearch
       // Esta función ahora buscará directamente en el modelo requestMedicTest
