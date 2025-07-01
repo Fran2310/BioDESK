@@ -9,9 +9,8 @@ import { PatientModule } from '../patient/patient.module';
 
 @Module({
   imports: [
-    LabPrismaModule,
     SystemUserModule,
-    LabModule,
+    LabPrismaModule,
     PatientModule,
     AuditModule,
   ],

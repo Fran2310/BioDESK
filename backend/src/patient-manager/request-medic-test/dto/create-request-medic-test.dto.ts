@@ -7,20 +7,6 @@ import { InputJsonValue } from '@prisma/client/runtime/library';
 
 
 export class CreateRequestMedicTestDto {
-
-  @ApiProperty({ example: '2025-06-14T00:00:00Z', description: 'Fecha de solicitud en formato ISO 8601' })
-  @IsNotEmpty()
-  @IsDateString() // Valida que la cadena sea una fecha válida (e.g., 'YYYY-MM-DD' o ISO 8601)
-  requestedAt: string;
-
-  @ApiProperty({ example: '2025-06-14T00:00:00Z', description: 'Fecha de solicitud en formato ISO 8601' })
-  @IsDateString() // Valida que la cadena sea una fecha válida (e.g., 'YYYY-MM-DD' o ISO 8601)
-  completedAt: string;
-
-  @ApiProperty({ example: State.PENDING, enum: State })
-  @IsEnum(State)
-  state: State;
-
   @ApiProperty({ example: Priority.MEDIUM, enum: Priority })
   @IsEnum(Priority)
   priority: Priority;
@@ -34,14 +20,14 @@ export class CreateRequestMedicTestDto {
     description: 'Resultados que se dieron durante el examen',
   })
   @IsObject() // <-- Cambia esto
-  resultProperties: InputJsonValue;
+  resultProperties?: InputJsonValue;
 
   @ApiProperty({
     example: '',
     description: 'Observaciones durante el examen',
   })
   @IsString()
-  observation: string;
+  observation?: string;
 
   @ApiProperty({
     example: '1',
@@ -59,3 +45,18 @@ export class CreateRequestMedicTestDto {
   @IsNumber()
   medicTestCatalogId: number;
 }
+
+/*
+  @ApiProperty({ example: '2025-06-14T00:00:00Z', description: 'Fecha de solicitud en formato ISO 8601' })
+  @IsNotEmpty()
+  @IsDateString() // Valida que la cadena sea una fecha válida (e.g., 'YYYY-MM-DD' o ISO 8601)
+  requestedAt: string;
+
+  @ApiProperty({ example: '2025-06-14T00:00:00Z', description: 'Fecha de solicitud en formato ISO 8601' })
+  @IsDateString() // Valida que la cadena sea una fecha válida (e.g., 'YYYY-MM-DD' o ISO 8601)
+  completedAt: string;
+
+  @ApiProperty({ example: State.PENDING, enum: State })
+  @IsEnum(State)
+  state: State;
+*/

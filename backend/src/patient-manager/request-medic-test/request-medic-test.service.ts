@@ -1,117 +1,219 @@
-import { ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { AuditService } from 'src/audit/audit.service';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
-import { LabService } from 'src/lab/services/lab.service';
 
-import { PatientService } from '../patient/patient.service';
 import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
 import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
-import { MedicHistoryService } from '../medic-history/medic-history.service';
+import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+import { Priority, State } from '@prisma/client-lab';
+
+import { STATE_TRANSITIONS } from 'src/casl/helper/transition.helper';
+import { LabUserService } from 'src/user/lab-user/lab-user.service';
+import { PdfService } from 'src/pdf/pdf.service';
+import { MailService } from 'src/mail/mail.service';
+import { LabService } from 'src/lab/services/lab.service';
 
 @Injectable()
 export class RequestMedicTestService {
   private readonly logger = new Logger(RequestMedicTestService.name);
   
   constructor(
-      private readonly labPrismaFactory: LabPrismaFactory,
       private readonly systemUserService: SystemUserService,
+      private readonly labUserService: LabUserService,
       private readonly labService: LabService,
-      private readonly patientService: PatientService,
-      private readonly medicHistory: MedicHistoryService,
       private readonly auditService: AuditService,
+      private readonly labDbManageService: LabDbManageService,
+      private readonly pdfService: PdfService,
+      private readonly mailService: MailService,
   ) {}
   
   async createRequestMedicTest(
     labId: number, 
-    patientId: number,
-    dto: CreateRequestMedicTestDto, 
-    performedByUserUuid) {
+    dto: CreateRequestMedicTestDto,  // Asegúrate que el DTO incluya patientId
+    performedByUserUuid: string
+  ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-
-      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
-      const patient = await this.patientService.getPatient(labId, patientId);
-
-      const medicTest = await labPrisma.requestMedicTest.create({
-        data: dto,
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+      const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+  
+      // 1. Obtener el historial médico con el paciente relacionado
+      const medicHistoryWithPatient = await labPrisma.medicHistory.findUnique({
+        where: { id: dto.medicHistoryId },
+        include: {
+          patient: true
+        }
       });
 
-      this.logger.log(
-        `Historial del ${patient.name} ${patient.lastName} creado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
+      if (!medicHistoryWithPatient) {
+        throw new NotFoundException(`Historial médico con ID ${dto.medicHistoryId} no encontrado`);
+      }
 
-      await this.auditService.logAction(labId, performedByUserUuid, {
-        action: 'create',
-        details: `El usuario ${systemUser.name} ${systemUser.lastName} creó una petición de examen médico para el paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci} `,
-        entity: 'requestMedicTest',
-        recordEntityId: medicTest.id.toString(),
-        operationData: {
-          after: {
-            medicTest
-          },
+      const patient = medicHistoryWithPatient.patient;
+  
+      const medicTest = await labPrisma.requestMedicTest.create({
+        data: {
+          ...dto, // Incluye todos los campos del DTO
+          requestedAt: new Date().toISOString(),
         },
       });
-
+  
+      // 3. Log y auditoría
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'create',
+        entity: 'requestMedicTest',
+        recordEntityId: medicTest.id.toString(),
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} creó un examen médico para el paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
+        operationData: {
+          after: medicTest // Envía el objeto completo para auditoría
+        },
+      });
+  
       return medicTest;
-
+  
     } catch (error) {
-      this.logger.error(`Error al crear una petición de examen para el paciente: ${error.message}`);
-      throw new ConflictException(`${error.message}`);
+      this.logger.error(`Error al crear examen médico: ${error.message}`);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new ConflictException('Error al crear el examen médico');
     }
   }
 
-  async getAllRequestsMedicTestFromOne(labId: number, all_data: boolean, medicHistoryId?: number, patientId?: number) {
+  async getAllRequestsMedicTestFromOne(
+    labId: number,
+    limit: number,
+    offset: number,
+    includeData: boolean,
+    medicHistoryId: number,
+    searchTerm?: string,
+    searchFields?: string[],
+  ) {
     try {
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-      
-      // Si no tenemos medicHistoryId pero tenemos patientId, intentamos obtenerlo
-    if (!medicHistoryId && patientId) {
-        const medicHistory = await this.medicHistory.getMedicHistory(labId, false, patientId);
-        if (medicHistory) {
-          medicHistoryId = medicHistory.id;
-        }
-      }
-  
-      // Validamos que al menos tengamos uno de los dos identificadores
-      if (!medicHistoryId && !patientId) {
-        throw new ConflictException(
-          'Debes proporcionar al menos uno: medicHistoryId o patientId.',
-        );
+      // La validación del medicHistoryId sigue siendo crucial
+      if (!medicHistoryId) {
+        throw new ConflictException('El ID del historial médico (medicHistoryId) es requerido.');
       }
 
-      const where = {
-        ...(medicHistoryId && { id: medicHistoryId }),
+      // El modelo sobre el que vamos a buscar es 'requestMedicTest'
+      const requestMedicTest = labPrisma.requestMedicTest;
+
+      // Opciones para omitir campos según el parámetro 'includeData'
+      const omitFields = {
+        resultProperties: !includeData,
+        observation: !includeData,
       };
 
-      const selectFieldsToOmitInMedicTests = {
-        resultProperties: !all_data,
-        observation: !all_data,
-      }
-
-      return await labPrisma.medicHistory.findFirst({
-        where,
-        include: {
-          requestMedicTests: {
-            omit: selectFieldsToOmitInMedicTests
-          },
+      // Construimos el objeto de opciones para la búsqueda
+      const searchOptions = {
+        skip: offset,
+        take: limit,
+        omit: omitFields,
+        // Este 'where' es fundamental para filtrar solo los exámenes de un historial médico
+        where: {
+          medicHistoryId: medicHistoryId,
+        },
+        enumFields: {
+          state: State,
+          priority: Priority,
         }
-      }) 
+      };
+
+      // Lógica principal: usar intelligentSearch si hay un término de búsqueda
+      const { results: data, total } = await intelligentSearch(
+          requestMedicTest, // 1. El modelo a buscar
+            searchOptions,  // 2. El término de búsqueda
+            searchTerm, // 3. Los campos donde buscar
+            searchFields // 4. Las opciones (where, skip, take, omit, etc.)
+      )
+
+      return {
+        total,
+        offset,
+        limit,
+        data,
+      };
 
     } catch (error) {
-      this.logger.error(`Error al obtener los examenes del paciente: ${error.message}`);
-      throw new NotFoundException(`${error.message}`);
+      this.logger.error(`Error al obtener los exámenes del paciente: ${error.message}`);
+      // Lanza la excepción original si ya es una de las nuestras (ej: ConflictException)
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        throw error;
+      }
+      // Envuelve otros errores en un NotFoundException genérico
+      throw new NotFoundException(`Error al obtener los exámenes: ${error.message}`);
     }
   }
 
-  async getRequestMedicTest(labId: number, all_data: boolean, requestMedicTestId: number) {
+  async getAllRequestsMedicTestFromAll(
+    labId: number,
+    limit: number,
+    offset: number,
+    includeData: boolean,
+    searchTerm?: string,
+    searchFields?: string[],
+  ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+  
+      // El modelo principal para la búsqueda es 'requestMedicTest', no 'medicHistory'
+      const requestMedicTestModel = labPrisma.requestMedicTest;
+  
+      // Opciones para omitir campos según el parámetro 'includeData'
+      const omitFields = {
+        resultProperties: !includeData,
+        observation: !includeData,
+      };
+
+  
+      // Construimos el objeto de opciones para la búsqueda inteligente
+      const searchOptions = {
+        skip: offset,
+        take: limit,
+        omit: omitFields,
+        orderBy: {
+          requestedAt: 'desc', // O 'id' si prefieres, para una paginación consistente
+        },
+        // Si tienes enums en tu modelo RequestMedicTest y quieres que intelligentSearch los maneje:
+        enumFields: {
+          state: State,
+          priority: Priority,
+        }
+      };
+  
+      // Lógica principal: usar intelligentSearch
+      // Esta función ahora buscará directamente en el modelo requestMedicTest
+      // sin el filtro de medicHistoryId específico.
+      const { results: data, total } = await intelligentSearch(
+        requestMedicTestModel, // 1. El modelo a buscar (requestMedicTest directamente)
+        searchOptions,         // 2. El término de búsqueda 
+        searchTerm,            // 3. Los campos donde buscar
+        searchFields,          // 4. Las opciones (skip, take, omit, orderBy, enumFields)
+      );
+  
+      return {
+        total,
+        offset,
+        limit,
+        data,
+      };
+  
+    } catch (error) {
+      this.logger.error(`Error al obtener todos los exámenes médicos: ${error.message}`);
+      // Lanza la excepción original si ya es una de las nuestras
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        throw error;
+      }
+      // Envuelve otros errores en un NotFoundException genérico
+      throw new NotFoundException(`Error al obtener todos los exámenes médicos: ${error.message}`);
+    }
+  }
+
+  async getRequestMedicTest(labId: number, requestMedicTestId: number) {
+    try {
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
       const where = {
         ...(requestMedicTestId && { id: requestMedicTestId }),
@@ -130,27 +232,31 @@ export class RequestMedicTestService {
   async updateRequestMedicTest(
     labId: number, 
     requestMedicTestId: number,
-    patientId: number,
     dto: UpdateRequestMedicTest, 
-    performedByUserUuid, 
-    ) {
+    performedByUserUuid: string
+  ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
-      
-      // Verificar existencia del historial
-      const before = await this.getRequestMedicTest(labId, false, requestMedicTestId)
-      if (!before) {
-        throw new NotFoundException(`Examen médico no encontrado para el paciente ${patientId}`);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+      const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+  
+      // Obtener el request incluyendo el paciente relacionado
+      const requestWithPatient = await labPrisma.requestMedicTest.findUnique({
+        where: { id: requestMedicTestId },
+        include: {
+          medicHistory: {
+            include: {
+              patient: true // Trae todos los datos del paciente
+            }
+          }
+        }
+      });
+  
+      if (!requestWithPatient) {
+        throw new NotFoundException(`Examen médico con ID ${requestMedicTestId} no encontrado`);
       }
-
-      const patient = await this.patientService.getPatient(labId, patientId);
-
-      this.logger.log(
-        `Examen del paciente ${patient.name} ${patient.lastName} actualizado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
-
+  
+      const patient = requestWithPatient.medicHistory.patient;
+      // Actualización del request
       const updated = await labPrisma.requestMedicTest.update({
         where: { id: requestMedicTestId },
         data: {
@@ -158,24 +264,25 @@ export class RequestMedicTestService {
           observation: dto.observation,
         } 
       });
-
+      
+      // Auditoría
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'update',
         entity: 'requestMedicTest',
         recordEntityId: updated.id.toString(),
-        details: `El usuario ${systemUser.name} ${systemUser.lastName} actualizó el historial médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci} `,
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} actualizó un examen médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
         operationData: {
-          before,
+          before: requestWithPatient,
           after: updated,
         },
       });
-
+  
       return updated;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`Error al actualizar paciente: ${error.message}`);
+      this.logger.error(`Error al actualizar examen médico: ${error.message}`);
       throw new ConflictException(`${error.message}`);
     }
   }
@@ -183,62 +290,134 @@ export class RequestMedicTestService {
   async deleteRequestMedicTest(
     labId: number, 
     requestMedicTestId: number,
-    patientId: number,
     performedByUserUuid: string, 
   ) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
       const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
   
-      // 1. Verificar primero si el paciente existe
-      const patient = await this.patientService.getPatient(labId, patientId);
-      if (!patient) {
-        throw new NotFoundException(`Paciente con ID ${patientId} no encontrado`);
-      }
-  
-      // 2. Obtener el examen junto con su medicHistory (incluyendo patientId)
-      const before = await labPrisma.requestMedicTest.findUnique({
+      // 1. Obtener el examen médico con los datos completos del paciente
+      const requestWithPatient = await labPrisma.requestMedicTest.findUnique({
         where: { id: requestMedicTestId },
         include: {
           medicHistory: {
-            select: {
-              patientId: true
+            include: {
+              patient: true // Incluye todos los datos del paciente
             }
           }
         }
       });
   
-      if (!before) {
+      if (!requestWithPatient) {
         throw new NotFoundException(`Examen con ID ${requestMedicTestId} no encontrado`);
       }
   
-      // 3. Validar que el examen pertenezca al paciente a través de medicHistory
-      if (before.medicHistory.patientId !== patientId) {
-        throw new ConflictException(`El examen no pertenece al paciente ${patientId}`);
-      }
+      const patient = requestWithPatient.medicHistory.patient;
   
-      // 4. Proceder con la eliminación
-      const deletedRequestMedicTest = await labPrisma.requestMedicTest.delete({
-        where: { id: before.id },
+      // 2. Eliminar el examen
+      const deletedRequest = await labPrisma.requestMedicTest.delete({
+        where: { id: requestMedicTestId },
       });
   
-      // Auditoría
+      // 3. Auditoría
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'delete',
         entity: 'requestMedicTest',
-        recordEntityId: deletedRequestMedicTest.id.toString(),
+        recordEntityId: deletedRequest.id.toString(),
         details: `El usuario ${systemUser.name} ${systemUser.lastName} eliminó un examen del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
-        operationData: { before: deletedRequestMedicTest },
+        operationData: { before: requestWithPatient },
       });
   
-      return deletedRequestMedicTest; 
+      return deletedRequest;
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`Error al eliminar un examen: ${error.message}`);
+      this.logger.error(`Error al eliminar examen: ${error.message}`);
       throw new ConflictException('Error al eliminar el examen');
+    }
+  }
+
+  async changeStateRequestMedicTest(
+    labId: number, 
+    requestMedicTestId: number,
+    state: State,
+    performedByUserUuid: string
+  ) {
+    try {
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+      const systemUser = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+      const labUser = await this.labUserService.getLabUserByUuid(labId, performedByUserUuid)
+      const lab = await this.labService.getLabById(labId) // TODO Refactorizar todo esto
+  
+      // Obtener el request incluyendo el paciente relacionado
+      const requestWithPatient = await labPrisma.requestMedicTest.findUnique({
+        where: { id: requestMedicTestId },
+        include: {
+          medicHistory: {
+            include: {
+              patient: true // Trae todos los datos del paciente
+            }
+          }
+        }
+      });
+
+      if (!requestWithPatient) {
+        throw new NotFoundException(`Examen médico con ID ${requestMedicTestId} no encontrado`);
+      }
+
+      if (!labUser) {
+        throw new NotFoundException(`Usuario del laboratorio no encontrado`);
+      }
+
+      // Verificar si la transción es válida
+      for (const [currentState, possibleTransitions] of Object.entries(STATE_TRANSITIONS)) { 
+        if (currentState === requestWithPatient?.state) {
+          if (!possibleTransitions.includes(state as State)) {
+            throw new ForbiddenException(`No se puede cambiar el estado de ${currentState} a ${state}`);
+          } 
+        }
+      }
+  
+      const patient = requestWithPatient.medicHistory.patient;
+      // Actualización del request
+      const updated = await labPrisma.requestMedicTest.update({
+        where: { id: requestMedicTestId },
+        data: {
+          state,
+          byLabUserId: labUser.id,
+          completedAt: state === "COMPLETED" ? new Date().toISOString() : undefined, // Solo se actualiza si el estado es "COMPLETED"
+        } 
+      });
+      
+      // Auditoría
+      await this.auditService.logAction(labId, performedByUserUuid, {
+        action: 'update',
+        entity: 'requestMedicTest',
+        recordEntityId: updated.id.toString(),
+        details: `El usuario ${systemUser.name} ${systemUser.lastName} cambió el estado de un examen médico del paciente ${patient.name} ${patient.lastName} C.I: ${patient.ci}`,
+        operationData: {
+          before: requestWithPatient.state,
+          after: updated.state,
+        },
+      });
+      
+      if (updated.state === "COMPLETED") { //TODO Con esto
+        const pdf = await this.pdfService.generateMedicReport(labId, updated.id)
+        if (pdf.downloadUrl) {
+          this.mailService.sendMedicResults(lab, patient, requestWithPatient, pdf.downloadUrl)
+        } else {
+          this.logger.error(`No hay enlace de descarga para el PDF`);
+        }
+      }
+  
+      return updated;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Error al actualizar examen médico: ${error.message}`);
+      throw new ConflictException(`${error.message}`);
     }
   }
 }

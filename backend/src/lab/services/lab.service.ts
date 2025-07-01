@@ -96,7 +96,7 @@ export class LabService {
         users: {
           some: {
             // Busca si "alguno" de los usuarios relacionados
-            uuid: uuid, // tiene este uuid.
+            uuid, // tiene este uuid.
           },
         },
       },
@@ -114,7 +114,7 @@ export class LabService {
           where: { id: userLab.id },
         });
         if (permissions) {
-          this.sharedCacheService.setUser(uuid, labId, permissions);
+          await this.sharedCacheService.setUser(uuid, labId, permissions);
         }
       }
     } else {
@@ -161,6 +161,30 @@ export class LabService {
       try {
         const lab = await this.systemPrisma.lab.findUnique({
           where: { id: Number(labId) },
+        });
+  
+        if (!lab) {
+          throw new NotFoundException(`Lab with ID ${labId} not found`);
+        }
+        return lab;
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw error;
+        }
+        this.logger.error(`Error al validar laboratorio: ${error.message}`);
+        throw new InternalServerErrorException('Error al validar laboratorio');
+      }
+    }
+    async getThisLabById(labId: number) { // Esta función se puede pasar a otro lado
+      try {
+        const lab = await this.systemPrisma.lab.findUnique({
+          where: { 
+            id: Number(labId) 
+          },
+          omit: {
+            dbName: true,
+            logoPath: false, // Devolver la ruta del logo en Supabase
+          }
         });
   
         if (!lab) {

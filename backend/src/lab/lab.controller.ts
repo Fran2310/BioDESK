@@ -2,6 +2,7 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
   Post,
   Request,
@@ -23,25 +24,70 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
+import { LabService } from './services/lab.service';
 
-@Controller('lab')
+@Controller('labs')
 export class LabController {
   constructor(
     private readonly userService: UserService,
+    private readonly labService: LabService,
     private readonly manageLogoLabService: ManageLogoLabService,
   ) {}
 
   @SkipLabIdCheck()
-  @Post('create')
+  @Post('')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Crea un laboratorio para el usuario',
+    summary: 'Crea un laboratorio para el usuario del token JWT',
     description: `Crea un nuevo laboratorio asociado al usuario autenticado. NOTA!: El usuario que registra el el laboratorio será el administrador del mismo.`,
   })
   @ApiBody({ type: CreateLabDto })
   async createLab(@Body() dto: CreateLabDto, @Request() req) {
     const userUuid = req.user.sub;
     return this.userService.createLabForUser(userUuid, dto);
+  }
+
+  @SkipLabIdCheck()
+  @Get('')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Lista los laboratorios asociados al usuario del token JWT',
+  })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      example: {
+        labs: [
+          {
+            id: 1,
+            name: 'Laboratorio Santos',
+            status: 'active',
+            rif: 'J-12345678-9',
+          },
+          {
+            id: 2,
+            name: 'Lab Grillos',
+            status: 'active',
+            rif: 'J-45678901-9',
+          },
+        ],
+      },
+    },
+  })
+  async listLabs(@Request() req) {
+    const performedByUserUuid = req.user.sub;
+    return this.userService.getLabList(performedByUserUuid);
+  }
+
+  @Get('this')
+  @ApiBearerAuth()
+  @ApiHeaders([X_LAB_ID_HEADER])
+  @ApiOperation({ summary: 'Datos del laboratorio dado un x-lab-id' })
+  async getThisLabData(
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.labService.getThisLabById(labId);
   }
 
   @Post('logo')
@@ -72,7 +118,7 @@ export class LabController {
     status: 200,
     description: 'Logo actualizado exitosamente',
     schema: {
-      example: { logoPath: '/img/logolab/lab_8_logo.png' },
+      example: { logoPath: 'supabase.com/../images/logolab/8.png' },
     },
   })
   @ApiResponse({

@@ -64,7 +64,7 @@ export class CaslAbilityGuard implements CanActivate {
     const isAllowed = requiredAbilities.every(
       ({ actions, subject, fields }) => {
         const actionList = actions.split(',').map((a) => a.trim());
-        const stateRequested = req.body?.state; // 👈 obtenemos el valor de state si viene
+        const stateRequested = req.path.split('/').pop();  // 👈 obtenemos el valor de state si viene
 
         return actionList.every((action) => {
           const typedAction = action as Actions;

@@ -11,6 +11,7 @@ import {
   Patch,
   ParseUUIDPipe,
   Delete,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './system-user/dto/create-user.dto';
@@ -30,15 +31,32 @@ import { CreateUserWithRoleIdDto } from './dto/create-user-with-role-id.dto';
 import { UpdateSystemUserDto } from './system-user/dto/update-system-user.dto';
 import { SystemUserDto } from './dto/system-user.dto';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
+import { SkipLabIdCheck } from 'src/auth/decorators/skip-lab-id-check.decorator';
 
 @ApiBearerAuth()
 @ApiTags('User')
 @ApiHeaders([X_LAB_ID_HEADER])
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('data-lab-users')
+  @Get('me')
+  @SkipLabIdCheck()
+  @ApiOperation({
+    summary: 'Obtener datos del usuario que hace la consulta',
+    description:
+      'Devuelve los datos del usuario propetario del token JWT, el x-lab-id no hace falta',
+  })
+  async getDataUserMe(
+    @Request() req,
+  ) {
+    const performedByUserUuid = req.user.sub;
+    return this.userService.getDataUserMe(
+      performedByUserUuid
+    );
+  }
+
+  @Get('mix')
   @CheckAbility(
     { actions: 'read', subject: 'LabUser' },
     { actions: 'read', subject: 'SystemUser' },
@@ -47,6 +65,21 @@ export class UserController {
     summary: 'Obtener usuarios de un laboratorio con su rol asignado',
     description:
       'Devuelve una lista paginada de usuarios de laboratorio, con su UUID y datos de rol (si existe).',
+  })
+  @ApiQuery({
+    name: 'search-term',
+    required: false,
+    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    example: '',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search-fields',
+    required: false,
+    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    type: [String], // Esto indica que es un array de strings
+    isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
+    example: ['ci', 'name', 'email'], // Ejemplo con valores
   })
   @ApiQuery({
     name: 'limit',
@@ -71,6 +104,12 @@ export class UserController {
       'Indica si se deben incluir los permisos del rol en la respuesta',
   })
   async getDataLabUsers(
+    @Query('search-term') searchTerm,
+    @Query('search-fields', new ParseArrayPipe({ 
+      optional: true,
+      items: String,
+      separator: ','  
+    })) searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
     @Query('includePermissions', ParseBoolPipe) includePermissions = false,
@@ -82,10 +121,12 @@ export class UserController {
       includePermissions,
       offset,
       limit,
+      searchTerm,
+      searchFields,
     );
   }
 
-  @Get('global-user')
+  @Get('system')
   @CheckAbility({ actions: 'read', subject: 'SystemUser' })
   @ApiOperation({
     summary: 'consultar usuario registrado en el sistema central',
@@ -131,7 +172,7 @@ export class UserController {
     return safeUser as SystemUserDto;
   }
 
-  @Post('create-with-role')
+  @Post('mix/create-with-role')
   @CheckAbility(
     { actions: 'create', subject: 'LabUser' },
     { actions: 'create', subject: 'SystemUser' },
@@ -165,7 +206,7 @@ export class UserController {
     );
   }
 
-  @Post('create-with-role-id')
+  @Post('mix/create-with-role-id')
   @CheckAbility(
     {
       actions: 'create',
@@ -194,7 +235,7 @@ export class UserController {
     );
   }
 
-  @Post('assign-user-to-lab')
+  @Post('lab/assign-user-to-lab')
   @CheckAbility({ actions: 'create', subject: 'LabUser' })
   @ApiOperation({
     summary:
@@ -209,7 +250,7 @@ export class UserController {
     return this.userService.assignExistUserToLab(labId, dto, req.user.sub);
   }
 
-  @Patch('update')
+  @Patch('system')
   @CheckAbility({
     actions: 'update',
     subject: 'SystemUser',
@@ -239,7 +280,7 @@ export class UserController {
     );
   }
 
-  @Patch('assign-role')
+  @Patch('lab/assign-role')
   @CheckAbility({
     actions: 'update',
     subject: 'LabUser',
@@ -275,7 +316,7 @@ export class UserController {
     return this.userService.updateUserRole(labId, uuid, roleId, performedBy);
   }
 
-  @Delete('soft-delete')
+  @Delete('lab/soft-delete')
   @CheckAbility({ actions: 'delete', subject: 'LabUser' })
   @ApiOperation({
     summary: 'Eliminar la asignación de un usuario a un laboratorio',
@@ -300,7 +341,7 @@ export class UserController {
     );
   }
 
-  @Delete('hard-delete')
+  @Delete('system/hard-delete')
   @CheckAbility({ actions: 'delete', subject: 'SystemUser' })
   @ApiOperation({
     summary: 'Eliminar completamente un usuario del sistema',

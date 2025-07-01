@@ -1,21 +1,23 @@
 // user/dto/create-user.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateMedicHistoryDto {
   @ApiProperty({
-    example: '',
+    example: ["ejemplo"],
     description: 'Alergias del paciente',
   })
-  @IsString()
-  allergies: string;
+  @IsString({ each: true })
+  @IsArray()
+  allergies: string[];
 
   @ApiProperty({
-    example: '',
+    example: ["ejemplo"],
     description: 'Patologías del paciente',
   })
-  @IsString()
-  pathologies: string;
+  @IsString({ each: true })
+  @IsArray()
+  pathologies: string[];
 
   @ApiProperty({
     example: '1',

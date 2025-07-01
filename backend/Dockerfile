@@ -8,6 +8,6 @@ RUN npm install
 
 COPY . .
 
-RUN npm run prisma:generate:system && npm run prisma:generate:lab
+RUN npm run prisma:generate:system && npm run prisma:generate:lab && npm run build --webpack false
 
 EXPOSE 3000

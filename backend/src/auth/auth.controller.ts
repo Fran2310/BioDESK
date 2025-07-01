@@ -38,18 +38,13 @@ export class AuthController {
   @ApiOperation({
     summary: 'Registro de usuario',
     description: `Registra un nuevo usuario admin a un laboratorio asociado.
-      Devuelve un JSON con access_token JWT si los datos son correctos y una lista de laboratorios asociados al usuario.`,
+      Devuelve un JSON con access_token JWT si los datos son correctos`,
   })
   @ApiBody({
     description: 'Datos de registro',
     schema: {
       allOf: [
         { $ref: getSchemaPath(CreateUserDto) },
-        {
-          properties: {
-            lab: { $ref: getSchemaPath(CreateLabDto) },
-          },
-        },
       ],
     },
   })
@@ -63,7 +58,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Inicio de sesión',
     description: `Inicia sesión con email y contraseña.
-      Devuelve un JSON con access_token JWT si las credenciales son correctas y una lista de laboratorios asociados al usuario.`,
+      Devuelve un JSON con access_token JWT si las credenciales son correctas`,
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -73,20 +68,6 @@ export class AuthController {
     schema: {
       example: {
         access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        labs: [
-          {
-            id: 1,
-            name: 'Laboratorio Santos',
-            status: 'active',
-            rif: 'J-12345678-9',
-          },
-          {
-            id: 2,
-            name: 'Lab Grillos',
-            status: 'active',
-            rif: 'J-45678901-9',
-          },
-        ],
       },
     },
   })

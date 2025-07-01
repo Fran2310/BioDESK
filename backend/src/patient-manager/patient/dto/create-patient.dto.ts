@@ -18,15 +18,20 @@ export class CreatePatientDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'doe', description: 'Apellido del usuario' })
+  @ApiProperty({ example: 'ripper', description: 'Apellido del usuario' })
   @IsNotEmpty()
   @IsString()
   lastName: string;
 
-  @ApiProperty({ example: 'ripper', description: 'Segundo apellido del usuario' })
+  @ApiProperty({ example: 'pedro', description: 'Segundo apellido del usuario' })
   @IsNotEmpty()
   @IsString()
-  secondLastName: string;
+  secondName?: string;
+
+  @ApiProperty({ example: 'pe', description: 'Segundo apellido del usuario' })
+  @IsNotEmpty()
+  @IsString()
+  secondLastName?: string;
 
   @ApiProperty({ example: Gender.ANY, enum: Gender })
   @IsEnum(Gender)

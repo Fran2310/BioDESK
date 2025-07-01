@@ -7,6 +7,7 @@ import { LabPrismaModule } from 'src/prisma-manage/lab-prisma/lab-prisma.module'
 import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
 import { UserModule } from 'src/user/user.module';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
+import { StorageModule } from 'src/storage/storage.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ManageLogoLabService } from './services/manage-logo-lab.service';
     LabPrismaModule,
     SharedCacheModule,
     AuditModule,
+    StorageModule,
     forwardRef(() => UserModule), // UserModule se importa de forma diferida para evitar dependencias circulares
   ],
   providers: [LabService, ManageLogoLabService],

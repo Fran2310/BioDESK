@@ -87,6 +87,28 @@ export class LabUserService {
     };
   }
 
+  async getLabUserByUuid(
+    labId: number,
+    uuid: string,
+  ) {
+    const prisma = await this.labDbManageService.genInstanceLabDB(labId);
+
+    const labUser = await prisma.labUser.findUnique({
+      where: {systemUserUuid: uuid},
+      include: {
+        role: {
+          select: {
+            id: true,
+            role: true,
+            description: true,
+          },
+        },
+      },
+    });
+
+    return labUser;
+    }
+
   /**
    * Crea un nuevo usuario de laboratorio en la base de datos correspondiente.
    *

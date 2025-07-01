@@ -1,9 +1,8 @@
 import { ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { AuditService } from 'src/audit/audit.service';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
+import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
 import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
-import { LabService } from 'src/lab/services/lab.service';
 
 import { Patient } from '@prisma/client-lab';
 import { CreateMedicHistoryDto } from './dto/create-medic-history.dto';
@@ -15,11 +14,10 @@ export class MedicHistoryService {
   private readonly logger = new Logger(MedicHistoryService.name);
   
   constructor(
-      private readonly labPrismaFactory: LabPrismaFactory,
-      private readonly systemUserService: SystemUserService,
-      private readonly labService: LabService,
-      private readonly patientService: PatientService,
-      private readonly auditService: AuditService,
+    private readonly systemUserService: SystemUserService,
+    private readonly patientService: PatientService,
+    private readonly auditService: AuditService,
+    private readonly labDbManageService: LabDbManageService,
   ) {}
   
   async createMedicHistory(
@@ -27,10 +25,9 @@ export class MedicHistoryService {
     dto: CreateMedicHistoryDto, 
     performedByUserUuid) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
-      await this.verifyPatientHasNoMedicalHistory(labPrisma, dto.patientId)
+      await this.verifyPatientHasNoMedicalHistory(labPrisma, dto.patientId);
 
       const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
       const patient = await this.patientService.getPatient(labId, dto.patientId);
@@ -38,10 +35,6 @@ export class MedicHistoryService {
       const history = await labPrisma.medicHistory.create({
         data: dto,
       });
-
-      this.logger.log(
-        `Historial del ${patient.name} ${patient.lastName} creado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'create',
@@ -69,20 +62,15 @@ export class MedicHistoryService {
     dto: CreateMedicHistoryDto, 
     performedByUserUuid) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
-      await this.verifyPatientHasNoMedicalHistory(labPrisma, dto.patientId)
+      await this.verifyPatientHasNoMedicalHistory(labPrisma, dto.patientId);
 
-      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
       
       const history = await labPrisma.medicHistory.create({
         data: dto,
       });
-
-      this.logger.log(
-        `Historial del ${patient.name} ${patient.lastName} creado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'create',
@@ -104,36 +92,9 @@ export class MedicHistoryService {
     }
   }
 
-  async getAllMedicHistories(labId: number, limit: number, offset: number, all_data: boolean) {
+  async getMedicHistory(labId: number, includeData: boolean, patientId?: number, medicHistoryId?: number) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-
-      const selectFieldsToOmitInMedicTests = {
-        resultProperties: !all_data,
-        observation: !all_data,
-      }
-
-      return await labPrisma.medicHistory.findMany({
-        skip: offset,
-        take: limit,
-        include: {
-          requestMedicTests: {
-            omit: selectFieldsToOmitInMedicTests
-          }, // Incluye todos los RequestMedicTest relacionados
-        }
-      })
-
-    } catch (error) {
-      this.logger.error(`Error al obtener los historiales de los pacientes: ${error.message}`);
-      throw new NotFoundException(`${error.message}`);
-    }
-  }
-
-  async getMedicHistory(labId: number, all_data: boolean, patientId?: number, medicHistoryId?: number) {
-    try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
 
       if (!patientId && !medicHistoryId ) {
         throw new ConflictException(
@@ -142,8 +103,9 @@ export class MedicHistoryService {
       }
 
       const selectFieldsToOmitInMedicTests = {
-        resultProperties: !all_data,
-        observation: !all_data,
+        resultProperties: true,
+        observation: true,
+        medicHistoryId: true,
       }
   
       const where = {
@@ -154,9 +116,9 @@ export class MedicHistoryService {
       return await labPrisma.medicHistory.findFirst({
         where,
         include: {
-          requestMedicTests: {
+          requestMedicTests: includeData ? {
             omit: selectFieldsToOmitInMedicTests
-          },
+          } : false
         }
       })
 
@@ -170,24 +132,18 @@ export class MedicHistoryService {
     labId: number, 
     dto: UpdateMedicHistory, 
     performedByUserUuid, 
-    patientId: number,
-    medicHistoryId: number) {
+    patientId: number) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
       
       // Verificar existencia del historial
-      const before = await this.getMedicHistory(labId, false, patientId, medicHistoryId)
+      const before = await this.getMedicHistory(labId, false, patientId);
       if (!before) {
         throw new NotFoundException(`Historial médico no encontrado para el paciente ${patientId}`);
       }
 
       const patient = await this.patientService.getPatient(labId, before.patientId);
-
-      this.logger.log(
-        `Historial del paciente ${patient.name} ${patient.lastName} actualizado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
 
       const updated = await labPrisma.medicHistory.update({
         where: { patientId: Number(patient.id) },
@@ -221,14 +177,12 @@ export class MedicHistoryService {
   async deleteMedicHistory(
     labId: number, 
     performedByUserUuid, 
-    patientId: number,
-    medicHistoryId: number) {
+    patientId: number) {
     try {
-      const lab = await this.labService.getLabById(labId);
-      const labPrisma = await this.labPrismaFactory.createInstanceDB(lab.dbName);
-      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid})
+      const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
+      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
 
-      const before = await this.getMedicHistory(labId, false, patientId, medicHistoryId)
+      const before = await this.getMedicHistory(labId, false, patientId);
       if (!before) {
         throw new NotFoundException(`Historial médico no encontrado para el paciente ${patientId}`);
       }
@@ -238,11 +192,6 @@ export class MedicHistoryService {
       });
 
       const patient = await this.patientService.getPatient(labId, before.patientId);
-
-      this.logger.log(
-        `Historial médico del paciente ${patient.name} ${patient.lastName} borrado para el laboratorio ${lab.name} (${lab.rif})`,
-      );
-
 
       await this.auditService.logAction(labId, performedByUserUuid, {
         action: 'delete',

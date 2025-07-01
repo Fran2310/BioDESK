@@ -22,6 +22,7 @@ model LabUser {
   role           Role?    @relation(fields: [roleId], references: [id])
 
   actionHistory        ActionHistory[]
+  requestMedicTests     RequestMedicTest[]
 }
 
 model Role {
@@ -67,11 +68,11 @@ model Patient {
 
 model MedicHistory {
   id          Int        @id @default(autoincrement())
-  allergies   String?
-  pathologies String?
+  allergies   String[] @default([])  
+  pathologies String[] @default([]) 
 
   patientId   Int        @unique
-  patient     Patient    @relation(fields: [patientId], references: [id])
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   requestMedicTests RequestMedicTest[]
 }
@@ -85,8 +86,11 @@ model RequestMedicTest {
   resultProperties Json?
   observation     String?
 
+  byLabUserId     Int?
+  byLabUser       LabUser? @relation(fields: [byLabUserId], references: [id])
+
   medicHistoryId  Int
-  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id])
+  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id], onDelete: Cascade)
 
   medicTestCatalogId Int
   medicTestCatalog   MedicTestCatalog   @relation(fields: [medicTestCatalogId], references: [id])
@@ -97,7 +101,7 @@ model MedicTestCatalog {
   name        String               @unique
   description String?
   price       Float
-  supplies        String[] @default([""])
+  supplies    String[] @default([""])
 
   properties  MedicTestProperty[]
   requestMedicTests RequestMedicTest[]
