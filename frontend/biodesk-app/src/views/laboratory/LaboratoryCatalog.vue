@@ -19,9 +19,14 @@
         </div>
       </va-card-content>
     </va-card>
+
     <va-card>
       <va-card-content>
+        <div v-if="tableState.loading" class="flex justify-center items-center py-8">
+          <va-progress-circle indeterminate size="large" color="primary" />
+        </div>
         <va-data-table
+          v-else
           :columns="columns"
           :items="filteredExams"
           :loading="loading"
@@ -309,7 +314,7 @@ const search = ref(tableState.search)
 watch(search, (val) => {
   tableState.search = val
 })
-
+const loadingCatalog = ref(false)
 const loading = tableState.loading
 const supplies = examForm.supplies
 const newSupply = examForm.newSupply
@@ -375,6 +380,8 @@ function handleSaveReference() {
 onMounted(() => {
   fetchExams()
 })
+
+
 
 </script>
 
