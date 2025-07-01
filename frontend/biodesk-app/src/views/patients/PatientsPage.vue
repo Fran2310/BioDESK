@@ -1,13 +1,12 @@
 <template>
   <div>
-    <h1 class="page-title">{{ t('menu.patients') }}</h1>
     <VaCard>
       <VaCardContent>
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
           <div
             class="flex flex-col md:flex-row gap-2 justify-start items-center"
           >
-            <VaInput v-model="filters.search" placeholder="Search">
+            <VaInput v-model="filters.search" placeholder="Nombre">
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>
@@ -18,11 +17,11 @@
               icon="search"
               class="ml-2"
             >
-              Search by Name
+              Buscar
             </VaButton>
           </div>
           <VaButton @click="showAddPatientModal">{{
-            t('form.addPatient')
+            'Añadir Paciente'
           }}</VaButton>
         </div>
         <CustomPatientsTable
@@ -53,13 +52,13 @@
       v-slot="{ cancel, ok }"
     >
       <h1 class="va-h5">
-        {{ patientToEdit ? t('form.editPatient') : t('form.addPatient') }}
+        {{ patientToEdit ? 'Editar Paciente' : 'Añadir Paciente' }}
       </h1>
       <PatientsForm
         :key="formKey"
         ref="editFormRef"
         :patient="patientToEdit"
-        :save-button-label="patientToEdit ? t('form.save') : t('form.add')"
+        :save-button-label="patientToEdit ? 'Guardar' : 'Añadir'"
         @close="cancel"
         @save="
           (patient) => {
@@ -75,7 +74,6 @@
 <script setup lang="ts">
   import { ref, onMounted, watch } from 'vue';
   import { useToast, useModal } from 'vuestic-ui';
-  import { useI18n } from 'vue-i18n';
   import PatientsForm from './widgets/PatientsForm.vue';
   import CustomPatientsTable from './widgets/CustomPatientsTable.vue';
   // import { useLabStore } from '../../stores/labStore'
@@ -84,7 +82,6 @@
   import type { PatientData } from '@/services/interfaces/patient';
   import type { GetExtendQuerys } from '@/services/interfaces/global';
 
-  const { t } = useI18n();
   // const labStore = useLabStore()
   const isLoading = ref(false);
   const error = ref<any>(null);

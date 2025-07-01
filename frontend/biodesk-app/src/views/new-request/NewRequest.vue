@@ -3,8 +3,6 @@ import { ref, onMounted } from 'vue'
 import { medicTestRequestApi } from '@/services/api'
 import { useToast } from 'vuestic-ui'
 
-import { validator } from '@/services/utils'
-
 import { useLabStore } from '@/stores/labStore';
 import type { LabData } from '@/services/interfaces/lab'
 import { medicTestCatalogApi } from '@/services/api'

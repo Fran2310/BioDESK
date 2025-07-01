@@ -45,20 +45,20 @@
   //COLUMNS DEFINITION
 
   const columns = defineVaDataTableColumns([
-    { label: t('patients.name'), key: 'name', sortable: true },
-    { label: t('patients.lastName'), key: 'lastName', sortable: true },
-    { label: t('patients.secondName'), key: 'secondName', sortable: true },
+    { label: 'Nombre', key: 'name', sortable: true },
+    { label: 'Apellido', key: 'lastName', sortable: true },
+    { label: 'Segundo Nombre', key: 'secondName', sortable: true },
     {
-      label: t('patients.secondLastName'),
+      label: 'Segundo Apellido',
       key: 'secondLastName',
       sortable: true,
     },
-    { label: t('patients.ci'), key: 'ci', sortable: true },
-    { label: t('patients.birthDate'), key: 'birthDate', sortable: true },
-    { label: t('patients.address'), key: 'dir', sortable: true },
+    { label: 'CI', key: 'ci', sortable: true },
+    { label: 'Fecha de Nacimiento', key: 'birthDate', sortable: true },
+    { label: 'Dirección', key: 'dir', sortable: true },
     /* { label: t('patients.phoneNums'), key: 'phoneNums' } */
     /* { label: t('patients.active'), key: 'active' }, */
-    { label: t('patients.actions'), key: 'actions', align: 'right' },
+    { label: 'Acciones', key: 'actions', align: 'right' },
   ]);
 
   //PROPS PASSED BY PARENT
@@ -299,13 +299,13 @@
     <template #footer>
       <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
       <VaButton color="primary" class="ml-2" @click="onAddExam(selectedPatient)"
-        >Add Exam</VaButton
+        >Añadir Examen</VaButton
       >
       <VaButton
         color="primary"
         class="ml-2"
         @click="onViewExams(selectedPatient)"
-        >View Exams</VaButton
+        >Ver Examenes</VaButton
       >
     </template>
   </VaModal>

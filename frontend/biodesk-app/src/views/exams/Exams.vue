@@ -68,6 +68,10 @@
   const showStateModal = ref(false);
   const selectedExamId = ref<number | null>(null);
 
+  const showCompleteModal = ref(false);
+  const examToComplete = ref<ExamRow | null>(null);
+  const isCompletingExam = ref(false);
+
   const showDeleteModal = ref(false);
   const examToDelete = ref<ExamRow | null>(null);
 
@@ -106,6 +110,8 @@
         return 'info';
       case 'COMPLETED':
         return 'success';
+      case 'CANCELED':
+        return 'danger';
       default:
         return 'info';
     }
@@ -207,8 +213,8 @@
     }
   );
 
-  function goToEditExam(id: number) {
-    router.push({ name: 'EditExam', params: { id } });
+  function goToUploadResults(id: number) {
+    router.push({ name: 'UploadResults', params: { id } });
   }
 
   function openChangeStateModal(examId: number) {
@@ -232,10 +238,37 @@
     showStateModal.value = false;
   }
 
+  function onCompleteExam(exam: ExamRow) {
+    examToComplete.value = exam;
+    showCompleteModal.value = true;
+  }
+
   function onDeleteExam(exam: ExamRow) {
     examToDelete.value = exam;
     showDeleteModal.value = true;
   }
+
+  async function confirmCompleteExam() {
+  if (!examToComplete.value) return;
+  isCompletingExam.value = true;
+
+  try {
+    await medicTestRequestApi.updateMedicTestRequestState(
+      String(examToComplete.value.id),
+      'COMPLETED'
+    );
+
+    notify({ message: 'Examen completado correctamente.', color: 'success' });
+    refreshExams();
+    showCompleteModal.value = false;
+  } catch (e: any) {
+    notify({ message: e.message, color: 'danger' });
+  } finally {
+    isCompletingExam.value = false;
+    examToComplete.value = null;
+  }
+}
+
 
   async function confirmDeleteExam() {
     if (!examToDelete.value) return;
@@ -279,9 +312,8 @@
       <VaCardContent>
         <!-- Search -->
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-          <div
-            class="flex flex-col md:flex-row gap-2 justify-start items-center"
-          >
+          <div class="flex flex-col md:flex-row gap-2 justify-start items-center">
+
             <VaSelect
               v-model="filters.state"
               placeholder="Filtrar por estado"
@@ -302,12 +334,7 @@
               class="w-[200px]"
             />
 
-            <VaButton
-              color="primary"
-              icon="search"
-              class="ml-2"
-              @click="searchExams"
-            >
+            <VaButton color="primary" icon="search" class="ml-2" @click="searchExams">
               Buscar
             </VaButton>
           </div>
@@ -322,16 +349,13 @@
               { label: 'Apellido', key: 'lastName' },
               { label: 'Examen', key: 'examName' },
               { label: 'Solicitado', key: 'requestedAt' },
-              { label: 'Estado', key: 'state', align: 'center' },
-              { label: 'Prioridad', key: 'priority', align: 'center' },
-              { label: 'Acciones', key: 'actions', align: 'right' },
+              { label: 'Estado', key: 'state' },
+              { label: 'Prioridad', key: 'priority' },
+              { label: 'Acciones', key: 'actions', align: 'right' }
             ]"
-            :items="
-              exams.map((e) => ({ ...e, examName: e.medicTestCatalog.name }))
-            "
+            :items="exams.map(e => ({ ...e, examName: e.medicTestCatalog.name }))"
             :loading="isLoading"
             @row:click="handleRowClick"
-            class="va-table--hoverable"
           >
             <template #cell(requestedAt)="{ rowData }">
               {{ formatDate(rowData.requestedAt) }}
@@ -349,18 +373,29 @@
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-end">
                 <VaButton
-                  preset="secondary"
+                  v-if="rowData.state === 'TO_VERIFY'"
+                  preset="primary"
                   size="small"
-                  icon="swap_horiz"
-                  aria-label="Cambiar estado"
-                  @click.stop="openChangeStateModal(rowData.id)"
+                  icon="check"
+                  color="success"
+                  aria-label="Completar examen"
+                  @click.stop="onCompleteExam(rowData)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'IN_PROCESS'"
+                  preset="primary"
+                  size="small"
+                  icon="cloud_upload"
+                  color="success"
+                  aria-label="Subir resultados"
+                  @click.stop="goToUploadResults(rowData.id)"
                 />
                 <VaButton
                   preset="primary"
                   size="small"
                   icon="edit"
-                  aria-label="Editar examen"
-                  @click.stop="goToEditExam(rowData.id)"
+                  aria-label="Modificar examen"
+                  @click.stop="openChangeStateModal(rowData.id)"
                 />
                 <VaButton
                   preset="primary"
@@ -375,10 +410,7 @@
           </VaDataTable>
 
           <!-- Loading overlay -->
-          <div
-            v-if="isLoading"
-            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10"
-          >
+          <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
             <VaProgressCircle indeterminate size="large" color="primary" />
           </div>
         </div>
@@ -388,29 +420,12 @@
           <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
           <div v-if="selectedExam">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(selectedExam.requestedAt) }}
-              </div>
-              <div>
-                <strong>CI:</strong> {{ selectedExam.medicHistory.patient.ci }}
-              </div>
-              <div>
-                <strong>Nombre:</strong>
-                {{ selectedExam.medicHistory.patient.name }}
-              </div>
-              <div>
-                <strong>Apellido:</strong>
-                {{ selectedExam.medicHistory.patient.lastName }}
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ selectedExam.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ selectedExam.medicTestCatalog.description }}
-              </div>
+              <div><strong>Fecha de solicitud:</strong> {{ formatDate(selectedExam.requestedAt) }}</div>
+              <div><strong>CI:</strong> {{ selectedExam.medicHistory.patient.ci }}</div>
+              <div><strong>Nombre:</strong> {{ selectedExam.medicHistory.patient.name }}</div>
+              <div><strong>Apellido:</strong> {{ selectedExam.medicHistory.patient.lastName }}</div>
+              <div><strong>Examen:</strong> {{ selectedExam.medicTestCatalog.name }}</div>
+              <div><strong>Descripción:</strong> {{ selectedExam.medicTestCatalog.description }}</div>
               <div class="flex items-center gap-2">
                 <strong>Estado:</strong>
                 <va-chip size="small" :color="stateColor(selectedExam.state)">
@@ -419,14 +434,8 @@
               </div>
               <div class="flex items-center gap-2">
                 <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(selectedExam.priority)"
-                >
-                  {{
-                    priorityLabels[selectedExam.priority] ??
-                    selectedExam.priority
-                  }}
+                <va-chip size="small" :color="priorityColor(selectedExam.priority)">
+                  {{ priorityLabels[selectedExam.priority] ?? selectedExam.priority }}
                 </va-chip>
               </div>
             </div>
@@ -446,10 +455,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="(value, key) in selectedExam.resultProperties"
-                    :key="key"
-                  >
+                  <tr v-for="(value, key) in selectedExam.resultProperties" :key="key">
                     <td class="pr-4 font-semibold">{{ key }}</td>
                     <td>{{ value }}</td>
                   </tr>
@@ -457,7 +463,9 @@
               </table>
             </div>
           </div>
-          <div v-else>No se ha seleccionado un examen válido.</div>
+          <div v-else>
+            No se ha seleccionado un examen válido.
+          </div>
         </VaModal>
 
         <!-- Change State Modal -->
@@ -469,6 +477,59 @@
           />
         </VaModal>
 
+        <!-- Completar examen Modal -->
+        <VaModal v-model="showCompleteModal" hide-default-actions>
+          <div>
+          <h2 class="va-h4 mb-4 text-success">Confirmar completar examen</h2>
+          <p class="mb-4">¿Está seguro de que desea completar este examen?</p>
+
+          <div v-if="examToComplete" class="space-y-2 mb-4 text-sm">
+            <div>
+              <strong>Paciente:</strong> {{ examToComplete.medicHistory.patient.name }} {{ examToComplete.medicHistory.patient.lastName }}
+              (CI: {{ examToComplete.medicHistory.patient.ci }})
+            </div>
+            <div>
+              <strong>Examen:</strong> {{ examToComplete.medicTestCatalog.name }}
+            </div>
+            <div>
+              <strong>Descripción:</strong> {{ examToComplete.medicTestCatalog.description }}
+            </div>
+            <div class="flex items-center gap-2">
+              <strong>Estado:</strong>
+              <va-chip size="small" :color="stateColor(examToComplete.state)">
+                {{ stateLabels[examToComplete.state] ?? examToComplete.state }}
+              </va-chip>
+            </div>
+            <div class="flex items-center gap-2">
+              <strong>Prioridad:</strong>
+              <va-chip size="small" :color="priorityColor(examToComplete.priority)">
+                {{ priorityLabels[examToComplete.priority] ?? examToComplete.priority }}
+              </va-chip>
+            </div>
+            <div>
+              <strong>Fecha de solicitud:</strong> {{ formatDate(examToComplete.requestedAt) }}
+            </div>
+            <div v-if="examToComplete.observation">
+              <strong>Observación:</strong> {{ examToComplete.observation }}
+            </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+              <VaButton color="secondary" :disabled="isCompletingExam" @click="showCompleteModal = false">
+                Cancelar
+              </VaButton>
+              <VaButton
+                color="success"
+                :loading="isCompletingExam"
+                :disabled="isCompletingExam"
+                @click="confirmCompleteExam"
+              >
+                Completar
+              </VaButton>
+            </div>
+          </div>
+        </VaModal>
+
         <!-- Delete Confirmation Modal -->
         <VaModal v-model="showDeleteModal" hide-default-actions>
           <div>
@@ -477,18 +538,14 @@
 
             <div v-if="examToDelete" class="space-y-2 mb-4 text-sm">
               <div>
-                <strong>Paciente:</strong>
-                {{ examToDelete.medicHistory.patient.name }}
-                {{ examToDelete.medicHistory.patient.lastName }} (CI:
-                {{ examToDelete.medicHistory.patient.ci }})
+                <strong>Paciente:</strong> {{ examToDelete.medicHistory.patient.name }} {{ examToDelete.medicHistory.patient.lastName }}
+                (CI: {{ examToDelete.medicHistory.patient.ci }})
               </div>
               <div>
-                <strong>Examen:</strong>
-                {{ examToDelete.medicTestCatalog.name }}
+                <strong>Examen:</strong> {{ examToDelete.medicTestCatalog.name }}
               </div>
               <div>
-                <strong>Descripción:</strong>
-                {{ examToDelete.medicTestCatalog.description }}
+                <strong>Descripción:</strong> {{ examToDelete.medicTestCatalog.description }}
               </div>
               <div class="flex items-center gap-2">
                 <strong>Estado:</strong>
@@ -498,19 +555,12 @@
               </div>
               <div class="flex items-center gap-2">
                 <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(examToDelete.priority)"
-                >
-                  {{
-                    priorityLabels[examToDelete.priority] ??
-                    examToDelete.priority
-                  }}
+                <va-chip size="small" :color="priorityColor(examToDelete.priority)">
+                  {{ priorityLabels[examToDelete.priority] ?? examToDelete.priority }}
                 </va-chip>
               </div>
               <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(examToDelete.requestedAt) }}
+                <strong>Fecha de solicitud:</strong> {{ formatDate(examToDelete.requestedAt) }}
               </div>
               <div v-if="examToDelete.observation">
                 <strong>Observación:</strong> {{ examToDelete.observation }}
@@ -518,28 +568,18 @@
             </div>
 
             <div class="flex justify-end gap-2 mt-4">
-              <VaButton color="secondary" @click="showDeleteModal = false"
-                >Cancelar</VaButton
-              >
-              <VaButton color="danger" @click="confirmDeleteExam"
-                >Eliminar</VaButton
-              >
+              <VaButton color="secondary" @click="showDeleteModal = false">Cancelar</VaButton>
+              <VaButton color="danger" @click="confirmDeleteExam">Eliminar</VaButton>
             </div>
           </div>
         </VaModal>
 
         <!-- Pagination -->
-        <div
-          class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
-        >
+        <div class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2">
           <div>
             <b>{{ pagination.total }} resultados.</b>
             Resultados por página
-            <VaSelect
-              v-model="pagination.perPage"
-              class="!w-20"
-              :options="[5, 10, 20, 50]"
-            />
+            <VaSelect v-model="pagination.perPage" class="!w-20" :options="[5, 10, 20, 50]" />
           </div>
           <div v-if="totalPages > 1" class="flex items-center gap-2">
             <VaButton
@@ -570,3 +610,5 @@
     </VaCard>
   </div>
 </template>
+
+

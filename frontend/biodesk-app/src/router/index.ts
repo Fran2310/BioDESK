@@ -122,9 +122,9 @@ const router = createRouter({
           component: NewRequest,
         },
         {
-          path: '/lab/request-medic-test/:id/edit',
-          name: 'EditExam',
-          component: () => import('@/views/exams/EditExam.vue'),
+          path: '/lab/request-medic-test/:id/upload',
+          name: 'UploadResults',
+          component: () => import('@/views/exams/UploadResults.vue'),
         },
         {
           path: '/settings',
