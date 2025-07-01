@@ -3,8 +3,6 @@
         <!-- Ícono -->
         <VaIcon :name="icon" color="primary" class="corner-icon material-symbols-outlined" size="48px"/>
 
-        <!-- <div class="arrow-hide" style="cursor: pointer" :class="showOptions ? 'arrow-show' : 'arrow-hide'" @click="toggleOptions"></div> -->
-
         <!-- Título y subtítulo con animación de slide-out -->
         <transition name="fade" mode="out-in">
             <div v-if="!showOptions" key="main-content" class="main-content">
@@ -24,11 +22,13 @@
             </div>
         </transition>
 
-        <!-- Flecha -->
-        <VaIcon name="arrow_back" color="primary" size="48px" :class="['corner-icon', 'material-symbols-outlined arrow', arrow ? 'arrow-slideIn' : 'arrow-slideOut']"/>
-
         <!-- Triángulo de la esquina -->
         <div class="triangle"></div>
+
+        <!-- Flecha -->
+        <transition name="fade" mode="out-in">
+            <VaIcon v-if="showOptions" name="arrow_back" color="base" size="32px" class="material-symbols-outlined arrow"/>
+        </transition>
     </div>
 </template>
 
@@ -169,6 +169,7 @@
         flex-direction: column;
         align-items: center;    /* centra el bloque de opciones horizontalmente */
         justify-content: center;
+        position: relative;
     }
 
     .options-content > * {
@@ -191,19 +192,9 @@
 
     .arrow {        /* posición */
         position: absolute;
-        top: 80%;
-        left: 45%;
+        bottom: -2px;
+        right: -2px;
     }
-
-    .arrow-slideIn {
-        transition: transform 0.3s ease-out;    /* regresar a su orientación original */
-    }
-
-    .arrow-slideOut {       /* rotar la flecha */
-        transform: rotate(180deg);
-        transition: transform 0.3s ease-out;
-    }
-
 
     /*    Animaciones para el contenido de las tarjetas   */
 
