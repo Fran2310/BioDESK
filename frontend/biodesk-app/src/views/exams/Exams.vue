@@ -56,6 +56,7 @@
 
   const exams = ref<ExamRow[]>([]);
   const filters = ref({
+    medicHistoryId: '',
     state: '',
     priority: '',
   });
@@ -154,55 +155,79 @@
   };
 
   const searchExams = async () => {
-    isLoading.value = true;
-    try {
-      const query: GetExtendQuerys = {
-        offset: (pagination.value.page - 1) * pagination.value.perPage,
-        limit: pagination.value.perPage,
-        includeData: true,
-      };
+  isLoading.value = true;
 
-      const fields: SearchField[] = [];
-      const terms: string[] = [];
+  try {
+    const query: GetExtendQuerys = {
+      offset: (pagination.value.page - 1) * pagination.value.perPage,
+      limit: pagination.value.perPage,
+      includeData: true,
+    };
 
-      if (filters.value.state) {
-        fields.push('state');
-        terms.push(filters.value.state);
-      }
+    const fields: SearchField[] = [];
+    const terms: string[] = [];
 
-      if (filters.value.priority) {
-        fields.push('priority');
-        terms.push(filters.value.priority);
-      }
-
-      if (fields.length > 0) {
-        query['search-fields'] = fields;
-        query['search-term'] = terms.join(',');
-      }
-
-      const { data } = await medicTestRequestApi.getMedicTestRequests(query);
-
-      exams.value = data.data.map((e: ExamRow) => ({
-        ...e,
-        ci: e.medicHistory?.patient?.ci ?? '-',
-        name: e.medicHistory?.patient?.name ?? '-',
-        lastName: e.medicHistory?.patient?.lastName ?? '-',
-      }));
-      pagination.value.total = data.total;
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      isLoading.value = false;
+    // Armar campos de búsqueda dinámica
+    if (filters.value.state) {
+      fields.push('state');
+      terms.push(filters.value.state);
     }
-  };
 
-  onMounted(() => {
-    if (props.medicHistoryId) {
-      searchExams();
+    if (filters.value.priority) {
+      fields.push('priority');
+      terms.push(filters.value.priority);
+    }
+
+    if (fields.length > 0) {
+      query['search-fields'] = fields;
+      query['search-term'] = terms.join(',');
+    }
+
+    let response;
+
+    // ✅ Lógica corregida aquí
+    if (filters.value.medicHistoryId) {
+      // Si hay ID, buscar solo por ese historial
+      response = await medicTestRequestApi.getMedicTestRequestsByMedicHistoryId(
+        filters.value.medicHistoryId,
+        query
+      );
+      console.log('respuesta')
     } else {
-      fetchExams();
+      // Si no hay ID, buscar globalmente
+      response = await medicTestRequestApi.getMedicTestRequests(query);
     }
-  });
+
+    const { data } = response;
+
+    exams.value = data.data.map((e: ExamRow) => ({
+      ...e,
+      ci: e.medicHistory?.patient?.ci ?? '-',
+      name: e.medicHistory?.patient?.name ?? '-',
+      lastName: e.medicHistory?.patient?.lastName ?? '-',
+    }));
+
+    pagination.value.total = data.total;
+
+  } catch (e: any) {
+    notify({ message: e.message ?? 'Error al buscar exámenes', color: 'danger' });
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+  
+
+// If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
+onMounted(() => {
+  if (props.medicHistoryId) {
+    console.log(props.medicHistoryId)
+    filters.value.medicHistoryId = props.medicHistoryId
+    searchExams()
+  } else {
+    fetchExams()
+  }
+})
 
   watch(
     () => [pagination.value.page, pagination.value.perPage],

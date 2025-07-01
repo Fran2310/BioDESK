@@ -298,14 +298,16 @@
 
     <template #footer>
       <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
+      <!-- 
       <VaButton color="primary" class="ml-2" @click="onAddExam(selectedPatient)"
-        >Añadir Examen</VaButton
+      >Añadir Examen</VaButton
       >
+        -->
       <VaButton
-        color="primary"
-        class="ml-2"
-        @click="onViewExams(selectedPatient)"
-        >Ver Examenes</VaButton
+      color="primary"
+      class="ml-2"
+      @click="onViewExams(selectedPatient)"
+      >Ver Examenes</VaButton
       >
     </template>
   </VaModal>
