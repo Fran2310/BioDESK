@@ -355,12 +355,6 @@
   const breakpoint = useBreakpoint();
   const isDesktop = computed(() => breakpoint.mdUp);
 
-  // Token de acceso a API externa
-  const credentialsApiDPT = ref({
-    username: import.meta.env.VITE_CREDENTIAL_APISEGEN_USER,
-    password: import.meta.env.VITE_CREDENTIAL_APISEGEN_PW,
-  });
-
   /* ----------------------------------------
    * 🔹 NAVEGACIÓN Y TRANSICIÓN DEL STEPPER
    * ---------------------------------------- */
@@ -610,10 +604,7 @@
    * ---------------------------------------- */
   onMounted(async () => {
     try {
-      await loginApiDPT(
-        credentialsApiDPT.value.username,
-        credentialsApiDPT.value.password
-      );
+      await loginApiDPT();
       entityOptions.value = await fetchEntidades();
     } catch (e: any) {
       initToast('Error', 'No se pudo conectar con el sistema DPT', 'danger');

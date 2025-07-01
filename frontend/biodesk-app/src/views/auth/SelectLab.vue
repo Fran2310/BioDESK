@@ -225,10 +225,12 @@
 
   // Verifica scroll al montar y cuando cambian labs o el breakpoint
   onMounted(async () => {
+    if (labStore.labs.length === 0) {
+      const response = await labApi.getUserLabs();
+      labStore.setLabs(response.data.labs);
+    }
     checkScroll();
-    const response = await labApi.getUserLabs();
-    //controlar que solo se haga la peticion si es necesario
-    labStore.setLabs(response.data.labs);
+    // Solo hace la petición si labStore.labs está vacío
   });
   watch(() => labStore.labs.length, checkScroll);
   watch(isDesktop, checkScroll);

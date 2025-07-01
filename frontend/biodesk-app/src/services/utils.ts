@@ -25,6 +25,14 @@ export const validator = {
     !/\s/.test(v) || 'No se permiten espacios en blanco.',
   onlyLength7to8: (v: string) =>
     (v.length >= 7 && v.length <= 8) || 'Debe tener entre 7 y 8 digitos.',
+  validateOnlyLettersAndSpaces(value) {
+    if (!value) return 'El nombre es requerido';
+    // Solo letras (mayúsculas/minúsculas) y espacios
+    return (
+      /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value) ||
+      'Solo se permiten letras y espacios'
+    );
+  },
 };
 
 export function mapPermissionsFormat(permissions: any[] = []) {

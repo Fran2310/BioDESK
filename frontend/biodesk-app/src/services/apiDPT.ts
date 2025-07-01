@@ -2,6 +2,10 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL_APISEGEN_PROD;
+// Token de acceso a API externa
+const USERNAME = import.meta.env.VITE_CREDENTIAL_APISEGEN_USER;
+const PW = import.meta.env.VITE_CREDENTIAL_APISEGEN_PW;
+
 let token: string | null = null;
 
 /**
@@ -11,12 +15,12 @@ let token: string | null = null;
  * @param clave - Contraseña del usuario.
  * @returns Una promesa que resuelve con el token de autenticación recibido.
  */
-export const loginApiDPT = async (usuario: string, clave: string) => {
+export const loginApiDPT = async () => {
   const url = `${BASE_URL}/login`;
 
   const params = new URLSearchParams();
-  params.append('usuario', usuario);
-  params.append('clave', clave);
+  params.append('usuario', USERNAME);
+  params.append('clave', PW);
 
   const { data } = await axios.post(url, params, {
     headers: {

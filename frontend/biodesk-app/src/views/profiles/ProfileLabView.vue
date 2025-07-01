@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6">
+  <div class="p-6 relative">
     <VaCard class="mb-4 shadow-2xl min-w-full" v-if="lab">
       <VaCardTitle class="flex justify-between items-center">
         <div class="flex items-center gap-2">
@@ -133,41 +133,168 @@
       title="Editar laboratorio"
       ok-text="Guardar"
       cancel-text="Cancelar"
-      size="small"
+      size="large"
       @ok="submitEdit"
       close-button
       blur
     >
-      <VaForm
-        ref="editFormRef"
-        class="space-y-3 flex flex-col justify-center items-center"
-      >
+      <VaForm ref="editFormRef" class="space-y-3 flex flex-col">
+        <!-- Nombre -->
         <VaInput
           v-model="editableForm.name"
           label="Nombre"
-          required-mark
-          :rules="[(v) => !!v || 'Requerido']"
-          class="w-full"
+          :rules="[validator.validateOnlyLettersAndSpaces]"
         />
-        <VaInput
-          v-model="editableForm.rif"
-          label="RIF"
-          required-mark
-          :rules="[(v) => !!v || 'Requerido']"
-          class="w-full"
-        />
+
+        <!-- RIF -->
+        <div class="flex flex-wrap gap-2 items-start">
+          <VaSelect
+            v-model="editableForm.rifType"
+            :options="['V', 'J', 'G']"
+            class="w-24"
+            label="Tipo"
+          />
+          <VaInput
+            v-model="editableForm.rif"
+            label="N° RIF"
+            :rules="[validator.onlyNumbers, validator.minLengthCi]"
+            class="flex-1"
+          />
+        </div>
+
+        <!-- Teléfonos -->
+        <div class="flex flex-wrap gap-2 items-start">
+          <VaSelect
+            v-model="phoneInput.areaCode"
+            :options="areaCodes"
+            class="w-24"
+            label="Cod área"
+            :rules="[phoneAreaCodeValidator]"
+          />
+          <VaInput
+            v-model="phoneInput.number"
+            label="N° Teléfono"
+            :rules="[phoneNumberValidator]"
+            class="flex-1"
+            @keyup.enter="addPhone"
+          >
+            <template #appendInner>
+              <VaButton
+                icon="add"
+                @click="addPhone"
+                :disabled="!canAddPhone"
+                size="small"
+              />
+            </template>
+          </VaInput>
+        </div>
+        <!-- Tags de teléfonos añadidos -->
+        <div class="flex flex-wrap gap-1" style="min-height: 2rem">
+          <VaChip
+            v-for="(phone, idx) in editableForm.phoneNums
+              .slice(0, 2)
+              .filter((p) => p)"
+            :key="phone"
+            class="items-center"
+            color="primary"
+          >
+            <VaIcon name="call" class="mr-1" />
+            {{ phone }}
+            <VaButton
+              icon="close"
+              size="small"
+              color="primary"
+              class="ml-2"
+              round
+              @click="removePhone(idx)"
+              aria-label="Eliminar teléfono"
+              flat
+            />
+          </VaChip>
+
+          <!-- Botón para mostrar el menú si hay más de 3 teléfonos -->
+          <VaMenu
+            v-if="editableForm.phoneNums.length > 2"
+            v-model="showPhonesMenu"
+            :close-on-content-click="false"
+            placement="bottom"
+          >
+            <template #anchor>
+              <VaButton
+                icon="add"
+                color="primary"
+                size="small"
+                class="w-12"
+                aria-label="Ver más teléfonos"
+                round
+              >
+                {{ editableForm.phoneNums.length - 2 }}
+              </VaButton>
+            </template>
+            <div class="flex flex-col gap-1 p-2 min-w-[180px]">
+              <VaChip
+                v-for="(phone, idx) in editableForm.phoneNums.slice(2)"
+                :key="phone"
+                class="items-center"
+                color="primary"
+              >
+                <VaIcon name="call" class="mr-2" />
+                {{ phone }}
+                <VaButton
+                  icon="close"
+                  size="small"
+                  color="primary"
+                  class="ml-2"
+                  round
+                  @click="removePhone(idx + 2)"
+                  aria-label="Eliminar teléfono"
+                  flat
+                />
+              </VaChip>
+            </div>
+          </VaMenu>
+        </div>
+
+        <!-- Dirección (DPT dependientes) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <VaSelect
+            v-model="dirInput.entity"
+            :options="entityOptions"
+            track-by="value"
+            text-by="label"
+            label="Estado"
+            searchable
+          />
+          <VaSelect
+            v-model="dirInput.municipality"
+            :options="municipalityOptions"
+            track-by="value"
+            text-by="label"
+            label="Municipio"
+            searchable
+          />
+          <VaSelect
+            v-model="dirInput.parish"
+            :options="parishOptions"
+            track-by="value"
+            text-by="label"
+            label="Parroquia"
+            searchable
+          />
+          <VaSelect
+            v-model="dirInput.community"
+            :options="communityOptions"
+            track-by="value"
+            text-by="label"
+            label="Comunidad"
+            searchable
+          />
+        </div>
         <VaTextarea
-          v-model="editableForm.dir"
-          label="Dirección"
-          required-mark
-          :rules="[(v) => !!v || 'Requerido']"
-          class="w-full"
-        />
-        <VaInput
-          v-model="editableForm.phoneNums"
-          label="Teléfonos (separados por coma)"
-          required-mark
-          class="w-full"
+          v-model="dirInput.restDir"
+          label="Dirección detallada"
+          :min-rows="1"
+          :max-rows="2"
         />
       </VaForm>
     </VaModal>
@@ -206,7 +333,19 @@
   import dayjs from 'dayjs';
   import { initToast } from '@/services/toast';
   import { useLabStore } from '@/stores/labStore';
-  import { formatRif, validateLogoFile } from '@/services/utils';
+  import { formatRif, validateLogoFile, validator } from '@/services/utils';
+  import { useCascadingDPT } from '@/composables/useCascadingDPT.ts';
+  import { loginApiDPT } from '@/services/apiDPT';
+  import { RegisterLabData } from '@/services/interfaces/lab';
+
+  const {
+    dirInput,
+    entityOptions,
+    municipalityOptions,
+    parishOptions,
+    communityOptions,
+    loadEntities,
+  } = useCascadingDPT();
 
   const loading = ref(true);
   const lab = ref<any>(null);
@@ -214,13 +353,15 @@
   const isEditModalOpen = ref(false);
   const isUploadModalOpen = ref(false);
   const editFormRef = ref();
+  const showPhonesMenu = ref(false);
   const logoKey = ref(Date.now());
 
   const editableForm = reactive({
     name: '',
     rif: '',
+    rifType: 'J',
     dir: '',
-    phoneNums: '',
+    phoneNums: [] as string[],
   });
 
   const logoUrlDinamic = computed(() => {
@@ -232,36 +373,116 @@
   const formatDate = (dateStr: string) =>
     dayjs(dateStr).format('DD MMM YYYY HH:mm');
 
+  const areaCodes = ['0414', '0424', '0416', '0426', '0412'];
+  const phoneInput = reactive({ areaCode: '0412', number: '' });
+
+  // 🧠 Computed: validación para habilitar botón de agregar teléfono
+  const canAddPhone = computed(() => {
+    return (
+      phoneInput.areaCode &&
+      phoneInput.number &&
+      validator.onlyNumbers(phoneInput.number) === true &&
+      validator.onlyLength7to8(phoneInput.number) === true &&
+      !editableForm.phoneNums.includes(
+        `${phoneInput.areaCode}-${phoneInput.number}`
+      )
+    );
+  });
+
+  // ➕ Agrega teléfono a la lista
+  function addPhone() {
+    if (!canAddPhone.value) return;
+    const fullPhone = `${phoneInput.areaCode}-${phoneInput.number}`;
+    editableForm.phoneNums.push(fullPhone);
+    phoneInput.number = '';
+  }
+
+  // ❌ Elimina teléfono
+  function removePhone(idx: number) {
+    editableForm.phoneNums.splice(idx, 1);
+  }
+
+  // 🧼 Capitaliza cada palabra en un string
+  function capitalizeWords(str: string) {
+    return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  // 🧾 Formatea dirección uniendo valores seleccionados
+  function formatDir(input: typeof dirInput): string {
+    const parts = [
+      input.entity?.label,
+      input.municipality?.label,
+      input.parish?.label,
+      input.community?.label,
+      input.restDir,
+    ].filter(Boolean);
+
+    return capitalizeWords(parts.join(', '));
+  }
+
+  // ✅ Validadores condicionales para los teléfonos
+  const phoneAreaCodeValidator = (v: any) =>
+    editableForm.phoneNums.length > 0 ? true : validator.required(v);
+
+  const phoneNumberValidator = (v: string) =>
+    editableForm.phoneNums.length > 0
+      ? true
+      : validator.onlyNumbers(v) === true &&
+        validator.onlyLength7to8(v) === true;
+
   const onEditLab = () => {
     if (!lab.value) return;
     editableForm.name = lab.value.name;
-    editableForm.rif = lab.value.rif;
+    editableForm.rifType = lab.value.rif?.[0]?.toUpperCase() || 'J';
+    editableForm.rif = lab.value.rif?.slice(1) || '';
     editableForm.dir = lab.value.dir;
-    editableForm.phoneNums = lab.value.phoneNums?.join(', ') ?? '';
+    editableForm.phoneNums = Array.isArray(lab.value.phoneNums)
+      ? [...lab.value.phoneNums]
+      : [];
     isEditModalOpen.value = true;
   };
 
-  const submitEdit = async () => {
+  async function submitEdit() {
+    loading.value = true;
     const isValid = await editFormRef.value?.validate?.();
     if (!isValid) return;
-    const updated = {
-      ...editableForm,
-      phoneNums: editableForm.phoneNums.split(',').map((p) => p.trim()),
+
+    const data: Partial<RegisterLabData> = {
+      name: editableForm.name,
+      rif: `${editableForm.rifType.toLowerCase()}${editableForm.rif}`,
+      phoneNums: editableForm.phoneNums,
+      dir: formatDir(dirInput),
     };
+
+    Object.keys(data).forEach((key) => {
+      // Elimina si es string vacío, array vacío o null/undefined
+      if (
+        data[key] === '' ||
+        data[key] === null ||
+        data[key] === undefined ||
+        (Array.isArray(data[key]) && data[key].length === 0)
+      ) {
+        delete data[key];
+      }
+    });
+
     try {
-      //const res = await labApi.updateLab(lab.value.id, updated);
-      //lab.value = res.data;
+      const response = await labApi.updateLab(data);
+      lab.value = response.data;
+      useLabStore().setCurrentLab(response.data);
+
       initToast(
         'Laboratorio actualizado',
         'Cambios guardados correctamente',
         'success'
       );
-      console.log('updated: ', updated);
-    } catch (err) {
-      console.error(err);
+      isEditModalOpen.value = false;
+    } catch (e) {
       initToast('Error', 'No se pudo actualizar', 'danger');
+    } finally {
+      loading.value = false;
     }
-  };
+  }
 
   const onOpenUpload = () => {
     isUploadModalOpen.value = true;
@@ -300,11 +521,17 @@
     try {
       const res = await labApi.getDataLab();
       lab.value = res.data;
-      console.log(lab.value.logoPath);
     } catch (e) {
       console.error('No se pudo cargar el laboratorio', e);
     } finally {
       loading.value = false;
+    }
+
+    try {
+      await loginApiDPT();
+      await loadEntities();
+    } catch (e) {
+      console.error('Error al cargar datos de API DPT', e);
     }
   });
 </script>
