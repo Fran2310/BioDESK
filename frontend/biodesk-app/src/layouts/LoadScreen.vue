@@ -28,6 +28,7 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import { useWindowSize } from '@vueuse/core'; // 🆕 Hook de VueUse para tamaño de ventana
+  import { useUserRole } from '@/composables/getBannerData';
   import LogoAnimate from '@/components/icons/LogoAnimate.vue';
 
   const router = useRouter();
@@ -64,6 +65,13 @@
       router.push({ name: 'HomeView' }); // ✅ Redirige cuando termina la animación
     }, 1300);
   });
+
+  //    Cargar la info para el banner
+  const { loadUserRole } = useUserRole()
+
+  onMounted(() => {
+    loadUserRole()
+  })
 </script>
 
 <style scoped>
