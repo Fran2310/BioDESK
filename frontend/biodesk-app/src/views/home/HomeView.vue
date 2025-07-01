@@ -1,6 +1,4 @@
 <template class="home">
-  <h1 class="font-bold text-5xl"> Home </h1>
-
   <BannerHome
     v-for="(content, idx) in banner"
     :key="idx"
@@ -23,6 +21,7 @@
       :key="idx"
       :title="content.title"
       :icon="content.icon"
+      :subtitle="content.subtitle"
       :option1="content.option1"
       :routeName1="content.routeName1"
       :option2="content.option2"
@@ -41,9 +40,9 @@
   import CardSimple from './CardSimple.vue'
   import CardComplex from './CardComplex.vue'
   import BannerHome from './BannerHome.vue'
-import { GetWithPermissionsQuerys } from '@/services/interfaces/global'
+  import { GetWithPermissionsQuerys } from '@/services/interfaces/global'
 
-  // Contenido del banner
+  //    Contenido del banner
   const labStore = useLabStore();
   const banner = ref([
     {
@@ -67,37 +66,38 @@ import { GetWithPermissionsQuerys } from '@/services/interfaces/global'
       };
 
       const response = await userApi.getUsersMix(query)
-      console.log('Response: ', response.data)
+      // console.log('Response: ', response.data)
       const user = response.data.data[0];
  
-      console.log('User:', user)
+      // console.log('User:', user)
       banner.value[0].role = user?.labUser.role?.role || 'Rol desconocido';   // asigna el valor del rol para el banner
     } catch (error) {
       banner.value[0].role = 'Rol desconocido';
     }
   })
 
-  // Contenido para las tarjetas simples
+  //    Contenido para las tarjetas simples
   const simpleCards = ref([
     {   // Tarjeta al dashboard
       title: 'Dashboard',
       icon: 'dashboard',
-      subtitle: 'Ir al dashboard',
+      subtitle: 'Ver las estadísticas recientes del laboratorio',
       routeName: 'Dashboard'
     },
     {   // Tarjeta a pacientes
       title: 'Pacientes',
       icon: 'healing',
-      subtitle: 'Ir a los pacientes',
+      subtitle: 'Añadir, buscar, editar o eliminar pacientes',
       routeName: 'Patients'
     },
   ])
 
-  // Contenido para la tarjeta a datos de pacientes
+  //    Contenido para las tarjetas complejas
   const complexCard = ref([
-    {
+    {     // Tarjeta a sistemas
       title: 'Sistema',
       icon: 'group',
+      subtitle: 'Administrar el personal asignado a este laboratorio',
       option1: 'Usuarios',
       routeName1: 'UsersView',
       option2: 'Roles',
@@ -105,9 +105,10 @@ import { GetWithPermissionsQuerys } from '@/services/interfaces/global'
       option3: '',
       routeName3: ''
     },
-    {
+    {     // Tarjeta a exámenes
       title: 'Exámenes',
       icon: 'troubleshoot',
+      subtitle: 'Administrar los análisis disponibles y los que están en proceso',
       option1: 'Exámenes',
       routeName1: 'Exams',
       option2: 'Catálogo',

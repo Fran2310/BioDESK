@@ -32,15 +32,11 @@
     function goToX() {
     router.push({ name: props.routeName })
     }
-
-    // Vuestic breakpoint logic
-
 </script>
 
 
 <style scoped>
-    /* Características de la tarjeta */
-    .card {
+    .card {         /* características de la tarjeta */
         position: relative;
         display: grid;
         flex-wrap: wrap;
@@ -58,35 +54,39 @@
         background-color: var(--va-background-light-secondary);
         border: 3px solid var(--va-primary);
         border-radius: 8px;
+        transition: transform 0.2s;     /* duración de la transformación del tamaño */
     }
 
-    @media (min-width: 1420px) {    /* Límite de tamaño de las tarjetas */
+    @media (min-width: 1420px) {        /* límite de tamaño de las tarjetas */
         .card {
-            width: 300px;
+            width: 280px;
             min-width: 280px;
-            max-width: 350px;
-            height: 300px;
+            max-width: 300px;
+            height: 280px;
             min-height: 280px;
-            max-height: 350px;
-            padding: 10px;
+            max-height: 300px;
+            padding: 10px
         }
     }
 
-    .card:hover {
+    .card:hover {       /* transformar tamaño */
         background-color: var(--va-base);
-        transition: transform 0.2s;     /* transición del tamaño */
         transform: scale(1.05);
     }
 
-    /* Corner icon */
-    .corner-icon {
+    .text-card {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .corner-icon {      /*  ícono de la esquina */
         position: absolute;
         top: 10px;
         left: 10px;
         color: var(--va-primary);
     }
 
-    .material-symbols-outlined {
+    .material-symbols-outlined {            /* ajustes de Google Fonts para los íconos*/
         font-variation-settings:
         'FILL' 0,
         'wght' 400,
@@ -94,8 +94,7 @@
         'opsz' 48
     }
 
-    /* Triángulo de la esquina */
-    .triangle {
+    .triangle {     /* triángulo de la esquina */
         width: 50px;
         aspect-ratio: 1;
         clip-path: polygon(0 100%,100% 0,100% 100%);    /* forma */ 
