@@ -103,8 +103,6 @@ function priorityColor(priority: string) {
     }
   }
 
-
-
 </script>
 
 <template>

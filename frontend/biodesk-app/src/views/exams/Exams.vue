@@ -209,10 +209,6 @@
     }
   );
 
-  function goToEditExam(id: number) {
-    router.push({ name: 'EditExam', params: { id } });
-  }
-
   function goToUploadResults(id: number) {
     router.push({ name: 'UploadResults', params: { id } });
   }
