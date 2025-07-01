@@ -235,7 +235,7 @@
               </VaButton>
             </div>
             <div class="flex justify-end gap-2 mt-6">
-              <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
+              <VaButton color="danger" type="reset" @click="closeEditRoleModal">Cancelar</VaButton>
               <VaButton color="primary" type="submit">Guardar</VaButton>
             </div>
           </form>
