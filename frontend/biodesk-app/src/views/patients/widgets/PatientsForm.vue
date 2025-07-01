@@ -200,7 +200,7 @@
             v-model="newUser.gender"
             label="Gender"
             class="w-full sm:w-1/2"
-            :options="['ANY', 'MALE', 'FEMALE', 'OTHER']"
+            :options="['MALE', 'FEMALE']"
             name="gender"
           />
         </div>

@@ -1,6 +1,8 @@
 <template>
   <div class="bg-white rounded p-4 flex flex-col">
-    <h3 class="text-lg font-semibold mb-2">Distribución de estados de solicitudes</h3>
+    <h3 class="text-lg font-semibold mb-2">
+      Distribución de estados de solicitudes
+    </h3>
 
     <div
       v-if="loading"
@@ -14,7 +16,7 @@
       ref="chartContainer"
       :option="chartOptions"
       autoresize
-      style="width: 100%; height: 100%;"
+      style="width: 100%; height: 100%"
     />
   </div>
 </template>
@@ -61,6 +63,9 @@
       legend: {
         orient: 'vertical',
         left: 'left',
+        textStyle: {
+          fontSize: 16, // Cambia 16 por el tamaño que desees
+        },
       },
       series: [
         {
@@ -78,6 +83,7 @@
           },
           label: {
             formatter: '{b}: {d}%',
+            fontSize: 16,
           },
         },
       ],

@@ -1,16 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import GraphRequestsTrend from './GraphRequestsTrend.vue';
-import GraphRequestsPie from './GraphRequestsPie.vue';
-
-const props = defineProps<{
-  rawData: any[] | null, // Permitir null para un estado inicial más claro
-  loading: boolean,
-}>();
-
-const dataForGraphs = computed(() => props.rawData);
-</script>
-
 <template>
   <div
     class="bg-white rounded-lg shadow-md p-4 sm:p-6 w-full max-w-6xl"
@@ -22,8 +9,14 @@ const dataForGraphs = computed(() => props.rawData);
         key="loading"
         class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 justify-center px-4 sm:px-6"
       >
-        <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 350px;"></div>
-        <div class="w-full bg-gray-200 rounded-lg animate-pulse" style="height: 350px;"></div>
+        <div
+          class="w-full bg-gray-200 rounded-lg animate-pulse"
+          style="height: 350px"
+        ></div>
+        <div
+          class="w-full bg-gray-200 rounded-lg animate-pulse"
+          style="height: 350px"
+        ></div>
       </div>
 
       <div
@@ -50,14 +43,27 @@ const dataForGraphs = computed(() => props.rawData);
   </div>
 </template>
 
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
+<script setup lang="ts">
+  import { computed } from 'vue';
+  import GraphRequestsTrend from './GraphRequestsTrend.vue';
+  import GraphRequestsPie from './GraphRequestsPie.vue';
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+  const props = defineProps<{
+    rawData: any[] | null; // Permitir null para un estado inicial más claro
+    loading: boolean;
+  }>();
+
+  const dataForGraphs = computed(() => props.rawData);
+</script>
+
+<style scoped>
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.3s ease;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
 </style>
