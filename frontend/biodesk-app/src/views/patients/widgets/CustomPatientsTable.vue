@@ -237,7 +237,7 @@
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>
 
     <div class="p-4 space-y-4">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-4 capitalize">
         <div>
           <strong>Nombre:</strong>
           <p>{{ selectedPatient?.name || '-' }}</p>
@@ -260,7 +260,7 @@
 
         <div>
           <strong>CI:</strong>
-          <p>{{ selectedPatient?.ci || '-' }}</p>
+          <p>{{ formatCi(selectedPatient?.ci) || '-' }}</p>
         </div>
 
         <div>
