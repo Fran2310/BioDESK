@@ -578,7 +578,7 @@ onMounted(() => {
                 <strong>Paciente:</strong>
                 {{ examToComplete.medicHistory.patient.name }}
                 {{ examToComplete.medicHistory.patient.lastName }} (CI:
-                {{ formatCi(selectedExam.medicHistory.patient.ci) }})
+                {{ formatCi(examToComplete.medicHistory.patient.ci) }})
               </div>
               <div>
                 <strong>Examen:</strong>
@@ -648,7 +648,7 @@ onMounted(() => {
                 <strong>Paciente:</strong>
                 {{ examToDelete.medicHistory.patient.name }}
                 {{ examToDelete.medicHistory.patient.lastName }} (CI:
-                {{ formatCi(selectedExam.medicHistory.patient.ci)}})
+                {{ formatCi(examToDelete.medicHistory.patient.ci)}})
               </div>
               <div>
                 <strong>Examen:</strong>
