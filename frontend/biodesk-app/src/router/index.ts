@@ -101,21 +101,19 @@ const router = createRouter({
         {
           path: 'patients',
           name: 'Patients',
-          component: PatientsPage,
+          component: () => import('@/views/patients/PatientsPage.vue'),
         },
         {
           path: 'roles',
           name: 'RoleManagement',
           component: () => import('@/views/role/RoleManagement.vue'),
         },
-
         {
           path: 'exams/:medicHistoryId?',
           name: 'Exams',
-          component: Exams,
+          component: () => import('@/views/exams/Exams.vue'),
           props: true,
         },
-
         {
           path: 'newrequest',
           name: 'NewRequest',

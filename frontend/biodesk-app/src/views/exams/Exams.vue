@@ -415,7 +415,7 @@ onMounted(() => {
               </va-chip>
             </template>
             <template #cell(actions)="{ rowData }">
-              <div class="flex gap-2 justify-end">
+              <div class="flex gap-2 justify-start">
                 <VaButton
                   v-if="rowData.state === 'COMPLETED'"
                   preset="primary"
