@@ -3,6 +3,7 @@ import { medicTestRequestApi } from '@/services/api';
 import { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
 import { Priority } from '@/services/types/global.type';
 import { formatCi } from '@/services/utils';
+import { ref } from 'vue';
 import { useToast } from 'vuestic-ui';
 
 const props = defineProps<{ 
@@ -13,6 +14,8 @@ const { init: notify } = useToast();
 
 const emit = defineEmits(['close', 'deleted'])
 
+const isLoading = ref(false)
+
 const closeModal = () => {
   emit('close')
 }
@@ -20,6 +23,7 @@ const closeModal = () => {
 async function confirmDeleteExam() {
   if (!props.examToDelete.id) return;
   try {
+    isLoading.value = true; 
     await medicTestRequestApi.deleteMedicTestRequest(
       String(props.examToDelete.id)
     );
@@ -27,6 +31,8 @@ async function confirmDeleteExam() {
     notify({ message: 'Examen eliminado correctamente.', color: 'success' });
   } catch (e: any) {
     notify({ message: e.message, color: 'danger' });
+  } finally {
+    isLoading.value = false; 
   }
 }
 
@@ -173,7 +179,7 @@ function formatDate(dateString: string) {
       <VaButton color="secondary" @click="closeModal"
         >Cancelar</VaButton
       >
-      <VaButton color="danger" @click="confirmDeleteExam"
+      <VaButton color="danger" :loading="isLoading" @click="confirmDeleteExam"
         >Eliminar</VaButton
       >
     </div>

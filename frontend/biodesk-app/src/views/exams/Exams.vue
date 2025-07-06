@@ -296,10 +296,10 @@ onMounted(() => {
   function onDeleteExam(exam: ExamRow) {
     examToDelete.value = exam
     showDeleteModal.value = true;
-    refreshExams();
   }
   function DeletedExam() {
     showDeleteModal.value = false;
+    refreshExams();
   }
   
   async function confirmCompleteExam() {
