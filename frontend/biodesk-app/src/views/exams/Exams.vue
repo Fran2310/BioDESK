@@ -131,23 +131,22 @@
   };
 
 
-// If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
-onMounted(() => {
-  if (props.medicHistoryId) {
-    console.log(props.medicHistoryId)
-    filters.value.medicHistoryId = props.medicHistoryId
-    searchExams()
-  } else {
-    fetchExams()
-  }
-})
+  // If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
+  onMounted(() => {
+    if (props.medicHistoryId) {
+      console.log(props.medicHistoryId)
+      filters.value.medicHistoryId = props.medicHistoryId
+      searchExams()
+    } else {
+      fetchExams()
+    }
+  })
 
   watch(
     () => [pagination.value.page, pagination.value.perPage],
+    // Llama a searchExams() cada vez que la página o los resultados por página cambien.
     () => {
-      const maxPage =
-        Math.ceil(pagination.value.total / pagination.value.perPage) || 1;
-      if (pagination.value.page > maxPage) pagination.value.page = 1;
+      searchExams();
     }
   );
 
