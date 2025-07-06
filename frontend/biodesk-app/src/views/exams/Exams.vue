@@ -248,7 +248,7 @@ onMounted(() => {
 
   const downloadResults = async (id: number) => {
     try {
-      const response = await storageApi.getStorage(String(id))
+      const response = await storageApi.getMedicResultsPdf(String(id))
       const data = response.data
 
       if (data?.url) {
