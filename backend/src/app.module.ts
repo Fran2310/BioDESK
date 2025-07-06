@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config'; // Importa ConfigModule para manejar variables de entorno
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SystemPrismaModule } from './system-prisma/system-prisma.module';
-import { LabPrismaModule } from './lab-prisma/lab-prisma.module';
+import { SystemPrismaModule } from './prisma-manager/system-prisma/system-prisma.module';
+import { LabPrismaModule } from './prisma-manager/lab-prisma/lab-prisma.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core'; // Importa APP_GUARD para usar guards globales
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'; // Importa el guard de autenticación JWT
@@ -16,7 +16,13 @@ import { LabModule } from './lab/lab.module';
 import { CaslModule } from './casl/casl.module';
 import { AuditModule } from './audit/audit.module';
 import { RoleModule } from './role/role.module';
-import { LabUserModule } from './lab-user/lab-user.module';
+import { LabUserModule } from './user/lab-user/lab-user.module';
+import { MailModule } from './mail/mail.module';
+import { SystemUserModule } from './user/system-user/system-user.module';
+import { CatalogLabModule } from './catalog-lab/catalog-lab.module';
+import { StorageModule } from './storage/storage.module';
+import { PdfModule } from './pdf/pdf.module';
+import { RequestMedicTestModule } from './patient-manager/request-medic-test/request-medic-test.module';
 
 @Module({
   imports: [
@@ -31,6 +37,12 @@ import { LabUserModule } from './lab-user/lab-user.module';
     AuditModule,
     RoleModule,
     LabUserModule,
+    MailModule,
+    SystemUserModule,
+    RequestMedicTestModule,
+    CatalogLabModule,
+    StorageModule,
+    PdfModule,
   ],
   controllers: [AppController],
   providers: [

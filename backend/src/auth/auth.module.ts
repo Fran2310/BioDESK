@@ -10,6 +10,8 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { LabModule } from 'src/lab/lab.module';
+import { MailModule } from 'src/mail/mail.module';
+import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
 
 /**
  * Módulo de autenticación que configura los servicios, controladores y estrategias necesarias
@@ -22,6 +24,8 @@ import { LabModule } from 'src/lab/lab.module';
     LabModule,
     UserModule,
     PassportModule,
+    SharedCacheModule,
+    MailModule,
     JwtModule.registerAsync({
       imports: [],
       inject: [ConfigService],

@@ -21,8 +21,16 @@ async function bootstrap() {
     .addTag('[Testing] SystemPrisma')
     .addTag('[Testing] LabPrisma')
     .addTag('[Testing] CASL')
+    .addTag('[Testing] Storage')
     .addTag('Auth', 'Autenticación')
     .addTag('Lab', 'Gestión de laboratorios')
+    .addTag('User', 'Gestión de usuarios')
+    .addTag('Role', 'Gestión de roles')
+    .addTag('Auditoría', 'Para gestionar de acciones')
+    .addTag(
+      'Catálogo de Exámenes',
+      'Gestion de acciones generales del catálogo de exámenes',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -35,9 +43,18 @@ async function bootstrap() {
   });
 
   // Configuraciones existentes
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true, // Habilita la transformación automática
+      transformOptions: {
+        enableImplicitConversion: true, // Convierte tipos automáticamente
+      },
+    }),
+  );
   app.setGlobalPrefix('api');
-
+  app.enableCors(); // Habilitar el CORS
   await app.listen(process.env.PORT ?? 3000);
 }
 

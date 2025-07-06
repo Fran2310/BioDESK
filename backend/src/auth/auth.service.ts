@@ -4,6 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
+import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 /**
  * Servicio de autenticación que gestiona el registro, validación y login de usuarios.
@@ -17,6 +19,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UserService,
     private readonly jwtService: JwtService,
+    private readonly sharedCacheService: SharedCacheService,
   ) {}
 
   /**
@@ -26,7 +29,7 @@ export class AuthService {
    * @returns Un objeto con el token de acceso y los datos del laboratorio creado.
    */
   async register(dto: RegisterDto) {
-    const { uuid, labs } = await this.usersService.createUserAdminAndLab(dto);
+    const uuid  = await this.usersService.createUser(dto);
 
     const payload = { sub: uuid };
 
@@ -34,13 +37,6 @@ export class AuthService {
 
     return {
       access_token: token,
-      labs: labs.map((lab) => ({
-        id: lab.id,
-        name: lab.name,
-        rif: lab.rif,
-        status: lab.status,
-        createdAt: lab.createdAt,
-      })),
     };
   }
 
@@ -51,7 +47,7 @@ export class AuthService {
    * @returns El usuario si las credenciales son correctas, o un mensaje de error si no lo son.
    */
   async validateUser(email: string, password: string) {
-    const user = await this.usersService.getSystemUser({
+    const user = await this.usersService.systemUserService.getSystemUser({
       email: email,
       includeLabs: true, // Incluye los laboratorios asociados al usuario
     });
@@ -69,12 +65,7 @@ export class AuthService {
    * @returns Un objeto con el token de acceso y los datos de los laboratorios asociados al usuario.
    */
   async login(user: any) {
-    if (!user?.labs?.length) {
-      throw new UnauthorizedException(
-        'Este usuario no está asociado a ningún laboratorio.',
-      );
-    }
-
+    
     const payload = {
       sub: user.uuid, // solo UUID en el token
     };
@@ -83,12 +74,24 @@ export class AuthService {
 
     return {
       access_token: token,
-      labs: user.labs.map((lab) => ({
-        id: lab.id,
-        name: lab.name,
-        status: lab.status,
-        rif: lab.rif,
-      })),
     };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    // 1. Validar que el token recibido coincide con el almacenado
+    const storedToken = await this.sharedCacheService.getEmailToken(dto.email);
+
+    if (!storedToken || dto.token !== storedToken) {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
+
+    // 2. Cambiar la contraseña
+    await this.usersService.systemUserService.changePasswordByEmail(
+      dto.email,
+      dto.newPassword,
+    );
+
+    // 3. Invalidar el token después de usarlo (importante para seguridad)
+    await this.sharedCacheService.delEmailToken(dto.email);
   }
 }

@@ -1,0 +1,88 @@
+<mjml>
+    <mj-head>
+    <mj-font name="Roboto" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" />
+    <mj-attributes>
+      <mj-text font-family="Roboto, Helvetica, Arial, sans-serif" padding="0" />
+      <mj-button background-color="#4A90E2" color="#FFF" font-weight="500" border-radius="4px" />
+
+    </mj-attributes>
+    <mj-style>
+      .date-card {
+        border-left: 4px solid #4A90E2;
+        padding-left: 12px !important;
+        margin: 8px 0;
+        display: inline-block;
+        width: 100%;
+      }
+      .date-label {
+        padding: 0 0 5px 0 !important;
+        display: block;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body>
+
+    <!-- Banner con logo -->
+    <mj-section background-color="#f2f0eb" padding="0">
+      <mj-column>
+        <mj-image src="{{ bannerUrl }}" alt="Logo Laboratorio" padding="0" />
+      </mj-column>
+    </mj-section>
+
+    <!-- Contenido principal -->
+    <mj-section padding="30px 20px">
+      <mj-column>
+        <mj-text font-size="24px" color="#333" font-weight="700" padding="10px 0 20px 0">
+          Hola, {{name}}
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#555" line-height="1.6">
+          Los resultados de sus exámenes realizados en <strong>{{labName}}</strong> ya están disponibles.
+        </mj-text>
+
+        <!-- Sección de fechas (snippet corregido) -->
+        <mj-section background-color="#f8fafc" border-radius="6px" padding="15px">
+          <mj-column>
+            <!-- Fecha de solicitud -->
+            <mj-text font-size="14px" color="#64748b" font-weight="bold" css-class="date-label">
+              📅 Fecha de solicitud
+            </mj-text>
+            <mj-text font-size="16px" color="#1e293b" css-class="date-card">
+              {{requestedAt}}
+            </mj-text>
+
+            <!-- Fecha de completado -->
+            <mj-text font-size="14px" color="#64748b" font-weight="bold" css-class="date-label">
+              ✅ Fecha de resultados
+            </mj-text>
+            <mj-text font-size="16px" color="#1e293b" css-class="date-card">
+              {{completedAt}}
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <!-- Botón de descarga -->
+        <mj-section padding="5px 0 5px 0">
+          <mj-column>
+            <mj-button href="{{pdfUrl}}" padding="12px 24px">
+              <mj-text font-size="15px" font-weight="500">📄 Descargar resultados (PDF)</mj-text>
+            </mj-button>
+            
+            <mj-text align="center" color="#64748b" font-size="13px" padding="10px 0 0 0">
+              Válido hasta 30 días después de la emisión
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f8f9fa" padding="10px 0">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#999" line-height="1.4">
+          © {{year}} BioDESK. Todos los derechos reservados.<br/>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

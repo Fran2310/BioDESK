@@ -2,17 +2,22 @@ import { forwardRef, Module } from '@nestjs/common';
 import { LabService } from './services/lab.service';
 import { LabController } from './lab.controller';
 import { AuditModule } from 'src/audit/audit.module';
-import { SystemPrismaModule } from 'src/system-prisma/system-prisma.module';
-import { LabPrismaModule } from 'src/lab-prisma/lab-prisma.module';
+import { SystemPrismaModule } from 'src/prisma-manager/system-prisma/system-prisma.module';
+import { LabPrismaModule } from 'src/prisma-manager/lab-prisma/lab-prisma.module';
 import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
 import { UserModule } from 'src/user/user.module';
 import { ManageLogoLabService } from './services/manage-logo-lab.service';
+import { StorageModule } from 'src/storage/storage.module';
+import { SystemUserModule } from 'src/user/system-user/system-user.module';
 
 @Module({
   imports: [
     SystemPrismaModule,
     LabPrismaModule,
     SharedCacheModule,
+    AuditModule,
+    StorageModule,
+    SystemUserModule,
     AuditModule,
     forwardRef(() => UserModule), // UserModule se importa de forma diferida para evitar dependencias circulares
   ],

@@ -1,11 +1,13 @@
 // /src/lab/services/manage-logo-lab.service.ts
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { join, extname } from 'path';
+import { extname } from 'path'; // path.join y fs ya no son necesarios para el guardado local
 import * as sharp from 'sharp';
-import { existsSync, mkdirSync } from 'fs';
-import { promises as fs } from 'fs';
-import { SystemPrismaService } from '../../system-prisma/system-prisma.service';
+// import { existsSync, mkdirSync } from 'fs'; // No necesarios para el guardado en la nube
+// import { promises as fs } from 'fs'; // No necesarios para el guardado en la nube
+import { SystemPrismaService } from '../../prisma-manager/system-prisma/system-prisma.service';
 import { AuditService } from 'src/audit/audit.service';
+import { StorageService } from 'src/storage/storage.service'; // Asegúrate que la ruta es correcta
+import { STORAGE_BUCKETS } from '../../storage/constants/storage.constants'; // Para saber el nombre del bucket
 
 @Injectable()
 export class ManageLogoLabService {
@@ -13,61 +15,71 @@ export class ManageLogoLabService {
   private readonly allowedTypes = ['image/png', 'image/svg+xml'];
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
   private readonly maxDimensions = 512; // 512px
-  private readonly uploadDir = join(process.cwd(), 'img', 'logolab');
+  // private readonly uploadDir = join(process.cwd(), 'img', 'logolab'); // No necesario para el almacenamiento en la nube
 
   constructor(
     private systemPrisma: SystemPrismaService,
     private readonly auditService: AuditService,
+    private readonly storageService: StorageService, // Inyectamos el StorageService
   ) {
-    this.createUploadDirectory();
+    // this.createUploadDirectory(); // No es necesario si se guarda en la nube
   }
 
   /**
-   * Guarda el logo del laboratorio en el sistema de archivos y actualiza la base de datos.
+   * Guarda el logo del laboratorio usando el StorageService (Supabase).
    * @param file Archivo subido por el usuario
    * @param labId ID del laboratorio al que pertenece el logo
    * @param userUuid UUID del usuario que realiza la acción
-   * @returns Objeto con la ruta del logo guardado
+   * @returns Objeto con la URL pública del logo guardado
    * @throws BadRequestException si el archivo no es válido o supera los límites establecidos
    */
   async saveLabLogo(
     file: Express.Multer.File,
     labId: number,
     userUuid: string,
-  ): Promise<{ logoPath: string }> {
+  ): Promise<{ logoUrl: string }> { // Cambia el tipo de retorno a logoUrl
     this.validateFile(file);
 
     if (file.mimetype === 'image/png') {
       await this.validatePngDimensions(file);
     }
 
-    // Generar nombre de archivo y rutas
+    // Generar nombre de archivo y la ruta personalizada dentro del bucket
     const newFilename = this.generateFilename(labId, file.originalname);
-    const newFilePath = join(this.uploadDir, newFilename);
-    const newLogoPath = `/img/logolab/${newFilename}`;
+    // Definimos la ruta personalizada dentro del bucket. Por ejemplo, 'lab-logos/123/'
+    // El bucket para logos será el de IMAGES, ya que son públicos.
+    const customPathInBucket = `logolab/`; // Una buena práctica para organizar
 
-    // Verificar si existe logo con diferente extensión
+    // Eliminar logos existentes en el almacenamiento en la nube si hay cambio de extensión
+    // Esto es crucial para limpiar archivos antiguos en Supabase Storage
     const hasDifferentExtension = await this.checkForDifferentExtension(
       labId,
       newFilename,
     );
 
-    // Eliminar logos existentes solo si hay cambio de extensión
     if (hasDifferentExtension) {
-      await this.deleteExistingLogos(labId);
+      await this.deleteExistingLogosFromCloud(labId);
     }
 
-    // Guardar el nuevo archivo
-    await fs.writeFile(newFilePath, file.buffer);
+    // --- Subir el archivo usando StorageService ---
+    this.logger.log(`Subiendo logo para lab ${labId} a StorageService...`);
+    const uploadResult = await this.storageService.uploadPublicFile(
+      file,
+      newFilename,
+      customPathInBucket,
+    );
+
+    const newLogoPathInDb = uploadResult.url; // Guardamos la URL pública en la DB
 
     // Determinar si es necesario actualizar la base de datos
-    if (await this.needsDbUpdate(labId, newLogoPath, hasDifferentExtension)) {
-      await this.updateLabLogoInDatabase(labId, newLogoPath);
+    if (await this.needsDbUpdate(labId, newLogoPathInDb, hasDifferentExtension)) {
+      await this.updateLabLogoInDatabase(labId, newLogoPathInDb);
     } else {
       this.logger.log(
         `Logo actualizado sin cambios en DB para laboratorio ID: ${labId}`,
       );
     }
+
     // Registrar la acción en el historial de auditoría
     await this.auditService.logAction(labId, userUuid, {
       action: 'update',
@@ -78,113 +90,120 @@ export class ManageLogoLabService {
         after: {
           originalFileName: file.originalname,
           filename: newFilename,
-          logoPath: newLogoPath,
+          logoUrl: newLogoPathInDb, // Ahora es una URL
           mimeType: file.mimetype,
           size: file.size,
         },
       },
     });
 
-    return { logoPath: newLogoPath };
+    return { logoUrl: newLogoPathInDb };
   }
 
   /**
-   * Verifica si existe un logo con diferente extensión para el mismo laboratorio
+   * Verifica si existe un logo con diferente extensión para el mismo laboratorio en la NUBE.
+   * Obtiene la URL actual de la DB y verifica la extensión.
    * @param labId ID del laboratorio
    * @param newFilename Nombre del nuevo archivo
    * @returns true si hay un logo existente con diferente extensión, false en caso contrario
-   * @throws Error si hay un problema al leer el directorio
    */
   private async checkForDifferentExtension(
     labId: number,
     newFilename: string,
   ): Promise<boolean> {
-    const existingFiles = await this.getExistingLogos(labId);
-    return existingFiles.some(
-      (file) => file !== newFilename && file.startsWith(`logo_lab_${labId}`),
-    );
+    const currentDbUrl = await this.getCurrentLogoPathFromDb(labId);
+    if (!currentDbUrl) return false; // No hay logo previo
+
+    const currentExt = extname(currentDbUrl);
+    const newExt = extname(newFilename);
+
+    // Si las extensiones son diferentes, indica que se debe eliminar el anterior.
+    // También, si el nombre actual en la URL no coincide con el patrón esperado
+    // (lo que podría indicar un cambio de convención o un error previo),
+    // también lo tratamos como un cambio.
+    const currentFilenameFromUrl = currentDbUrl.split('/').pop(); // Obtener el último segmento de la URL
+    return currentExt !== newExt || !currentFilenameFromUrl?.startsWith(`logo_lab_${labId}`);
   }
 
   /**
-   * Determina si es necesario actualizar la base de datos
+   * Determina si es necesario actualizar la base de datos.
    * @param labId ID del laboratorio
-   * @param newLogoPath Nuevo path del logo
+   * @param newLogoUrl Nueva URL del logo
    * @param hasDifferentExtension Indica si hay un cambio de extensión
    * @returns true si es necesario actualizar, false en caso contrario
-   * @throws Error si hay un problema al consultar la base de datos
    */
   private async needsDbUpdate(
     labId: number,
-    newLogoPath: string,
+    newLogoUrl: string,
     hasDifferentExtension: boolean,
   ): Promise<boolean> {
-    // Si hay cambio de extensión, siempre actualizamos DB
+    // Si hay cambio de extensión, siempre actualizamos DB (ya que se limpió el anterior)
     if (hasDifferentExtension) return true;
 
-    // Obtener el path actual de la base de datos
-    const currentDbPath = await this.getCurrentLogoPathFromDb(labId);
+    // Obtener la URL actual de la base de datos
+    const currentDbUrl = await this.getCurrentLogoPathFromDb(labId);
 
     // Actualizar DB si:
     // - No había logo previo
-    // - El path en DB es diferente al nuevo
-    return !currentDbPath || currentDbPath !== newLogoPath;
+    // - La URL en DB es diferente a la nueva
+    return !currentDbUrl || currentDbUrl !== newLogoUrl;
   }
 
   /**
-   * Obtiene todos los nombres de archivo de logos existentes para un laboratorio
+   * Elimina los logos existentes para un laboratorio del **almacenamiento en la nube**.
+   * Esto requiere conocer el nombre del bucket y la posible ruta/nombre del archivo anterior.
    * @param labId ID del laboratorio
-   * @returns Lista de nombres de archivo que coinciden con el patrón
-   * @throws Error si hay un problema al leer el directorio
    */
-  private async getExistingLogos(labId: number): Promise<string[]> {
-    try {
-      const files = await fs.readdir(this.uploadDir);
-      const pattern = new RegExp(`^logo_lab_${labId}(\\.|_)`);
-      return files.filter((file) => pattern.test(file));
-    } catch (error) {
-      this.logger.error(
-        `Error obteniendo logos existentes para lab ${labId}`,
-        error,
-      );
-      return [];
-    }
-  }
+  private async deleteExistingLogosFromCloud(labId: number): Promise<void> {
+    // Asume que todos los logos de un laboratorio se guardan con el patrón `logo_lab_{labId}.*`
+    // en el bucket `STORAGE_BUCKETS.IMAGES` dentro de la carpeta `lab-logos/{labId}/`.
+    const bucket = STORAGE_BUCKETS.IMAGES; // O el bucket donde guardes los logos
+    const customPath = `logolab/`;
 
-  /**
-   * Elimina todos los logos existentes para un laboratorio
-   * @param labId ID del laboratorio
-   * @throws Error si hay un problema al eliminar los archivos
-   * @return void
-   */
-  private async deleteExistingLogos(labId: number): Promise<void> {
     try {
-      const files = await this.getExistingLogos(labId);
-      for (const file of files) {
-        const filePath = join(this.uploadDir, file);
-        if (existsSync(filePath)) {
-          await fs
-            .unlink(filePath)
-            .catch((error) =>
-              this.logger.warn(
-                `Error eliminando logo existente: ${filePath}`,
-                error,
-              ),
-            );
+      // Supabase no tiene una función para "listar y eliminar por patrón" directamente.
+      // La estrategia es buscar el logo actual en la DB, y eliminarlo.
+      // O, si sabes los nombres de archivo exactos, eliminarlos.
+      // Si la convención es que solo hay UN logo por laboratorio,
+      // entonces solo necesitamos eliminar el que esté actualmente en la DB.
+
+      const currentDbUrl = await this.getCurrentLogoPathFromDb(labId);
+      if (currentDbUrl) {
+        // La URL pública es algo como:
+        // https://[project_ref].supabase.co/storage/v1/object/public/bucket-name/path/to/file.ext
+        // Necesitamos extraer "bucket-name/path/to/file.ext"
+        const fullPathInStorage = currentDbUrl.split('/public/')[1]; // Esto puede ser frágil
+        if (fullPathInStorage) {
+          this.logger.log(`Intentando eliminar logo antiguo de la nube: ${fullPathInStorage}`);
+          try {
+            // Llama directamente al SupabaseService para eliminar si tu StorageService no expone delete
+            // Si tu StorageService expone un deleteFile(fullPathInStorage), úsalo aquí.
+            const { bucket: existingBucket, relativePath: existingRelativePath } =
+              this.storageService['supabaseService']['_parseFilePath'](fullPathInStorage);
+
+            const { error } = await this.storageService['supabaseService']['supabase'].storage
+              .from(existingBucket)
+              .remove([existingRelativePath]);
+
+            if (error) {
+              this.logger.warn(`Error al eliminar logo antiguo ${fullPathInStorage} de la nube: ${error.message}`);
+            } else {
+              this.logger.log(`Logo antiguo ${fullPathInStorage} eliminado exitosamente de la nube.`);
+            }
+          } catch (parseError) {
+            this.logger.warn(`No se pudo parsear la URL del logo antiguo para eliminarlo: ${currentDbUrl}`, parseError);
+          }
         }
       }
     } catch (error) {
-      this.logger.error(
-        `Error eliminando logos existentes para lab ${labId}`,
-        error,
-      );
+      this.logger.error(`Error al intentar eliminar logos antiguos de la nube para lab ${labId}`, error);
     }
   }
 
   /**
-   * Obtiene el path actual del logo desde la base de datos
+   * Obtiene el path/URL actual del logo desde la base de datos
    * @param labId ID del laboratorio
-   * @returns Path del logo o null si no existe
-   * @throws Error si hay un problema al consultar la base de datos
+   * @returns URL del logo o null si no existe
    */
   private async getCurrentLogoPathFromDb(
     labId: number,
@@ -194,7 +213,7 @@ export class ManageLogoLabService {
         where: { id: labId },
         select: { logoPath: true },
       });
-      return lab?.logoPath || null;
+      return lab?.logoPath || null; // logoPath ahora almacena la URL
     } catch (error) {
       this.logger.error(
         `Error obteniendo path de logo desde DB para lab ${labId}`,
@@ -205,15 +224,13 @@ export class ManageLogoLabService {
   }
 
   /**
-   * Actualiza el path del logo en la base de datos
+   * Actualiza el path (URL) del logo en la base de datos
    * @param labId ID del laboratorio
-   * @param logoPath Nuevo path del logo
+   * @param logoUrl Nueva URL del logo
    * @throws BadRequestException si el laboratorio no existe o hay un error al actualizar
-   * @returns void
    */
-  private async updateLabLogoInDatabase(labId: number, logoPath: string) {
+  private async updateLabLogoInDatabase(labId: number, logoUrl: string) {
     try {
-      // Verificar si el laboratorio existe
       const labExists = await this.systemPrisma.lab.findUnique({
         where: { id: labId },
         select: { id: true },
@@ -225,18 +242,17 @@ export class ManageLogoLabService {
         );
       }
 
-      // Actualizar la base de datos
       await this.systemPrisma.lab.update({
         where: { id: labId },
-        data: { logoPath },
+        data: { logoPath: logoUrl }, // Guarda la URL completa
       });
-      this.logger.log(`Logo actualizado en DB para laboratorio ID: ${labId}`);
+      this.logger.log(`Logo URL actualizado en DB para laboratorio ID: ${labId}`);
     } catch (error) {
       this.logger.error(
-        `Error actualizando logo en base de datos para lab ${labId}`,
+        `Error actualizando URL de logo en base de datos para lab ${labId}`,
         error,
       );
-      throw new BadRequestException('Error actualizando logo en base de datos');
+      throw new BadRequestException('Error actualizando URL de logo en base de datos');
     }
   }
 
@@ -276,16 +292,11 @@ export class ManageLogoLabService {
     }
   }
 
-  /**
-   * Crea el directorio de subida de logos si no existe
-   * @returns void
-   * @throws Error si hay un problema al crear el directorio
-   */
-  private createUploadDirectory(): void {
-    if (!existsSync(this.uploadDir)) {
-      mkdirSync(this.uploadDir, { recursive: true });
-    }
-  }
+  // private createUploadDirectory(): void { // Ya no es necesario
+  //   if (!existsSync(this.uploadDir)) {
+  //     mkdirSync(this.uploadDir, { recursive: true });
+  //   }
+  // }
 
   /**
    * Genera un nombre de archivo único para el logo del laboratorio
@@ -294,10 +305,7 @@ export class ManageLogoLabService {
    * @returns Nombre de archivo generado
    */
   private generateFilename(labId: number, originalName: string): string {
-    // Obtener solo la extensión del archivo original
     const extension = extname(originalName) || '.png';
-
-    // Usar el formato: logo_lab_{idLab}.{extension}
-    return `logo_lab_${labId}${extension}`;
+    return `${labId}${extension}`;
   }
 }

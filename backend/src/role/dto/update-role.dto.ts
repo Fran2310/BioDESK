@@ -15,9 +15,6 @@ import {
 
 @ApiExtraModels(PermissionDto)
 export class UpdateRoleDto extends PartialType(RoleDto) {
-  @ValidateIf((o) => !o.name && !o.description && !o.permissions)
-  invalidUpdate: true; // Solo sirve como trigger para class-validator
-
   @ApiPropertyOptional({
     description: 'Nuevo nombre del rol',
     example: 'Tecnico de laboratorio',

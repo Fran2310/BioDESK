@@ -6,11 +6,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LabPrismaService } from 'src/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UserService } from 'src/user/user.service';
 import { AuditService } from 'src/audit/audit.service';
+import { LabDbManageService } from '../prisma-manager/lab-prisma/services/lab-db-manage.service';
+import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
+import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
 
 /**
  * Servicio encargado de gestionar roles dentro de un laboratorio, incluyendo su creación, actualización, eliminación y consulta.
@@ -23,7 +26,29 @@ export class RoleService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly auditService: AuditService,
+    private readonly labDbManageService: LabDbManageService,
+    private readonly sharedCacheService: SharedCacheService,
   ) {}
+
+  /**
+   * Valida que un rol con el ID proporcionado exista en el laboratorio especificado.
+   *
+   * @param labId ID del laboratorio.
+   * @param roleId ID del rol a validar.
+   * @throws NotFoundException Si el rol no existe en el laboratorio.
+   */
+  async validateRoleExists(labId: number, roleId: number) {
+    const prisma = await this.labDbManageService.genInstanceLabDB(labId);
+
+    const role = await this.getRoleById(prisma, roleId);
+    if (!role) {
+      throw new NotFoundException(
+        `Rol con ID ${roleId} no encontrado en el laboratorio`,
+      );
+    } else {
+      return role;
+    }
+  }
 
   /**
    * Busca y retorna un rol único por su nombre utilizando LabPrismaService.
@@ -60,18 +85,23 @@ export class RoleService {
    */
   async getAllRoles(
     prisma: LabPrismaService,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; searchTerm?: string; searchFields?: string[] },
   ) {
-    const { limit = 10, offset = 0 } = options || {};
+    const { limit = 10, offset = 0, searchTerm, searchFields } = options || {};
 
-    const [data, total] = await Promise.all([
-      prisma.role.findMany({
-        skip: offset,
+    const searchOptions = {
+      skip: offset,
         take: limit,
         orderBy: { id: 'asc' },
-      }),
-      prisma.role.count(),
-    ]);
+    };
+
+    // Usar intelligentSearch o la búsqueda normal según si hay searchTerm
+    const { results: data, total } = await intelligentSearch(
+      prisma.role,
+      searchOptions,
+      searchTerm,
+      searchFields,
+    )
 
     return {
       data,
@@ -90,35 +120,60 @@ export class RoleService {
    * @param roleId ID del rol para buscar los usuarios asociados.
    * @returns Promesa que resuelve con un arreglo de objetos de usuario.
    */
-  async getUsersByRoleId(prisma: LabPrismaService, roleId: number) {
-    const labUsers = await prisma.labUser.findMany({
+  async getUsersByRoleId(
+    prisma: LabPrismaService, 
+    roleId: number, 
+    offset?: number,
+    limit?: number,
+    searchTerm?: string,
+    searchFields?: string[]) {
+  
+    // Opciones para intelligentSearch
+    const searchOptions = {
+      skip: offset,
+      take: limit,
       where: { roleId },
-      select: { systemUserUuid: true }, // Solo necesitamos los UUID
-    });
-
-    if (labUsers.length === 0) {
+      select: { systemUserUuid: true }
+    };
+  
+    const { results: dataFromIntelligentSearch, total } = await intelligentSearch(
+      prisma.labUser,
+      searchOptions,
+      searchTerm,
+      searchFields,
+    );
+  
+    if (dataFromIntelligentSearch.length === 0) {
       throw new ConflictException(
         `No se encontraron usuarios asociados al rol con ID ${roleId}`,
       );
     }
-
+  
     // Consultar la info del usuario en la base de datos del sistema
     const users = await Promise.all(
-      labUsers.map((labUser) =>
-        this.userService.getSystemUser({
+      dataFromIntelligentSearch.map((labUser) =>
+        this.userService.systemUserService.getSystemUser({
           uuid: labUser.systemUserUuid,
           includeLabs: false,
         }),
       ),
     );
-
-    // Mapear solo los campos necesarios
-    return users.map((u) => ({
+  
+    // Mapear solo los campos necesarios para el resultado final
+    const data = users.map((u) => ({
+      uuid: u.uuid,
       ci: u.ci,
       name: u.name,
       lastName: u.lastName,
       email: u.email,
     }));
+  
+    return {
+      data,
+      total,
+      limit,
+      offset,
+    };
   }
 
   /**
@@ -218,6 +273,20 @@ export class RoleService {
       },
     });
 
+    // 4. Update cache only if there are users with this role
+    try {
+    const users = await this.getUsersByRoleId(prisma, updatedRole.id);
+    if (users.data.length > 0) {
+      await Promise.all(
+        users.data.map(user => 
+          this.sharedCacheService.setUser(user.uuid, labId, updatedRole)
+        )
+      );
+    }
+    // If no users, skip cache update silently
+    } catch (error) {
+    }
+
     // 4. Auditoria
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'update',
@@ -256,15 +325,11 @@ export class RoleService {
    */
   async deleteRoleById(
     prisma: LabPrismaService,
-    roleId: number,
     labId: number,
+    roleId: number,
     performedByUserUuid: string,
   ): Promise<{ message: string }> {
-    const role = await prisma.role.findUnique({ where: { id: roleId } });
-
-    if (!role) {
-      throw new NotFoundException(`Rol con ID ${roleId} no existe`);
-    }
+    const role = await this.validateRoleExists(labId, roleId)
 
     if (role.role === 'admin' || roleId === 1) {
       throw new BadRequestException('No puedes eliminar el rol "admin"');

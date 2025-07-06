@@ -22,6 +22,7 @@ model LabUser {
   role           Role?    @relation(fields: [roleId], references: [id])
 
   actionHistory        ActionHistory[]
+  requestMedicTests     RequestMedicTest[]
 }
 
 model Role {
@@ -56,6 +57,7 @@ model Patient {
   lastName       String
   secondName     String?
   secondLastName String?
+  gender         Gender
   email          String   @unique
   phoneNums      String[] @default([""])
   dir            String
@@ -66,11 +68,11 @@ model Patient {
 
 model MedicHistory {
   id          Int        @id @default(autoincrement())
-  allergies   String?
-  pathologies String?
+  allergies   String[] @default([])  
+  pathologies String[] @default([]) 
 
   patientId   Int        @unique
-  patient     Patient    @relation(fields: [patientId], references: [id])
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   requestMedicTests RequestMedicTest[]
 }
@@ -84,22 +86,55 @@ model RequestMedicTest {
   resultProperties Json?
   observation     String?
 
+  byLabUserId     Int?
+  byLabUser       LabUser? @relation(fields: [byLabUserId], references: [id])
+
   medicHistoryId  Int
-  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id])
+  medicHistory    MedicHistory    @relation(fields: [medicHistoryId], references: [id], onDelete: Cascade)
 
   medicTestCatalogId Int
   medicTestCatalog   MedicTestCatalog   @relation(fields: [medicTestCatalogId], references: [id])
 }
 
 model MedicTestCatalog {
-  id              Int      @id   @default(autoincrement())
-  name            String   @unique
-  description     String?
-  properties      Json?
-  supplies        String[] @default([""])
-  price           Float
+  id          Int                  @id @default(autoincrement())
+  name        String               @unique
+  description String?
+  price       Float
+  supplies    String[] @default([""])
 
+  properties  MedicTestProperty[]
   requestMedicTests RequestMedicTest[]
+}
+
+model MedicTestProperty {
+  id                Int                @id @default(autoincrement())
+  name              String
+  unit              String?
+  catalogId         Int
+  catalog           MedicTestCatalog   @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  valueReferences   ValueReference[]
+}
+
+model ValueReference {
+  id                Int       @id @default(autoincrement())
+  range             String    // Ej: "38–48"
+  gender            Gender    // MALE, FEMALE, ANY
+  ageGroup          AgeGroup  // ADULT, CHILD, ANY
+  medicTestProperty MedicTestProperty @relation(fields: [medicTestPropertyId], references: [id], onDelete: Cascade)
+  medicTestPropertyId Int
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ANY
+}
+
+enum AgeGroup {
+  ADULT
+  CHILD
+  ANY
 }
 
 enum State {
