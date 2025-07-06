@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { medicTestRequestApi } from '@/services/api';
-import { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
-import { Priority } from '@/services/types/global.type';
+import { ExamRow, formatDate, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
 import { formatCi } from '@/services/utils';
 import { ref } from 'vue';
 import { useToast } from 'vuestic-ui';
@@ -34,98 +33,6 @@ async function confirmDeleteExam() {
   } finally {
     isLoading.value = false; 
   }
-}
-
-const stateLabels: Record<string, string> = {
-    PENDING: 'Pendiente',
-    IN_PROCESS: 'En proceso',
-    COMPLETED: 'Completado',
-    TO_VERIFY: 'Por verificar',
-    CANCELED: 'Cancelado',
-  };
-
-const priorityLabels: Record<string, string> = {
-  HIGH: 'Alta',
-  MEDIUM: 'Media',
-  LOW: 'Baja',
-};
-
-interface ExamRow
-  extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
-  id: number;
-  requestedAt: string;
-  completedAt?: string;
-  state: string;
-  priority: Priority;
-  resultProperties: Record<string, string>;
-  observation: string;
-  byLabUserId: number | null;
-  medicTestCatalogId: number;
-  medicTestCatalog: {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    supplies: string[];
-  };
-  medicHistory: {
-    id: number;
-    patientId: number;
-    patient: {
-      id: number;
-      ci: string;
-      name: string;
-      lastName: string;
-      secondName: string;
-      secondLastName: string;
-      gender: string;
-      email: string;
-      phoneNums: string[];
-      dir: string;
-      birthDate: string;
-    };
-  };
-}
-
-function priorityColor(priority: string) {
-  switch (priority?.toUpperCase()) {
-    case 'HIGH':
-      return 'danger';
-    case 'MEDIUM':
-      return 'warning';
-    case 'LOW':
-      return 'success';
-    default:
-      return 'info';
-  }
-}
-
-function stateColor(state: string) {
-  switch (state?.toUpperCase()) {
-    case 'PENDING':
-      return 'warning';
-    case 'TO_VERIFY':
-      return 'info';
-    case 'COMPLETED':
-      return 'success';
-    case 'CANCELED':
-      return 'danger';
-    default:
-      return 'info';
-  }
-}
-
-function formatDate(dateString: string) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 </script>
 

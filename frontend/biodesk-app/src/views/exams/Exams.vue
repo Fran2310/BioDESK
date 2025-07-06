@@ -5,7 +5,7 @@
 
   import { medicTestRequestApi, storageApi } from '@/services/api';
   import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
-  import { Priority } from '@/services/types/global.type';
+  import { Priority, State } from '@/services/types/global.type';
 
   import ChangeStateModal from './ChangeStateModal.vue';
 
@@ -15,6 +15,7 @@
   import { formatCi } from '@/services/utils';
 
   import DeleteExam from '@/views/exams/modals/DeleteExam.vue'
+import CompleteExam from './modals/CompleteExam.vue';
 
   const { init: notify } = useToast();
   const router = useRouter();
@@ -26,7 +27,7 @@
     id: number;
     requestedAt: string;
     completedAt?: string;
-    state: string;
+    state: State;
     priority: Priority;
     resultProperties: Record<string, string>;
     observation: string;
@@ -290,6 +291,9 @@ onMounted(() => {
   function onCompleteExam(exam: ExamRow) {
     examToComplete.value = exam;
     showCompleteModal.value = true;
+  }
+  function CompletedExam() {
+    showCompleteModal.value = false;
     refreshExams();
   }
 
@@ -300,27 +304,6 @@ onMounted(() => {
   function DeletedExam() {
     showDeleteModal.value = false;
     refreshExams();
-  }
-  
-  async function confirmCompleteExam() {
-    if (!examToComplete.value) return;
-    isCompletingExam.value = true;
-
-    try {
-      await medicTestRequestApi.updateMedicTestRequestState(
-        String(examToComplete.value.id),
-        'COMPLETED'
-      );
-
-      notify({ message: 'Examen completado correctamente.', color: 'success' });
-      refreshExams();
-      showCompleteModal.value = false;
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      isCompletingExam.value = false;
-      examToComplete.value = null;
-    }
   }
 
   const totalPages = computed(() =>
@@ -556,75 +539,15 @@ onMounted(() => {
             @updated="handleStateUpdated"
           />
         </VaModal>
-
+        
         <!-- Completar examen Modal -->
         <VaModal v-model="showCompleteModal" hide-default-actions>
-          <div>
-            <h2 class="va-h4 mb-4 text-success">Confirmar completar examen</h2>
-            <p class="mb-4">¿Está seguro de que desea completar este examen?</p>
-
-            <div v-if="examToComplete" class="space-y-2 mb-4 text-sm">
-              <div>
-                <strong>Paciente:</strong>
-                {{ examToComplete.medicHistory.patient.name }}
-                {{ examToComplete.medicHistory.patient.lastName }} (CI:
-                {{ formatCi(examToComplete.medicHistory.patient.ci) }})
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ examToComplete.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ examToComplete.medicTestCatalog.description }}
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Estado:</strong>
-                <va-chip size="small" :color="stateColor(examToComplete.state)">
-                  {{
-                    stateLabels[examToComplete.state] ?? examToComplete.state
-                  }}
-                </va-chip>
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(examToComplete.priority)"
-                >
-                  {{
-                    priorityLabels[examToComplete.priority] ??
-                    examToComplete.priority
-                  }}
-                </va-chip>
-              </div>
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(examToComplete.requestedAt) }}
-              </div>
-              <div v-if="examToComplete.observation">
-                <strong>Observación:</strong> {{ examToComplete.observation }}
-              </div>
-            </div>
-
-            <div class="flex justify-end gap-2 mt-4">
-              <VaButton
-                color="secondary"
-                :disabled="isCompletingExam"
-                @click="showCompleteModal = false"
-              >
-                Cancelar
-              </VaButton>
-              <VaButton
-                color="success"
-                :loading="isCompletingExam"
-                :disabled="isCompletingExam"
-                @click="confirmCompleteExam"
-              >
-                Completar
-              </VaButton>
-            </div>
-          </div>
+          <CompleteExam 
+          :examToComplete="examToComplete"
+          @close="showCompleteModal = false"
+          @completed="CompletedExam()"
+          >
+          </CompleteExam>
         </VaModal>
 
         <!-- Delete Confirmation Modal -->
@@ -636,7 +559,6 @@ onMounted(() => {
           >
           </DeleteExam>
         </VaModal>
-
         <!-- Pagination -->
         <div
           class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
