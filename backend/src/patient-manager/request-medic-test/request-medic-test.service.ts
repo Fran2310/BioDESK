@@ -13,6 +13,7 @@ import { LabUserService } from 'src/user/lab-user/lab-user.service';
 import { PdfService } from 'src/pdf/pdf.service';
 import { MailService } from 'src/mail/mail.service';
 import { LabService } from 'src/lab/services/lab.service';
+import { StorageService } from 'src/storage/storage.service';
 
 @Injectable()
 export class RequestMedicTestService {
@@ -26,6 +27,7 @@ export class RequestMedicTestService {
       private readonly labDbManageService: LabDbManageService,
       private readonly pdfService: PdfService,
       private readonly mailService: MailService,
+      private readonly storageService: StorageService,
   ) {}
   
   async createRequestMedicTest(
@@ -245,6 +247,18 @@ export class RequestMedicTestService {
 
     } catch (error) {
       this.logger.error(`Error al obtener los historiales de los pacientes: ${error.message}`);
+      throw new NotFoundException(`${error.message}`);
+    }
+  }
+
+  async getRequestMedicTestPdf(labId: number, requestMedicTestId: number) {
+    try {
+      const bucket = 'medic-tests'
+      const fullPath = `${bucket}/${labId}/${requestMedicTestId}.pdf`;
+      return this.storageService.getFileUrl(fullPath);
+
+    } catch (error) {
+      this.logger.error(`Error al obtener el PDF`);
       throw new NotFoundException(`${error.message}`);
     }
   }

@@ -10,6 +10,7 @@ import { LabModule } from 'src/lab/lab.module';
 import { LabUserModule } from 'src/user/lab-user/lab-user.module';
 import { PdfModule } from 'src/pdf/pdf.module';
 import { MailModule } from 'src/mail/mail.module';
+import { StorageModule } from 'src/storage/storage.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MailModule } from 'src/mail/mail.module';
       AuditModule,
       PdfModule,
       MailModule,
+      StorageModule,
       LabModule,
     ],
   controllers: [RequestMedicTestController],

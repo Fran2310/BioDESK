@@ -183,6 +183,21 @@ import { State } from 'src/casl/dto/test-state.dto';
     );
   }
 
+  // Obtener el PDF de un resultado médico por ID
+  @Get('request-medic-tests/:requestMedicTestId/results/pdf')
+  @ApiOperation({ summary: 'Obtener el resultado en PDF de una petición de examen médico por su ID' })
+  @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
+  getOnePdf(
+    @Request() req,
+    @Param('requestMedicTestId', ParseIntPipe) requestMedicTestId: number,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.requestMedicTestService.getRequestMedicTestPdf(
+      labId,
+      requestMedicTestId,
+    );
+  }
+
   @Patch('request-medic-tests/:requestMedicTestId')
   @ApiOperation({ summary: 'Actualizar una petición de examen médico' })
   @CheckAbility({ actions: 'update', subject: 'RequestMedicTest' })
