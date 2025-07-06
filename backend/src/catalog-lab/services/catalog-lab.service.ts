@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateMedicTestDto } from '../dto/create-medic-test.dto';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { AuditService } from 'src/audit/audit.service';
 import { Prisma } from '@prisma/client-lab';
 import { UpdateMedicTestDto } from '../dto/update-medic-test.dto';

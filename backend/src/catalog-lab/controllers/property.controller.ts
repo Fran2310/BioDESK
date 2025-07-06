@@ -18,7 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { PropertyService } from '../services/property.service';
 import { MedicTestPropertyDto } from '../dto/property.dto';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { Request } from 'express';

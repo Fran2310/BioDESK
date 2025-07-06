@@ -16,8 +16,8 @@ import { AuditService } from 'src/audit/audit.service';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 import { MailService } from 'src/mail/mail.service';
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
 
 @Injectable()
 export class UserService {

@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config'; // Importa ConfigModule para manejar variables de entorno
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SystemPrismaModule } from './prisma-manage/system-prisma/system-prisma.module';
-import { LabPrismaModule } from './prisma-manage/lab-prisma/lab-prisma.module';
+import { SystemPrismaModule } from './prisma-manager/system-prisma/system-prisma.module';
+import { LabPrismaModule } from './prisma-manager/lab-prisma/lab-prisma.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core'; // Importa APP_GUARD para usar guards globales
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'; // Importa el guard de autenticación JWT

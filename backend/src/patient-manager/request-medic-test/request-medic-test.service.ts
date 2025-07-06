@@ -4,7 +4,7 @@ import { SystemUserService } from 'src/user/system-user/system-user.service';
 
 import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
 import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
 import { Priority, State } from '@prisma/client-lab';
 

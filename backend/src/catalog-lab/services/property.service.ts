@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { AuditService } from 'src/audit/audit.service';
 import { MedicTestPropertyDto } from '../dto/property.dto';
 

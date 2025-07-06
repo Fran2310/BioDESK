@@ -1,11 +1,11 @@
 // src/audit/audit.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
+import { LabPrismaFactory } from 'src/prisma-manager/lab-prisma/lab-prisma.factory';
 import { CreateAuditLogDto } from './dto/create-audit-log.dto';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 
 @Injectable()
 export class AuditService {

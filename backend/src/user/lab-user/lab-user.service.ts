@@ -8,7 +8,7 @@ import {
 import { CreateLabUserDto } from './dto/create-lab-user.dto';
 import { PaginatedLabUserListDto } from './dto/lab-user-with-role.dto';
 
-import { LabDbManageService } from '../../prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from '../../prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { RoleService } from '../../role/role.service';
 
 import { LabUser } from '@prisma/client-lab';

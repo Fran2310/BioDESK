@@ -9,10 +9,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
+import { LabPrismaFactory } from 'src/prisma-manager/lab-prisma/lab-prisma.factory';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { Lab } from '@prisma/client-system';
 
 import { UserCache } from 'src/shared-cache/dto/user-cache.interface';

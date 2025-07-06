@@ -3,7 +3,7 @@ import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
 import { Gender } from '@prisma/client-lab';

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditService } from 'src/audit/audit.service';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { ValueReferenceDto } from '../dto/value-ref.dto';
 import { UpdateValueReferenceDto } from '../dto/update-value-ref.dto';
 

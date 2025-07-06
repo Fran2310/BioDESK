@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { AuditService } from 'src/audit/audit.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 
 import { Patient } from '@prisma/client-lab';

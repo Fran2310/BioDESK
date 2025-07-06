@@ -6,12 +6,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UserService } from 'src/user/user.service';
 import { AuditService } from 'src/audit/audit.service';
-import { LabDbManageService } from '../prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from '../prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
 import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
 

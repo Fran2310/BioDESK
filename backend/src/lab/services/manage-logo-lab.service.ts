@@ -4,7 +4,7 @@ import { extname } from 'path'; // path.join y fs ya no son necesarios para el g
 import * as sharp from 'sharp';
 // import { existsSync, mkdirSync } from 'fs'; // No necesarios para el guardado en la nube
 // import { promises as fs } from 'fs'; // No necesarios para el guardado en la nube
-import { SystemPrismaService } from '../../prisma-manage/system-prisma/system-prisma.service';
+import { SystemPrismaService } from '../../prisma-manager/system-prisma/system-prisma.service';
 import { AuditService } from 'src/audit/audit.service';
 import { StorageService } from 'src/storage/storage.service'; // Asegúrate que la ruta es correcta
 import { STORAGE_BUCKETS } from '../../storage/constants/storage.constants'; // Para saber el nombre del bucket

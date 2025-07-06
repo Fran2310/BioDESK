@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { AgeGroup, Gender } from '@prisma/client-lab';
 import { LabService } from 'src/lab/services/lab.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 
 @Injectable()
