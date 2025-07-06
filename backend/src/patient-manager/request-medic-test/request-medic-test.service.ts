@@ -406,7 +406,7 @@ export class RequestMedicTestService {
         data: {
           state,
           byLabUserId: labUser.id,
-          completedAt: state === "COMPLETED" ? new Date() : undefined, // Solo se actualiza si el estado es "COMPLETED"
+          completedAt: state === "COMPLETED" ? new Date().toISOString() : null, // Solo se actualiza si el estado es "COMPLETED"
         } 
       });
       

@@ -48,8 +48,10 @@ export class MailService {
 
   async sendMedicResults(lab, patient, requestMedicTest, pdfUrl: string) {
     if (lab && patient && requestMedicTest) {
-      const formatDate = (dateISO: string) => { // Convertir la fecha ISO a formato legible (ej: "15 de junio de 2023, 2:30 PM")
-        return new Date(dateISO).toLocaleString('es-ES', {
+      const formatDate = (dateISO: string | null) => { // Acepta string o null
+        // Si es null, usa la fecha actual
+        const date = dateISO ? new Date(dateISO) : new Date().toISOString;
+        return date.toLocaleString('es-ES', {
           day: 'numeric',
           month: 'short',
           year: 'numeric',
