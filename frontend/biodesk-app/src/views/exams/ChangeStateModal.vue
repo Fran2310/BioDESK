@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useToast, VaSelect, VaButton, VaProgressCircle } from 'vuestic-ui'
+import { useToast, VaSelect, VaButton } from 'vuestic-ui'
 import { medicTestRequestApi } from '@/services/api'
 
 import type { State, Priority } from '@/services/types/global.type'

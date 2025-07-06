@@ -14,6 +14,8 @@
 
   import { formatCi } from '@/services/utils';
 
+  import DeleteExam from '@/views/exams/modals/DeleteExam.vue'
+
   const { init: notify } = useToast();
   const router = useRouter();
 
@@ -281,20 +283,25 @@ onMounted(() => {
   };
 
   function handleStateUpdated() {
-    refreshExams();
     showStateModal.value = false;
+    refreshExams();
   }
 
   function onCompleteExam(exam: ExamRow) {
     examToComplete.value = exam;
     showCompleteModal.value = true;
+    refreshExams();
   }
 
   function onDeleteExam(exam: ExamRow) {
-    examToDelete.value = exam;
+    examToDelete.value = exam
     showDeleteModal.value = true;
+    refreshExams();
   }
-
+  function DeletedExam() {
+    showDeleteModal.value = false;
+  }
+  
   async function confirmCompleteExam() {
     if (!examToComplete.value) return;
     isCompletingExam.value = true;
@@ -313,23 +320,6 @@ onMounted(() => {
     } finally {
       isCompletingExam.value = false;
       examToComplete.value = null;
-    }
-  }
-
-  async function confirmDeleteExam() {
-    if (!examToDelete.value) return;
-
-    try {
-      await medicTestRequestApi.deleteMedicTestRequest(
-        String(examToDelete.value.id)
-      );
-      notify({ message: 'Examen eliminado correctamente.', color: 'success' });
-      refreshExams();
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      showDeleteModal.value = false;
-      examToDelete.value = null;
     }
   }
 
@@ -639,61 +629,12 @@ onMounted(() => {
 
         <!-- Delete Confirmation Modal -->
         <VaModal v-model="showDeleteModal" hide-default-actions>
-          <div>
-            <h2 class="va-h4 mb-4 text-danger">Confirmar eliminación</h2>
-            <p class="mb-4">¿Está seguro de que desea eliminar este examen?</p>
-
-            <div v-if="examToDelete" class="space-y-2 mb-4 text-sm">
-              <div>
-                <strong>Paciente:</strong>
-                {{ examToDelete.medicHistory.patient.name }}
-                {{ examToDelete.medicHistory.patient.lastName }} (CI:
-                {{ formatCi(examToDelete.medicHistory.patient.ci)}})
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ examToDelete.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ examToDelete.medicTestCatalog.description }}
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Estado:</strong>
-                <va-chip size="small" :color="stateColor(examToDelete.state)">
-                  {{ stateLabels[examToDelete.state] ?? examToDelete.state }}
-                </va-chip>
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(examToDelete.priority)"
-                >
-                  {{
-                    priorityLabels[examToDelete.priority] ??
-                    examToDelete.priority
-                  }}
-                </va-chip>
-              </div>
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(examToDelete.requestedAt) }}
-              </div>
-              <div v-if="examToDelete.observation">
-                <strong>Observación:</strong> {{ examToDelete.observation }}
-              </div>
-            </div>
-
-            <div class="flex justify-end gap-2 mt-4">
-              <VaButton color="secondary" @click="showDeleteModal = false"
-                >Cancelar</VaButton
-              >
-              <VaButton color="danger" @click="confirmDeleteExam"
-                >Eliminar</VaButton
-              >
-            </div>
-          </div>
+          <DeleteExam 
+          :examToDelete="examToDelete"
+          @close="showDeleteModal = false"
+          @deleted="DeletedExam()"
+          >
+          </DeleteExam>
         </VaModal>
 
         <!-- Pagination -->
