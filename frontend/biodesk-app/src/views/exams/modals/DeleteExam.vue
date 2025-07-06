@@ -1,41 +1,3 @@
-<script setup lang="ts">
-import { medicTestRequestApi } from '@/services/api';
-import { ExamRow, formatDate, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
-import { formatCi } from '@/services/utils';
-import { ref } from 'vue';
-import { useToast } from 'vuestic-ui';
-
-const props = defineProps<{ 
-  examToDelete: ExamRow 
-}>();
-
-const { init: notify } = useToast();
-
-const emit = defineEmits(['close', 'deleted'])
-
-const isLoading = ref(false)
-
-const closeModal = () => {
-  emit('close')
-}
-
-async function confirmDeleteExam() {
-  if (!props.examToDelete.id) return;
-  try {
-    isLoading.value = true; 
-    await medicTestRequestApi.deleteMedicTestRequest(
-      String(props.examToDelete.id)
-    );
-    emit('deleted')
-    notify({ message: 'Examen eliminado correctamente.', color: 'success' });
-  } catch (e: any) {
-    notify({ message: e.message, color: 'danger' });
-  } finally {
-    isLoading.value = false; 
-  }
-}
-</script>
-
 <template>
   <div>
     <h2 class="va-h4 mb-4 text-danger">Confirmar eliminación</h2>
@@ -92,3 +54,41 @@ async function confirmDeleteExam() {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { medicTestRequestApi } from '@/services/api';
+import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
+import { formatCi, formatDate } from '@/services/utils';
+import { ref } from 'vue';
+import { useToast } from 'vuestic-ui';
+
+const props = defineProps<{ 
+  examToDelete: ExamRow 
+}>();
+
+const { init: notify } = useToast();
+
+const emit = defineEmits(['close', 'deleted'])
+
+const isLoading = ref(false)
+
+const closeModal = () => {
+  emit('close')
+}
+
+async function confirmDeleteExam() {
+  if (!props.examToDelete.id) return;
+  try {
+    isLoading.value = true; 
+    await medicTestRequestApi.deleteMedicTestRequest(
+      String(props.examToDelete.id)
+    );
+    emit('deleted')
+    notify({ message: 'Examen eliminado correctamente.', color: 'success' });
+  } catch (e: any) {
+    notify({ message: e.message, color: 'danger' });
+  } finally {
+    isLoading.value = false; 
+  }
+}
+</script>

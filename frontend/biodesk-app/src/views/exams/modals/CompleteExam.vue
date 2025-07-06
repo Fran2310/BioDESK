@@ -69,8 +69,8 @@
 
 <script setup lang="ts">
 import { medicTestRequestApi } from '@/services/api';
-import { ExamRow, formatDate, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
-import { formatCi } from '@/services/utils';
+import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
+import { formatCi, formatDate } from '@/services/utils';
 import { ref } from 'vue';
 import { useToast } from 'vuestic-ui';
 

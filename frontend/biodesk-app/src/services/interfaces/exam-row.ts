@@ -47,9 +47,9 @@ export const stateLabels: Record<string, string> = {
 };
 
 export const priorityLabels: Record<string, string> = {
-HIGH: 'Alta',
-MEDIUM: 'Media',
-LOW: 'Baja',
+  HIGH: 'Alta',
+  MEDIUM: 'Media',
+  LOW: 'Baja',
 };
 
 export function priorityColor(priority: string) {
@@ -78,18 +78,4 @@ export function stateColor(state: string) {
     default:
       return 'info';
   }
-}
-
-
-export function formatDate(dateString: string) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }

@@ -4,60 +4,22 @@
   import { useToast } from 'vuestic-ui';
 
   import { medicTestRequestApi, storageApi } from '@/services/api';
-  import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
-  import { Priority, State } from '@/services/types/global.type';
-
   import ChangeStateModal from './ChangeStateModal.vue';
 
   import type { GetExtendQuerys } from '@/services/interfaces/global';
   import type { SearchField } from '@/services/types/searchFields.type';
 
-  import { formatCi } from '@/services/utils';
+  import { formatCi, formatDate } from '@/services/utils';
 
   import DeleteExam from '@/views/exams/modals/DeleteExam.vue'
-import CompleteExam from './modals/CompleteExam.vue';
+  import CompleteExam from './modals/CompleteExam.vue';
+  import DetailsExam from './modals/DetailsExam.vue';
+  import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
 
   const { init: notify } = useToast();
   const router = useRouter();
 
   const props = defineProps<{ medicHistoryId?: string }>();
-
-  interface ExamRow
-    extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
-    id: number;
-    requestedAt: string;
-    completedAt?: string;
-    state: State;
-    priority: Priority;
-    resultProperties: Record<string, string>;
-    observation: string;
-    byLabUserId: number | null;
-    medicTestCatalogId: number;
-    medicTestCatalog: {
-      id: number;
-      name: string;
-      description: string;
-      price: number;
-      supplies: string[];
-    };
-    medicHistory: {
-      id: number;
-      patientId: number;
-      patient: {
-        id: number;
-        ci: string;
-        name: string;
-        lastName: string;
-        secondName: string;
-        secondLastName: string;
-        gender: string;
-        email: string;
-        phoneNums: string[];
-        dir: string;
-        birthDate: string;
-      };
-    };
-  }
 
   const exams = ref<ExamRow[]>([]);
   const filters = ref({
@@ -76,65 +38,9 @@ import CompleteExam from './modals/CompleteExam.vue';
 
   const showCompleteModal = ref(false);
   const examToComplete = ref<ExamRow | null>(null);
-  const isCompletingExam = ref(false);
 
   const showDeleteModal = ref(false);
   const examToDelete = ref<ExamRow | null>(null);
-
-  const stateLabels: Record<string, string> = {
-    PENDING: 'Pendiente',
-    IN_PROCESS: 'En proceso',
-    COMPLETED: 'Completado',
-    TO_VERIFY: 'Por verificar',
-    CANCELED: 'Cancelado',
-  };
-
-  const priorityLabels: Record<string, string> = {
-    HIGH: 'Alta',
-    MEDIUM: 'Media',
-    LOW: 'Baja',
-  };
-
-  function priorityColor(priority: string) {
-    switch (priority?.toUpperCase()) {
-      case 'HIGH':
-        return 'danger';
-      case 'MEDIUM':
-        return 'warning';
-      case 'LOW':
-        return 'success';
-      default:
-        return 'info';
-    }
-  }
-
-  function stateColor(state: string) {
-    switch (state?.toUpperCase()) {
-      case 'PENDING':
-        return 'warning';
-      case 'TO_VERIFY':
-        return 'info';
-      case 'COMPLETED':
-        return 'success';
-      case 'CANCELED':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
-  function formatDate(dateString: string) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
 
   const fetchExams = async () => {
     isLoading.value = true;
@@ -456,79 +362,9 @@ onMounted(() => {
 
         <!-- Exam Details Modal -->
         <VaModal v-model="showModal" hide-default-actions>
-          <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
-          <div v-if="selectedExam">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(selectedExam.requestedAt) }}
-              </div>
-              <div>
-                <strong>CI:</strong> {{ formatCi(selectedExam.medicHistory.patient.ci) }}
-              </div>
-              <div>
-                <strong>Nombre:</strong>
-                {{ selectedExam.medicHistory.patient.name }}
-              </div>
-              <div>
-                <strong>Apellido:</strong>
-                {{ selectedExam.medicHistory.patient.lastName }}
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ selectedExam.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ selectedExam.medicTestCatalog.description }}
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Estado:</strong>
-                <va-chip size="small" :color="stateColor(selectedExam.state)">
-                  {{ stateLabels[selectedExam.state] ?? selectedExam.state }}
-                </va-chip>
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(selectedExam.priority)"
-                >
-                  {{
-                    priorityLabels[selectedExam.priority] ??
-                    selectedExam.priority
-                  }}
-                </va-chip>
-              </div>
-            </div>
-
-            <h4 class="mt-4 mb-2"><strong>Observación:</strong></h4>
-            <div class="p-3 bg-gray-100 rounded border border-gray-200">
-              {{ selectedExam.observation || 'No se proporcionó observación.' }}
-            </div>
-
-            <h4 class="mt-4 mb-2"><strong>Resultados:</strong></h4>
-            <div class="overflow-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr>
-                    <th class="border-b pb-1">Propiedad</th>
-                    <th class="border-b pb-1">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(value, key) in selectedExam.resultProperties"
-                    :key="key"
-                  >
-                    <td class="pr-4 font-semibold">{{ key }}</td>
-                    <td>{{ value }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div v-else>No se ha seleccionado un examen válido.</div>
+          <DetailsExam
+          :selectedExam="selectedExam">
+          </DetailsExam>
         </VaModal>
 
         <!-- Change State Modal -->
@@ -539,7 +375,7 @@ onMounted(() => {
             @updated="handleStateUpdated"
           />
         </VaModal>
-        
+
         <!-- Completar examen Modal -->
         <VaModal v-model="showCompleteModal" hide-default-actions>
           <CompleteExam 
