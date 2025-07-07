@@ -4,10 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import Login from '@/views/auth/Login.vue';
 import HomeView from '@/views/home/HomeView.vue';
 import LoadScreen from '@/layouts/LoadScreen.vue';
-import PatientsPage from '@/views/patients/PatientsPage.vue';
 import AppLayoutVuestic from '@/layouts/AppLayoutVuestic.vue';
-import Exams from '@/views/exams/Exams.vue';
-import NewRequest from '@/views/new-request/NewRequest.vue';
 import UsersView from '@/views/users/UsersView.vue';
 
 const router = createRouter({
@@ -117,7 +114,7 @@ const router = createRouter({
         {
           path: 'newrequest',
           name: 'NewRequest',
-          component: NewRequest,
+          component: () => import('@/views/exams/NewRequest.vue'),
         },
         {
           path: '/lab/request-medic-test/:id/upload',
