@@ -27,7 +27,7 @@
         </div>
         <va-data-table
           v-else
-          :columns="columns"
+          :columns="columnsWithoutId"
           :items="filteredExams"
           :loading="loading"
                     class="shadow rounded min-h-[200px]"
@@ -277,7 +277,6 @@ import { computed, ref, watch } from 'vue'
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
 const {
-  // Tabla y búsqueda
   columns,
   filteredExams,
   tableState,
@@ -387,6 +386,9 @@ const canSubmitExam = computed(() => {
   // Puedes agregar más validaciones aquí si lo necesitas
   return true
 })
+
+// Filtrar la columna 'id' para no mostrarla en la tabla
+const columnsWithoutId = computed(() => columns.filter(col => col.key !== 'id'))
 
 onMounted(() => {
   fetchExams()
