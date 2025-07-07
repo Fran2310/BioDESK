@@ -33,6 +33,14 @@ export class CaslAbilityGuard implements CanActivate {
     private labService: LabService,
   ) {}
 
+  /**
+   * Determina si el usuario tiene permisos para acceder al recurso solicitado según las habilidades requeridas.
+   * Permite el acceso si la ruta es pública, si no se requieren habilidades específicas, o si el usuario autenticado posee los permisos necesarios.
+   * Lanza ForbiddenException si el usuario no está autenticado, no tiene permisos cacheados, o no cumple con las habilidades requeridas.
+   *
+   * @param context Contexto de ejecución de NestJS.
+   * @returns Promise<boolean> True si el acceso está permitido, de lo contrario lanza una excepción.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const metadataKeys = [IS_PUBLIC_KEY];
 
@@ -64,7 +72,7 @@ export class CaslAbilityGuard implements CanActivate {
     const isAllowed = requiredAbilities.every(
       ({ actions, subject, fields }) => {
         const actionList = actions.split(',').map((a) => a.trim());
-        const stateRequested = req.path.split('/').pop();  // 👈 obtenemos el valor de state si viene
+        const stateRequested = req.path.split('/').pop(); // 👈 obtenemos el valor de state si viene
 
         return actionList.every((action) => {
           const typedAction = action as Actions;

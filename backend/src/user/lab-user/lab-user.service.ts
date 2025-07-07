@@ -87,14 +87,19 @@ export class LabUserService {
     };
   }
 
-  async getLabUserByUuid(
-    labId: number,
-    uuid: string,
-  ) {
+  /**
+   * Obtiene un usuario de laboratorio específico por su UUID, incluyendo información básica de su rol asociado.
+   * Busca en la base de datos del laboratorio especificado y retorna tanto los datos del usuario como detalles esenciales de su rol.
+   *
+   * @param labId ID del laboratorio donde se buscará el usuario.
+   * @param uuid UUID único del usuario del sistema (correspondiente a systemUserUuid en labUser).
+   * @returns El usuario del laboratorio encontrado con información de su rol (id, nombre y descripción), o null si no existe.
+   */
+  async getLabUserByUuid(labId: number, uuid: string) {
     const prisma = await this.labDbManageService.genInstanceLabDB(labId);
 
     const labUser = await prisma.labUser.findUnique({
-      where: {systemUserUuid: uuid},
+      where: { systemUserUuid: uuid },
       include: {
         role: {
           select: {
@@ -107,7 +112,7 @@ export class LabUserService {
     });
 
     return labUser;
-    }
+  }
 
   /**
    * Crea un nuevo usuario de laboratorio en la base de datos correspondiente.

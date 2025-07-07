@@ -8,12 +8,8 @@ import {
 import { CreateMedicTestDto } from '../dto/create-medic-test.dto';
 import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { AuditService } from 'src/audit/audit.service';
-import { Prisma } from '@prisma/client-lab';
 import { UpdateMedicTestDto } from '../dto/update-medic-test.dto';
-import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
-import { UpdateValueReferenceDto } from '../dto/update-value-ref.dto';
-import { ValueReferenceDto } from '../dto/value-ref.dto';
-import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+import { intelligentSearch } from 'src/common/utils/intelligentSearch';
 
 @Injectable()
 export class CatalogLabService {
@@ -22,6 +18,14 @@ export class CatalogLabService {
     private readonly auditService: AuditService,
   ) {}
 
+  /**
+   * Valida la existencia de un examen médico en el catálogo.
+   *
+   * @param prisma - El cliente de Prisma para interactuar con la base de datos.
+   * @param testId - El ID del examen médico a validar.
+   * @returns El examen médico existente si se encuentra en el catálogo.
+   * @throws NotFoundException - Si no se encuentra el examen con el ID proporcionado.
+   */
   async validateMedicTestCatalog(prisma, testId: number) {
     const existingTest = await prisma.medicTestCatalog.findUnique({
       where: { id: testId },
@@ -60,15 +64,13 @@ export class CatalogLabService {
     const { id, includeData = false } = options;
 
     if (!id) {
-      throw new BadRequestException(
-        'Debe proporcionar un ID del examen.',
-      );
+      throw new BadRequestException('Debe proporcionar un ID del examen.');
     }
 
     const prisma = await this.labDbManageService.genInstanceLabDB(labId);
 
     const where = {
-      id
+      id,
     };
 
     const catalog = await prisma.medicTestCatalog.findFirst({
@@ -85,9 +87,7 @@ export class CatalogLabService {
     });
 
     if (!catalog) {
-      throw new NotFoundException(
-        `No se encontró un examen con ID: ${id}`,
-      );
+      throw new NotFoundException(`No se encontró un examen con ID: ${id}`);
     }
 
     return catalog;
@@ -102,21 +102,33 @@ export class CatalogLabService {
    */
   async getAllMedicTestCatalog(
     labId: number,
-    options: { offset?: number; limit?: number; includeData?: boolean; searchTerm?: string; searchFields?: string[] },
+    options: {
+      offset?: number;
+      limit?: number;
+      includeData?: boolean;
+      searchTerm?: string;
+      searchFields?: string[];
+    },
   ) {
     try {
-      const { offset = 0, limit = 20, includeData = false, searchTerm, searchFields } = options;
-  
+      const {
+        offset = 0,
+        limit = 20,
+        includeData = false,
+        searchTerm,
+        searchFields,
+      } = options;
+
       const prisma = await this.labDbManageService.genInstanceLabDB(labId);
-  
+
       // El modelo principal para la búsqueda es 'medicTestCatalog'
       const medicTestCatalogModel = prisma.medicTestCatalog;
-  
+
       const defaultSearchFields = [
         'name', // Ejemplo: buscar por nombre del examen
         'price', // Ejemplo: buscar por código del examen
       ];
-  
+
       // Opciones para incluir datos relacionados si includeData es true
       const includeOptions = includeData
         ? {
@@ -127,7 +139,7 @@ export class CatalogLabService {
             },
           }
         : undefined;
-  
+
       // Construimos el objeto de opciones para la búsqueda inteligente
       const searchOptions = {
         skip: offset,
@@ -137,28 +149,32 @@ export class CatalogLabService {
           name: 'asc', // O 'id' o cualquier otro campo relevante para ordenar el catálogo
         },
       };
-  
+
       // Lógica principal: usar intelligentSearch
       const { results: data, total } = await intelligentSearch(
         medicTestCatalogModel, // 1. El modelo a buscar (MedicTestCatalog)
-        searchOptions,         
-        searchTerm,           
-        searchFields || defaultSearchFields, 
+        searchOptions,
+        searchTerm,
+        searchFields || defaultSearchFields,
       );
-  
+
       return {
         total,
         offset,
         limit,
         data,
       };
-  
     } catch (error) {
-      if (error instanceof ConflictException || error instanceof NotFoundException) {
+      if (
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
       // Envuelve otros errores en un NotFoundException genérico
-      throw new NotFoundException(`Error al obtener el catálogo de exámenes médicos: ${error.message}`);
+      throw new NotFoundException(
+        `Error al obtener el catálogo de exámenes médicos: ${error.message}`,
+      );
     }
   }
 

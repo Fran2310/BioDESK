@@ -1,9 +1,25 @@
-import { Body, Controller, Delete, Get, Param, ParseBoolPipe, ParseIntPipe, Patch, Post, Query, Request } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeaders, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseBoolPipe,
+  ParseIntPipe,
+  Patch,
+  Query,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiHeaders,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { MedicHistoryService } from './medic-history.service';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
-import { CreateMedicHistoryDto } from './dto/create-medic-history.dto';
 import { UpdateMedicHistory } from './dto/update-medic-history.dto';
 
 @ApiBearerAuth()
@@ -11,8 +27,9 @@ import { UpdateMedicHistory } from './dto/update-medic-history.dto';
 @ApiHeaders([X_LAB_ID_HEADER])
 @Controller('patients')
 export class MedicHistoryController {
-  constructor(private readonly medicHistoryService: MedicHistoryService) {} 
+  constructor(private readonly medicHistoryService: MedicHistoryService) {}
 
+  // DEPRECATED: Endpoint para crear historial medico, responsabilidad delegada al crear el paciente
   /*
   @Post('medic-history')
   @ApiOperation({ summary: 'Crear un historial médico para un paciente' })
@@ -46,7 +63,11 @@ export class MedicHistoryController {
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
-    return this.medicHistoryService.getMedicHistory(+labId, includeData, patientId);
+    return this.medicHistoryService.getMedicHistory(
+      +labId,
+      includeData,
+      patientId,
+    );
   }
 
   @Patch(':patientId/medic-history')
@@ -75,6 +96,8 @@ export class MedicHistoryController {
       +patientId,
     );
   }
+
+  // DEPRECATED: Endpoint para borrar historial medico, responsabilidad delegada al borrar paciente
   /*
   @Delete(':patientId/medic-history')
   @ApiOperation({ summary: 'Eliminar historial médico de un paciente' })

@@ -5,6 +5,9 @@ import { CreateUserDto } from 'src/user/system-user/dto/create-user.dto';
 import { CreateLabDto } from 'src/lab/dto/create-lab.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
+/**
+ * DEPRECATED (util cuando el registro creaba el usuario y el laboratorio al mismo tiempo, esta funcion se separo en dos)
+ */
 export class RegisterDto extends CreateUserDto {
   /*
   @ApiProperty({

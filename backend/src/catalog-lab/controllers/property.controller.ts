@@ -23,6 +23,9 @@ import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { Request } from 'express';
 
+/**
+ * DEPRECADO: Este controlador quedo obsoleto por catalog-lab controller, se mantiene unicamente con efectos practicos de consultas para el desarrollador
+ */
 @ApiBearerAuth()
 @ApiTags('[Catálogo de Exámenes] Propiedades de Exámen')
 @ApiHeaders([X_LAB_ID_HEADER])

@@ -1,52 +1,48 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Param,
-    Delete,
-    Patch,
-    Request,
-    Query,
-    ParseIntPipe,
-    ParseBoolPipe,
-    ParseArrayPipe,
-    ParseEnumPipe,
-  } from '@nestjs/common';
-  import { RequestMedicTestService } from './request-medic-test.service';
-  import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
-  import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
-  import {
-    ApiBearerAuth,
-    ApiHeaders,
-    ApiOperation,
-    ApiParam,
-    ApiQuery,
-    ApiTags,
-  } from '@nestjs/swagger';
-  import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
-  import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Patch,
+  Request,
+  Query,
+  ParseIntPipe,
+  ParseBoolPipe,
+  ParseArrayPipe,
+  ParseEnumPipe,
+} from '@nestjs/common';
+import { RequestMedicTestService } from './request-medic-test.service';
+import { CreateRequestMedicTestDto } from './dto/create-request-medic-test.dto';
+import { UpdateRequestMedicTest } from './dto/update-request-medic-test.dto';
+import {
+  ApiBearerAuth,
+  ApiHeaders,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
+import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
 import { State } from 'src/casl/dto/test-state.dto';
-  
 
-//TODO Asegurar que el pacientId enviado si le pertenece el requestMedicId
+@ApiBearerAuth()
+@ApiTags('Peticiones de Exámenes Médicos')
+@ApiHeaders([X_LAB_ID_HEADER])
+@Controller('')
+export class RequestMedicTestController {
+  constructor(
+    private readonly requestMedicTestService: RequestMedicTestService,
+  ) {}
 
-  @ApiBearerAuth()
-  @ApiTags('Peticiones de Exámenes Médicos')
-  @ApiHeaders([X_LAB_ID_HEADER])
-  @Controller('')
-  export class RequestMedicTestController {
-    constructor(
-      private readonly requestMedicTestService: RequestMedicTestService,
-    ) {}
-  
   @Post('request-medic-tests')
-  @ApiOperation({ summary: 'Crear una petición de examen médico para un paciente' })
+  @ApiOperation({
+    summary: 'Crear una petición de examen médico para un paciente',
+  })
   @CheckAbility({ actions: 'create', subject: 'RequestMedicTest' })
-  create(
-    @Body() dto: CreateRequestMedicTestDto,
-    @Request() req,
-  ) {
+  create(@Body() dto: CreateRequestMedicTestDto, @Request() req) {
     const labId = Number(req.headers['x-lab-id']);
     const performedByUserUuid = req.user.sub;
 
@@ -58,19 +54,23 @@ import { State } from 'src/casl/dto/test-state.dto';
   }
 
   @Get(':medicHistoryId/request-medic-tests')
-  @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de un historial médico' })
+  @ApiOperation({
+    summary: 'Obtener todas las peticiones de exámenes de un historial médico',
+  })
   @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
   @ApiQuery({
     name: 'search-term',
     required: false,
-    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    description:
+      'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
     example: '',
     type: String,
   })
   @ApiQuery({
     name: 'search-fields',
     required: false,
-    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    description:
+      'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
     type: [String], // Esto indica que es un array de strings
     isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
     example: ['state', 'priority', 'observation'], // Ejemplo con valores
@@ -87,20 +87,36 @@ import { State } from 'src/casl/dto/test-state.dto';
     example: 0,
     type: Number,
   })
-  @ApiQuery({ name: 'includeData', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
-  @ApiParam({ name: 'medicHistoryId', required: true, type: Number, description: 'ID del paciente para buscar su historial activo' })
+  @ApiQuery({
+    name: 'includeData',
+    required: false,
+    type: Boolean,
+    description: 'Devuelve todos los campos, incluyendo resultados',
+  })
+  @ApiParam({
+    name: 'medicHistoryId',
+    required: true,
+    type: Number,
+    description: 'ID del paciente para buscar su historial activo',
+  })
   getAllFromOne(
     @Request() req,
     @Query('search-term') searchTerm,
-    @Query('search-fields', new ParseArrayPipe({ 
-      optional: true,
-      items: String,
-      separator: ','
-    })) searchFields: string[] = [],
+    @Query(
+      'search-fields',
+      new ParseArrayPipe({
+        optional: true,
+        items: String,
+        separator: ',',
+      }),
+    )
+    searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
-    @Query('includeData', new ParseBoolPipe({ optional: true })) includeData = false,
-    @Param('medicHistoryId', new ParseIntPipe({ optional: true })) medicHistoryId: number,
+    @Query('includeData', new ParseBoolPipe({ optional: true }))
+    includeData = false,
+    @Param('medicHistoryId', new ParseIntPipe({ optional: true }))
+    medicHistoryId: number,
   ) {
     const labId = Number(req.headers['x-lab-id']);
     return this.requestMedicTestService.getAllRequestsMedicTestFromOne(
@@ -115,19 +131,23 @@ import { State } from 'src/casl/dto/test-state.dto';
   }
 
   @Get('request-medic-tests')
-  @ApiOperation({ summary: 'Obtener todas las peticiones de exámenes de todos los pacientes' })
+  @ApiOperation({
+    summary: 'Obtener todas las peticiones de exámenes de todos los pacientes',
+  })
   @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
   @ApiQuery({
     name: 'search-term',
     required: false,
-    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    description:
+      'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
     example: '',
     type: String,
   })
   @ApiQuery({
     name: 'search-fields',
     required: false,
-    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    description:
+      'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
     type: [String], // Esto indica que es un array de strings
     isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
     example: ['state', 'priority', 'observation'], // Ejemplo con valores
@@ -144,18 +164,28 @@ import { State } from 'src/casl/dto/test-state.dto';
     example: 0,
     type: Number,
   })
-  @ApiQuery({ name: 'includeData', required: false, type: Boolean, description: 'Devuelve todos los campos, incluyendo resultados' })
+  @ApiQuery({
+    name: 'includeData',
+    required: false,
+    type: Boolean,
+    description: 'Devuelve todos los campos, incluyendo resultados',
+  })
   getAllFromAll(
     @Request() req,
     @Query('search-term') searchTerm,
-    @Query('search-fields', new ParseArrayPipe({ 
-      optional: true,
-      items: String,
-      separator: ','
-    })) searchFields: string[] = [],
+    @Query(
+      'search-fields',
+      new ParseArrayPipe({
+        optional: true,
+        items: String,
+        separator: ',',
+      }),
+    )
+    searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
-    @Query('includeData', new ParseBoolPipe({ optional: true })) includeData = false,
+    @Query('includeData', new ParseBoolPipe({ optional: true }))
+    includeData = false,
   ) {
     const labId = Number(req.headers['x-lab-id']);
     return this.requestMedicTestService.getAllRequestsMedicTestFromAll(
@@ -167,7 +197,6 @@ import { State } from 'src/casl/dto/test-state.dto';
       searchFields,
     );
   }
-
 
   @Get('request-medic-tests/:requestMedicTestId')
   @ApiOperation({ summary: 'Obtener una petición de examen médico por su ID' })
@@ -185,7 +214,10 @@ import { State } from 'src/casl/dto/test-state.dto';
 
   // Obtener el PDF de un resultado médico por ID
   @Get('request-medic-tests/:requestMedicTestId/results/pdf')
-  @ApiOperation({ summary: 'Obtener el resultado en PDF de una petición de examen médico por su ID' })
+  @ApiOperation({
+    summary:
+      'Obtener el resultado en PDF de una petición de examen médico por su ID',
+  })
   @CheckAbility({ actions: 'read', subject: 'RequestMedicTest' })
   getOnePdf(
     @Request() req,
@@ -235,7 +267,9 @@ import { State } from 'src/casl/dto/test-state.dto';
   }
 
   @Patch('request-medic-tests/:requestMedicTestId/:state')
-  @ApiOperation({ summary: 'Cambiar el estado de una petición de examen médico' })
+  @ApiOperation({
+    summary: 'Cambiar el estado de una petición de examen médico',
+  })
   @ApiParam({
     name: 'state',
     required: true,

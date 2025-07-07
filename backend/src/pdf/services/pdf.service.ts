@@ -1,12 +1,16 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
 import { Readable } from 'stream';
-import { StorageService } from 'src/storage/storage.service';
+import { StorageService } from 'src/storage/services/storage.service';
 
-import { DataTestReport } from './services/get-data-test-report.service';
+import { DataTestReport } from './get-data-test-report.service';
 
 @Injectable()
 export class PdfService {
@@ -17,6 +21,17 @@ export class PdfService {
     private readonly dataTestReport: DataTestReport,
   ) {}
 
+  /**
+   * Genera un PDF a partir de una plantilla y datos, lo sube a un servicio de almacenamiento privado,
+   * y opcionalmente obtiene una URL firmada para acceder al archivo.
+   *
+   * @param templateName Nombre de la plantilla Handlebars para generar el PDF.
+   * @param data Datos a inyectar en la plantilla para generar el contenido del PDF.
+   * @param fileName Nombre del archivo PDF que se creará (incluyendo extensión .pdf).
+   * @param customPath (Opcional) Ruta personalizada dentro del bucket de almacenamiento donde se guardará el archivo.
+   * @returns Objeto con: buffer del PDF, ruta de almacenamiento en el servicio, y URL firmada (si se pudo generar).
+   * @throws InternalServerErrorException Si ocurre algún error durante la generación, subida u obtención de URL.
+   */
   async generateAndUploadPdf(
     templateName: string,
     data: any,
@@ -39,7 +54,7 @@ export class PdfService {
           read() {
             this.push(pdfBuffer);
             this.push(null); // Indica el final del stream
-          }
+          },
         }),
         destination: '',
         filename: fileName,
@@ -56,7 +71,9 @@ export class PdfService {
       // 4. Obtener URL firmada (opcional)
       let url: string | undefined;
       try {
-        const urlResult = await this.storageService.getFileUrl(uploadResult.path);
+        const urlResult = await this.storageService.getFileUrl(
+          uploadResult.path,
+        );
         url = urlResult.url;
       } catch (error) {
         this.logger.warn('Could not generate signed URL for PDF', error);
@@ -69,10 +86,21 @@ export class PdfService {
       };
     } catch (error) {
       this.logger.error('Error generating and uploading PDF', error);
-      throw new InternalServerErrorException('Failed to generate and upload PDF');
+      throw new InternalServerErrorException(
+        'Failed to generate and upload PDF',
+      );
     }
   }
 
+  /**
+   * Genera un buffer PDF a partir de una plantilla Handlebars y datos dinámicos.
+   * Utiliza Puppeteer para convertir HTML a PDF con configuración específica de formato y márgenes.
+   *
+   * @param templateName Nombre del archivo de plantilla Handlebars (sin extensión .hbs).
+   * @param data Objeto con datos dinámicos para inyectar en la plantilla.
+   * @returns Buffer con el contenido binario del PDF generado.
+   * @throws InternalServerErrorException Si la plantilla no existe o ocurre un error durante la generación del PDF.
+   */
   async generatePdf(templateName: string, data: any): Promise<Buffer> {
     const filePath = path.join(
       process.cwd(),
@@ -90,7 +118,10 @@ export class PdfService {
 
     const templateHtml = fs.readFileSync(filePath, 'utf-8');
     const template = handlebars.compile(templateHtml);
-    const html = template({ ...data, currentDate: new Date().toLocaleDateString() });
+    const html = template({
+      ...data,
+      currentDate: new Date().toLocaleDateString(),
+    });
 
     let browser: puppeteer.Browser | null = null;
     try {
@@ -106,7 +137,12 @@ export class PdfService {
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        margin: { top: '1.5cm', right: '1.5cm', bottom: '1.5cm', left: '1.5cm' },
+        margin: {
+          top: '1.5cm',
+          right: '1.5cm',
+          bottom: '1.5cm',
+          left: '1.5cm',
+        },
       });
 
       return Buffer.from(pdfBuffer);
@@ -120,12 +156,17 @@ export class PdfService {
     }
   }
 
-  async generateMedicReport(
-    labId: number,
-    medicTestId: number,
-  ) {
+  /**
+   * Genera un informe médico en PDF para un examen específico, lo sube a almacenamiento privado
+   * y retorna metadatos de acceso. Combina obtención de datos, generación de PDF y subida a almacenamiento.
+   *
+   * @param labId ID del laboratorio donde se realizó el examen médico.
+   * @param medicTestId ID del examen médico para el cual se generará el informe.
+   * @returns Objeto con: indicador de éxito, mensaje descriptivo, ruta de almacenamiento, URL de descarga e información técnica del PDF.
+   * @throws InternalServerErrorException Si falta medicTestId o ocurre error durante generación/subida.
+   */
+  async generateMedicReport(labId: number, medicTestId: number) {
     try {
-
       if (!medicTestId) {
         throw new InternalServerErrorException('El medicTestId es requerido');
       }
@@ -151,7 +192,7 @@ export class PdfService {
     } catch (error) {
       console.error('Error al generar y subir PDF:', error);
       throw new InternalServerErrorException(
-        error.message || 'Error al generar y subir el PDF'
+        error.message || 'Error al generar y subir el PDF',
       );
     }
   }

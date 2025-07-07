@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { AgeGroup, Gender } from '@prisma/client-lab';
 import { LabService } from 'src/lab/services/lab.service';
 import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
@@ -14,39 +19,52 @@ export class DataTestReport {
     private readonly labDbManageService: LabDbManageService,
   ) {}
 
-  async getData( // TODO Esta función se podría pasar al PdfService o a un submodulo para eso
-    labId: number,
-    requestMedicTestId: number,
-  ): Promise<any> {
+  /**
+   * Obtiene y procesa todos los datos necesarios para generar un informe de resultados de un examen médico completado.
+   * Incluye información del laboratorio, paciente, usuario responsable, detalles del examen y resultados con sus rangos de referencia.
+   *
+   * @param labId ID del laboratorio donde se realizó el examen médico.
+   * @param requestMedicTestId ID del examen médico completado a procesar.
+   * @returns Objeto estructurado con todos los datos necesarios para generar un informe o reporte.
+   * @throws NotFoundException Si el examen médico no existe, no está completado o no tiene paciente asociado.
+   * @throws InternalServerErrorException Si ocurre un error inesperado durante el procesamiento de datos.
+   */
+  async getData(labId: number, requestMedicTestId: number): Promise<any> {
     try {
       // --- 1. OBTENCIÓN DE DATOS CRUDOS ---
       const labPrisma = await this.labDbManageService.genInstanceLabDB(labId);
-      
+
       const [lab, requestWithRelations] = await Promise.all([
         this.labService.getLabById(labId),
         labPrisma.requestMedicTest.findUnique({
           where: { id: requestMedicTestId, state: 'COMPLETED' },
           include: {
             medicHistory: { include: { patient: true } },
-            medicTestCatalog: { include: { properties: { include: { valueReferences: true } } } },
-            byLabUser: true
+            medicTestCatalog: {
+              include: { properties: { include: { valueReferences: true } } },
+            },
+            byLabUser: true,
           },
         }),
       ]);
 
-      
-      
       if (!requestWithRelations) {
-        throw new NotFoundException(`Examen médico completado con ID ${requestMedicTestId} no fue encontrado.`);
+        throw new NotFoundException(
+          `Examen médico completado con ID ${requestMedicTestId} no fue encontrado.`,
+        );
       }
 
-      const systemUser = await this.systemUserService.getSystemUser({ uuid: requestWithRelations?.byLabUser?.systemUserUuid });
+      const systemUser = await this.systemUserService.getSystemUser({
+        uuid: requestWithRelations?.byLabUser?.systemUserUuid,
+      });
 
       // --- 2. EXTRACCIÓN Y CÁLCULOS (CON MANEJO DE NULOS) ---
 
       const patient = requestWithRelations.medicHistory.patient;
       if (!patient) {
-        throw new NotFoundException(`No se encontró el paciente asociado a la solicitud de examen.`);
+        throw new NotFoundException(
+          `No se encontró el paciente asociado a la solicitud de examen.`,
+        );
       }
 
       // Declaramos las variables que pueden depender de la fecha de nacimiento
@@ -59,31 +77,34 @@ export class DataTestReport {
         patientAge = this.calculateAge(patient.birthDate);
         // Solo asignamos un grupo específico si la edad fue calculada
         if (patientAge !== null) {
-            patientAgeGroup = patientAge >= 18 ? AgeGroup.ADULT : AgeGroup.CHILD;
+          patientAgeGroup = patientAge >= 18 ? AgeGroup.ADULT : AgeGroup.CHILD;
         }
       }
-      
+
       // --- 3. PROCESAMIENTO DE RESULTADOS (CON MANEJO DE NULOS) ---
 
-      const results = requestWithRelations.medicTestCatalog.properties.map((prop) => {
-        // **CAMBIO CLAVE 2: Manejo de resultProperties nulo**
-        // Usamos el operador de encadenamiento opcional (?.) para evitar errores si resultProperties es null.
-        // Si es null o la propiedad específica no existe, usamos 'N/A'.
-        const resultValue = requestWithRelations.resultProperties?.[prop.name] ?? 'N/A';
-        
-        const referenceRange = this.findReferenceRange(
-          prop.valueReferences,
-          patient.gender,
-          patientAgeGroup, // Usamos el ageGroup calculado (o el default 'ANY')
-        );
+      const results = requestWithRelations.medicTestCatalog.properties.map(
+        (prop) => {
+          // **CAMBIO CLAVE 2: Manejo de resultProperties nulo**
+          // Usamos el operador de encadenamiento opcional (?.) para evitar errores si resultProperties es null.
+          // Si es null o la propiedad específica no existe, usamos 'N/A'.
+          const resultValue =
+            requestWithRelations.resultProperties?.[prop.name] ?? 'N/A';
 
-        return {
-          propertyName: prop.name,
-          value: resultValue,
-          unit: prop.unit ?? '',
-          referenceRange,
-        };
-      });
+          const referenceRange = this.findReferenceRange(
+            prop.valueReferences,
+            patient.gender,
+            patientAgeGroup, // Usamos el ageGroup calculado (o el default 'ANY')
+          );
+
+          return {
+            propertyName: prop.name,
+            value: resultValue,
+            unit: prop.unit ?? '',
+            referenceRange,
+          };
+        },
+      );
 
       // --- 4. CONSTRUCCIÓN DEL OBJETO FINAL PARA LA PLANTILLA ---
 
@@ -124,59 +145,67 @@ export class DataTestReport {
       };
 
       return reportData;
-
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`Error al generar los datos del reporte: ${error.message}`, error.stack);
-      throw new InternalServerErrorException(`Ocurrió un error inesperado al procesar la solicitud del reporte.`);
+      this.logger.error(
+        `Error al generar los datos del reporte: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        `Ocurrió un error inesperado al procesar la solicitud del reporte.`,
+      );
     }
   }
 
   // --- Helpers ---
-    private calculateAge(birthDate: Date | null): number | null {
-      // Si la fecha es nula, devolvemos null inmediatamente.
-      if (!birthDate) return null;
-      
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age;
+  private calculateAge(birthDate: Date | null): number | null {
+    // Si la fecha es nula, devolvemos null inmediatamente.
+    if (!birthDate) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
     }
+    return age;
+  }
 
-    private findReferenceRange(references: any[], gender: Gender, ageGroup: AgeGroup): string {
-        const specificMatch = references.find(
-          (ref) => ref.gender === gender && ref.ageGroup === ageGroup,
-        );
-        if (specificMatch) return specificMatch.range;
+  private findReferenceRange(
+    references: any[],
+    gender: Gender,
+    ageGroup: AgeGroup,
+  ): string {
+    const specificMatch = references.find(
+      (ref) => ref.gender === gender && ref.ageGroup === ageGroup,
+    );
+    if (specificMatch) return specificMatch.range;
 
-        const anyGenderMatch = references.find(
-          (ref) => ref.gender === Gender.ANY && ref.ageGroup === ageGroup,
-        );
-        if (anyGenderMatch) return anyGenderMatch.range;
-        
-        const anyAgeMatch = references.find(
-          (ref) => ref.gender === gender && ref.ageGroup === AgeGroup.ANY,
-        );
-        if (anyAgeMatch) return anyAgeMatch.range;
+    const anyGenderMatch = references.find(
+      (ref) => ref.gender === Gender.ANY && ref.ageGroup === ageGroup,
+    );
+    if (anyGenderMatch) return anyGenderMatch.range;
 
-        const fallback = references.find(
-          (ref) => ref.gender === Gender.ANY && ref.ageGroup === AgeGroup.ANY,
-        );
-        return fallback ? fallback.range : 'No disponible';
-    }
+    const anyAgeMatch = references.find(
+      (ref) => ref.gender === gender && ref.ageGroup === AgeGroup.ANY,
+    );
+    if (anyAgeMatch) return anyAgeMatch.range;
 
-    private formatRequestId(id: number): string {
-      return id.toString().padStart(6, '0');
-    }
+    const fallback = references.find(
+      (ref) => ref.gender === Gender.ANY && ref.ageGroup === AgeGroup.ANY,
+    );
+    return fallback ? fallback.range : 'No disponible';
+  }
 
-    private formatCi(ci: string | number): string {
-      const ciStr = ci.toString();
-      const visible = ciStr.slice(1); 
-      return `V-${visible}`; // TODO Puedes ajustar si tienes nacionalidad en el modelo
-    }
+  private formatRequestId(id: number): string {
+    return id.toString().padStart(6, '0');
+  }
+
+  private formatCi(ci: string | number): string {
+    const ciStr = ci.toString();
+    const visible = ciStr.slice(1);
+    return `V-${visible}`; // TODO Puedes ajustar si tienes nacionalidad en el modelo
+  }
 }

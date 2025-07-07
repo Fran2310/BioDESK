@@ -11,6 +11,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+// DISCLAIMER: Controller solo para endpoints de testing para desarrolladores
 @ApiTags('[Testing] LabPrisma')
 @Controller('lab')
 export class LabPrismaController {

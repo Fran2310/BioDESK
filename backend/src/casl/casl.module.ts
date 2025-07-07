@@ -11,7 +11,7 @@ import { CaslController } from './casl.controller';
  * para el control de acceso basado en permisos dentro de la aplicación.
  */
 @Module({
-  imports: [LabModule], // Porque CaslAbilityGuard usa LabService
+  imports: [LabModule], // Necesario porque CaslAbilityGuard usa LabService
   providers: [AbilityFactory, CaslAbilityGuard],
   exports: [AbilityFactory, CaslAbilityGuard],
   controllers: [CaslController],
