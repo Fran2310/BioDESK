@@ -4,7 +4,7 @@
   import { useToast } from 'vuestic-ui';
 
   import { medicTestRequestApi, storageApi } from '@/services/api';
-  import ChangeStateModal from './ChangeStateModal.vue';
+  import ChangePriorityModal from './modals/ChangePriorityModal.vue';
 
   import type { GetExtendQuerys } from '@/services/interfaces/global';
   import type { SearchField } from '@/services/types/searchFields.type';
@@ -34,7 +34,7 @@
   const selectedExam = ref<ExamRow | null>(null);
 
   const showStateModal = ref(false);
-  const selectedExamId = ref<number | null>(null);
+  const changePriorityRequestId = ref<number | null>(null);
 
   const showCompleteModal = ref(false);
   const examToComplete = ref<ExamRow | null>(null);
@@ -172,8 +172,8 @@
     }
   }
 
-  function openChangeStateModal(examId: number) {
-    selectedExamId.value = examId;
+  function openChangePriorityModal(examId: number) {
+    changePriorityRequestId.value = examId;
     showStateModal.value = true;
   }
 
@@ -336,7 +336,7 @@
                   size="small"
                   icon="edit"
                   aria-label="Modificar examen"
-                  @click.stop="openChangeStateModal(rowData.id)"
+                  @click.stop="openChangePriorityModal(rowData.id)"
                 />
                 <VaButton
                   preset="primary"
@@ -366,10 +366,10 @@
           </DetailsExam>
         </VaModal>
 
-        <!-- Change State Modal -->
+        <!-- Change Priority Modal -->
         <VaModal v-model="showStateModal" hide-default-actions>
-          <ChangeStateModal
-            :request-id="selectedExamId"
+          <ChangePriorityModal
+            :changePriorityRequestId="changePriorityRequestId"
             @close="showStateModal = false"
             @updated="handleStateUpdated"
           />
