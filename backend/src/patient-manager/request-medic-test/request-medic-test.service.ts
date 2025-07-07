@@ -388,6 +388,7 @@ export class RequestMedicTestService {
       const updated = await labPrisma.requestMedicTest.update({
         where: { id: requestMedicTestId },
         data: {
+          priority: dto.priority,
           resultProperties: dto.resultProperties,
           observation: dto.observation,
         },
