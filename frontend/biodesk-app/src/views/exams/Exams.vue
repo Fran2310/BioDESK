@@ -411,7 +411,7 @@
                   v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
                   preset="secondary"
                   size="medium"
-                  icon="delete_forever"
+                  icon="delete"
                   color="danger"
                   aria-label="Eliminar examen"
                   @click.stop="onDeleteExam(rowData)"
