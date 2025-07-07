@@ -249,7 +249,12 @@
               <va-button color="secondary" @click="closeModal" type="button">
                 Cancelar
               </va-button>
-              <va-button color="primary" type="submit">
+              <va-button 
+                color="primary" 
+                type="submit" 
+                @click="closeModal"
+                :disabled="!canSubmitExam"
+              >
                 Guardar
               </va-button>
             </div>
@@ -376,6 +381,15 @@ function handleSaveReference() {
     }, 0)
   }
 }
+
+const canSubmitExam = computed(() => {
+  // Validar campos requeridos
+  const nameValid = !!String(newExam.value.name).trim()
+  const priceValid = typeof newExam.value.price === 'number' && newExam.value.price > 0
+  const suppliesValid = Array.isArray(examForm.supplies) && examForm.supplies.length > 0
+  const propertiesValid = Array.isArray(referenceData.value) && referenceData.value.length > 0
+  return nameValid && priceValid && suppliesValid && propertiesValid
+})
 
 onMounted(() => {
   fetchExams()
