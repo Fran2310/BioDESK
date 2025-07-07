@@ -172,6 +172,48 @@
     }
   }
 
+  async function toPendingExam(id: number) {
+    try {
+      await medicTestRequestApi.updateMedicTestRequestState(
+        String(id),
+        'PENDING'
+      );
+      notify({ message: 'Examen puesto en pendiente correctamente', color: 'success' });
+    } catch (e: any) {
+      notify({ message: e.message, color: 'danger' });
+    } finally {
+      refreshExams()
+    }
+  }
+
+  async function toInProcessExam(id: number) {
+    try {
+      await medicTestRequestApi.updateMedicTestRequestState(
+        String(id),
+        'IN_PROCESS'
+      );
+      notify({ message: 'Examen puesto en proceso correctamente', color: 'success' });
+    } catch (e: any) {
+      notify({ message: e.message, color: 'danger' });
+    } finally {
+      refreshExams()
+    }
+  }
+
+  async function onCancelExam(id: number) {
+    try {
+      await medicTestRequestApi.updateMedicTestRequestState(
+        String(id),
+        'CANCELED'
+      );
+      notify({ message: 'Examen cancelado correctamente', color: 'success' });
+    } catch (e: any) {
+      notify({ message: e.message, color: 'danger' });
+    } finally {
+      refreshExams()
+    }
+  }
+
   function openChangePriorityModal(examId: number) {
     changePriorityRequestId.value = examId;
     showStateModal.value = true;
@@ -307,16 +349,16 @@
                 <VaButton
                   v-if="rowData.state === 'COMPLETED'"
                   preset="primary"
-                  size="small"
+                  size="medium"
                   icon="download"
                   color="info"
-                  aria-label="Completar examen"
+                  aria-label="Acceder a examen"
                   @click.stop="downloadResults(rowData.id)"
                 />
                 <VaButton
                   v-if="rowData.state === 'TO_VERIFY'"
                   preset="primary"
-                  size="small"
+                  size="medium"
                   icon="check"
                   color="success"
                   aria-label="Completar examen"
@@ -325,23 +367,51 @@
                 <VaButton
                   v-if="rowData.state === 'IN_PROCESS'"
                   preset="primary"
-                  size="small"
+                  size="medium"
                   icon="cloud_upload"
                   color="success"
                   aria-label="Subir resultados"
                   @click.stop="goToUploadResults(rowData.id)"
                 />
                 <VaButton
+                  v-if="rowData.state === 'PENDING'"
                   preset="primary"
-                  size="small"
-                  icon="edit"
+                  size="medium"
+                  icon="arrow_forward"
+                  color="info"
+                  aria-label="Empezar examen"
+                  @click.stop="toInProcessExam(rowData.id)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'CANCELED'"
+                  preset="primary"
+                  size="medium"
+                  icon="arrow_forward"
+                  color="info"
+                  aria-label="Empezar examen"
+                  @click.stop="toPendingExam(rowData.id)"
+                />
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="priority_high"
                   aria-label="Modificar examen"
                   @click.stop="openChangePriorityModal(rowData.id)"
                 />
                 <VaButton
-                  preset="primary"
-                  size="small"
-                  icon="va-delete"
+                  v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
+                  preset="secondary"
+                  size="medium"
+                  icon="cancel"
+                  color="danger"
+                  aria-label="Cancelar examen"
+                  @click.stop="onCancelExam(rowData.id)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
+                  preset="secondary"
+                  size="medium"
+                  icon="delete_forever"
                   color="danger"
                   aria-label="Eliminar examen"
                   @click.stop="onDeleteExam(rowData)"
