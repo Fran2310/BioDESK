@@ -30,7 +30,7 @@
           v-else
           :columns="roleColumns"
           :items="filteredRoles"
-          class="shadow rounded min-h-[120px]"
+          class="shadow rounded min-h-[200px]"
           :virtual-scroller="false"
           @row:click="onRowClick"
           :row-class="getRowClass"
@@ -42,9 +42,9 @@
             <span class="text-left w-full block">{{ rowData.description }}</span>
           </template>
           <template #cell(actions)="{ rowData }">
-            <div class="flex gap-2 justify-start" @click.stop>
-              <VaButton icon="edit" size="small" color="warning" @click="openEditRoleModal(rowData)">Editar</VaButton>
-              <VaButton icon="delete" size="small" color="danger" @click="deleteRole(rowData.id)">Eliminar</VaButton>
+            <div class="flex gap-2 justify-start">
+              <VaButton preset="primary" icon="edit" size="small" @click.stop="openEditRoleModal(rowData)"/>
+              <VaButton preset="primary" icon="va-delete" color="danger" size="small" @click.stop="deleteRole(rowData.id)"/>
             </div>
           </template>
         </va-data-table>
@@ -752,7 +752,7 @@ function getRowClass(row: RoleFromApi) {
 /* Aumenta el tamaño de fuente de los encabezados de la tabla */
 .va-data-table thead th,
 ::v-deep(.va-data-table__table-th) {
-  font-size: 0.9rem !important;
+  font-size: 0.7rem !important;
   font-weight: bold !important;
   /* Puedes ajustar el tamaño aquí */
 }
