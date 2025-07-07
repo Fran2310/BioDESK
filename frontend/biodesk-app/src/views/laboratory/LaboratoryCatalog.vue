@@ -38,24 +38,23 @@
         </template>
 
           <template #cell(actions)="{ row }">
-            <VaButton
-              color="primary"
-              class="ml-2"
-              size="small"
-              icon="delete"
-              @click="editExam(row)"
-            >
-              Editar
-            </VaButton>
-            <VaButton
-              color="danger"
-              class="ml-2"
-              size="small"
-              icon="delete"
-              @click="deleteExam(row, fetchExams, showError)"
-            >
-              Eliminar
-            </VaButton>
+            <div class="flex gap-2 justify-end">
+              <VaButton
+                preset="primary"
+                size="small"
+                icon="edit"
+                aria-label="Editar examen"
+                @click.stop="editExam(row)"
+              />
+              <VaButton
+                preset="primary"
+                size="small"
+                icon="va-delete"
+                color="danger"
+                aria-label="Eliminar examen"
+                @click.stop="deleteExam(row, fetchExams, showError)"
+              />
+            </div>
           </template>
         </va-data-table>
       </va-card-content>
@@ -384,11 +383,9 @@ function handleSaveReference() {
 
 const canSubmitExam = computed(() => {
   // Validar campos requeridos
-  const nameValid = !!String(newExam.value.name).trim()
-  const priceValid = typeof newExam.value.price === 'number' && newExam.value.price > 0
-  const suppliesValid = Array.isArray(examForm.supplies) && examForm.supplies.length > 0
-  const propertiesValid = Array.isArray(referenceData.value) && referenceData.value.length > 0
-  return nameValid && priceValid && suppliesValid && propertiesValid
+  if (!String(newExam.value.name).trim()) return false
+  // Puedes agregar más validaciones aquí si lo necesitas
+  return true
 })
 
 onMounted(() => {
