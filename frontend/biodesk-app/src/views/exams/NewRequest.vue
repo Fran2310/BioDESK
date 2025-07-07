@@ -10,8 +10,10 @@
   import { watch } from 'vue';
   import { formatCi } from '@/services/utils';
 
+  import { Priority } from "@/services/types/global.type";
+  
   const form = ref({
-    priority: '',
+    priority: 'MEDIUM' as Priority,
     medicHistoryId: null,
     medicTestCatalogId: null,
     observation: '',
@@ -44,7 +46,7 @@
       notify({ message: 'Request submitted successfully!', color: 'success' });
       // Optionally reset form
       form.value = {
-        priority: '',
+        priority: 'MEDIUM' as Priority,
         medicHistoryId: null,
         medicTestCatalogId: null,
         observation: '',
