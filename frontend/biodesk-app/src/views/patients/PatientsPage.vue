@@ -6,7 +6,7 @@
           <div
             class="flex flex-col md:flex-row gap-2 justify-start items-center"
           >
-            <VaInput v-model="filters.search" placeholder="Nombre">
+            <VaInput v-model="filters.search" placeholder="Nombre, apellido, cédula.">
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>
@@ -122,7 +122,7 @@
   const onSearchByName = () => {
     fetchPatients({
       'search-term': filters.value.search,
-      'search-fields': ['name'],
+      'search-fields': ['name', 'lastName', 'ci'],
     });
   };
 
