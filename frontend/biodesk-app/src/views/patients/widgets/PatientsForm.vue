@@ -176,7 +176,7 @@
               :rules="[validator.required]"
               name="lastName"
             />
-            <div style="min-height: 20px;"></div>
+            <div style="height: 20px;"></div>
           </div>
         </div>
 
@@ -210,13 +210,13 @@
             />
             <div style="min-height: 20px;"></div>
           </div>
-          <div class="w-full sm:w-1/2 flex gap-2 items-end">
+          <div class="w-full sm:w-1/2 flex gap-2 items-start">
             <VaSelect
               v-model="ciLetter"
               :options="['V', 'E']"
               class="w-16 self-center"
               name="ciLetter"
-              style="min-width: 60px; max-width: 60px;"
+              style="min-width: 60px; max-width: 60px; height: 35px;"
             />
             <div class="flex flex-col flex-1">
               <VaInput
@@ -227,7 +227,7 @@
                 maxlength="8"
                 style="max-width: 190px;"
               />
-              <div style="min-height: 20px;"></div>
+              <div style="min-height: 6px;"></div>
             </div>
           </div>
         </div>
@@ -258,31 +258,34 @@
               class="w-full"
               name="dir"
             />
-            <div style="min-height: 20px;"></div>
+            <div style="min-height: 70px;"></div>
           </div>
-          <div class="w-full sm:w-1/2">
+          <div class="w-full sm:w-1/2 pr-10">
             <label class="block mb-1 font-semibold">Números de Teléfono</label>
             <div
               v-for="(_, index) in newUser.phoneNums"
               :key="index"
-              class="flex items-center gap-2 mb-2 pr-8"
+              class="flex items-center gap-2 mb-2"
             >
-              <div class="flex flex-col flex-1">
+              
                 <VaInput
                   v-model="newUser.phoneNums[index]"
                   label="Teléfono"
                   :rules="[validator.required, validator.onlyNumbers]"
                   :name="`phone-${index}`"
+                  class="self-start"
                 />
-                <div style="min-height: 20px;"></div>
-              </div>
+                <div style="height: 70px;"></div>
+              
               <VaButton
                 icon="delete"
                 color="danger"
                 size="small"
+                class="self-center"
                 @click="removePhone(index)"
                 v-if="newUser.phoneNums.length > 1"
               />
+          
             </div>
             <VaButton size="small" @click="addPhone">Add Phone</VaButton>
           </div>
