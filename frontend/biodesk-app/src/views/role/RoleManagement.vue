@@ -336,368 +336,84 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-// Importa las funciones del servicio y los tipos que acabamos de definir
-import {
-  getRoles,
-  createRoleApi,
-  assignPermissionsApi,
-  getPermissions,
-  updateRoleApi,
-  deleteRoleApi,
-} from '../../services/roleService' // Asegúrate de que la ruta sea correcta
-
-import type {
-  RoleFromApi,
-  ApiRolePermission,
-  CreateRolePayload,
-  FlatPermissionsArray
-} from '../../services/roleService' 
-
 import { VaButton, VaProgressCircle } from 'vuestic-ui'
-// Importa los types para obtener los fields dinámicamente
-import * as PermissionTypes from '../../services/types/permission.type'
+import { useRoleModals } from './composables/useRoleModals'
+import { useRolePermissions } from './composables/useRolePermissions'
+import { useRoleApi } from './composables/useRoleApi'
 
-// Helper para convertir un type union a array de strings
-function typeToArray<T>(): string[] {
-  // TypeScript types no existen en runtime, así que esto es solo para claridad.
-  // Debes definir manualmente los arrays si quieres tipado estricto.
-  return [];
-}
+// Composables
+import { useRoleForm } from './composables/useRoleForm'
+// Declarar primero los composables de API para obtener las funciones necesarias
 
-// Construye el mapa de fields usando arrays explícitos (garantiza string[])
-const fieldsOptionsMap: Record<string, string[]> = {
-  SystemUser: [
-    'uuid', 'ci', 'name', 'lastName', 'email', 'password', 'salt', 'isActive', 'lastAccess'
-  ],
-  LabUser: [
-    'systemUserUuid', 'roleId'
-  ],
-  Lab: [
-    'name', 'dbName', 'status', 'rif', 'dir', 'phoneNums', 'logoPath', 'createdAt'
-  ],
-  Role: [
-    'role', 'description', 'permissions'
-  ],
-  ActionHistory: [
-    'action', 'details', 'entity', 'recordEntityId', 'operationData', 'madeAt', 'labUserId'
-  ],
-  Patient: [
-    'ci', 'name', 'lastName', 'secondName', 'secondLastName', 'gender', 'email', 'phoneNums', 'dir', 'birthDate'
-  ],
-  MedicHistory: [
-    'allergies', 'pathologies', 'patientId'
-  ],
-  RequestMedicTest: [
-    'requestedAt', 'completedAt', 'state', 'priority', 'resultProperties', 'observation', 'medicHistoryId', 'medicTestCatalogId'
-  ],
-  MedicTestCatalog: [
-    'name', 'description', 'price', 'supplies'
-  ],
-  all: [],
-};
+// useRoleApi solo una vez, antes de los demás composables
+const api = useRoleApi()
+// Ya no redeclarar variables, solo usar api.roles, api.loadingRoles, etc. en el resto del archivo
 
-// Helper para obtener las opciones de fields según el subject seleccionado
-function getFieldsOptions(subject: string): string[] {
-  if (!subject) return [];
-  const options = fieldsOptionsMap[subject];
-  return Array.isArray(options) ? options : [];
-}
+const {
+  showNewRoleModal,
+  showEditRoleModal,
+  showRoleDetailsModal,
+  selectedRole,
+  editRoleIdForModal,
+  editRoleModalData,
+  openEditRoleModal,
+  closeEditRoleModal,
+  closeNewRoleModal,
+  addEditRoleModalPermission,
+  removeEditRoleModalPermission
+} = useRoleModals()
 
-const newRoleName = ref('')
-const newRoleDescription = ref('')
-const selectedPermissions = ref<string[]>([]) // Esto sigue siendo string[] ('subject:action')
-const roles = ref<RoleFromApi[]>([]) // Ahora tipado correctamente
-const permissionGroups = ref<Record<string, any[]>>({}) // Tipado más específico
-const selectedRoleId = ref<string | null>(null)
+const {
+  newRoleName,
+  newRoleDescription,
+  selectedPermissions,
+  selectedRoleId,
+  permissions,
+  newPermission,
+  addPermission,
+  removePermission,
+  saveEditRoleModal,
+  resetRoleForm
+} = useRoleForm({
+  roles: api.roles,
+  fetchAllPermissions: api.fetchAllPermissions,
+  fetchAllRoles: api.fetchAllRoles,
+  editRoleModalData,
+  updateRoleApi: api.updateRole,
+  closeEditRoleModal,
+  showNewRoleModal
+})
 
-// Edición de roles
-const editingRoleId = ref<string | null>(null)
-const editRoleFields = ref<Record<string, { name: string; description: string }>>({});
-const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
+const { getFieldsOptions } = useRolePermissions()
 
-const permissions = ref([]);
-const newPermission = ref({ subject: '', actions: [], fields: [] });
+// Eliminado: ya se usa api.<prop> directamente
 
-const loadingRoles = ref(false)
-const savingNewRole = ref(false)
-const savingEditRole = ref(false)
 
-const fetchAllRoles = async () => {
-  loadingRoles.value = true
-  try {
-    const res = await getRoles();
-    console.log('Respuesta de getRoles:', res); // <-- ¿Es un array?
-    roles.value = res || [];
-  } catch (error) {
-    console.error('Error fetching roles:', error);
-    alert('Error al cargar roles.');
-  } finally {
-    loadingRoles.value = false
-  }
-}
+// Acciones y helpers de roles (guardar, botón guardar)
+import { useRoleActions } from './composables/useRoleActions'
+const { createRole, canSaveNewRole } = useRoleActions({
+  newRoleName,
+  newRoleDescription,
+  permissions,
+  createRoleApi: api.createRole,
+  fetchAllRoles: api.fetchAllRoles,
+  showNewRoleModal
+})
 
-const fetchAllPermissions = async () => {
-  loadingRoles.value = true
-  try {
-    // Usa el helper del servicio, que ya llama a getRoles y agrupa los permisos
-    permissionGroups.value = await getPermissions();
-    // Si quieres también refrescar la lista de roles:
-    roles.value = await getRoles();
-  } catch (error) {
-    console.error('Error fetching permissions:', error);
-    alert('Error al cargar permisos.');
-  } finally {
-    loadingRoles.value = false
-  }
-}
-
-// Utilidad para agrupar permisos y convertirlos al formato correcto
-function groupPermissions(flatPermissions: string[]) {
-  const grouped: Record<string, Set<string>> = {};
-  flatPermissions.forEach((perm) => {
-    const [subject, action] = perm.split(':');
-    if (!grouped[subject]) grouped[subject] = new Set();
-    grouped[subject].add(action);
-  });
-  return Object.entries(grouped).map(([subject, actions]) => ({
-    subject,
-    actions: Array.from(actions).join(',') // string separado por comas
-    // fields: "*" // Si necesitas enviar fields, agrégalo aquí
-  }));
-}
-
-function groupPermissionsWithFields(flatPermissions: string[]) {
-  const grouped: Record<string, Set<string>> = {};
-  flatPermissions.forEach((perm) => {
-    const [subject, action] = perm.split(':');
-    if (!grouped[subject]) grouped[subject] = new Set();
-    grouped[subject].add(action);
-  });
-  // Devuelve el formato esperado por la API, incluyendo fields
-  return Object.entries(grouped).map(([subject, actions]) => ({
-    subject,
-    actions: Array.from(actions).join(','), // string separado por comas
-    fields: Object.entries(permissionFields.value)
-      .filter(([key]) => key.startsWith(subject + ':'))
-      .map(([, fields]) => fields)
-      .filter(Boolean)[0] || undefined, // Toma el campo si existe
-  }));
-}
-
-function addPermission() {
-  if (newPermission.value.subject && newPermission.value.actions.length > 0) {
-    permissions.value.push({
-      subject: newPermission.value.subject,
-      actions: [...newPermission.value.actions],
-      fields: [...newPermission.value.fields],
-    });
-    newPermission.value = { subject: '', actions: [], fields: [] };
-  }
-}
-
-function removePermission(index) {
-  permissions.value.splice(index, 1);
-}
-
-const createRole = async () => {
-  if (!newRoleName.value || !newRoleDescription.value) return;
-
-  const perms = permissions.value
-    .filter(p => p.subject && p.actions && p.actions.length > 0)
-    .map(p => ({
-      subject: p.subject,
-      actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
-      ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
-        ? { fields: p.fields.join(',') }
-        : {})
-    }));
-
-  if (perms.length === 0) return;
-
-  const payload = {
-    name: newRoleName.value,
-    description: newRoleDescription.value,
-    permissions: perms,
-  };
-
-  await createRoleApi(payload);
-  newRoleName.value = '';
-  newRoleDescription.value = '';
-  permissions.value = [];
-  showNewRoleModal.value = false; // <-- Cierra el modal al guardar
-
-  await fetchAllRoles();
-}
-
-const assignPermissions = async () => {
-  if (!selectedRoleId.value) {
-    alert('Por favor, selecciona un rol primero.')
-    return
-  }
-  try {
-    const permissions = groupPermissions(selectedPermissions.value);
-    await assignPermissionsApi(selectedRoleId.value, permissions);
-    selectedPermissions.value = []
-    await fetchAllRoles() // Recargar roles para ver los cambios
-    alert('Permisos asignados con éxito.')
-  } catch (error) {
-    console.error('Error assigning permissions:', error)
-    alert('Error al asignar permisos')
-  }
-}
-
-// Edición de roles
-function startEditRole(role: RoleFromApi) {
-  editingRoleId.value = role.id;
-    editRoleFields.value[role.id] = {
-    name: role.role,
-    description: role.description,
-    };
-}
-
-const saveEditRole = async (role: RoleFromApi) => {
-  const fields = editRoleFields.value[role.id];
-  if (!fields.name || !fields.description) {
-    return;
-  }
-
-  const permissions = groupPermissions(selectedPermissions.value);
-  const payload = {
-    name: fields.name,
-    description: fields.description,
-    permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
-  };
-
-  await updateRoleApi(role.id, payload);
-  editingRoleId.value = null;
-  delete editRoleFields.value[role.id];
-  await fetchAllRoles();
-}
-
-const cancelEditRole = () => {
-  editingRoleId.value = null
-  editRoleFields.value = {}
-}
-
+// Eliminar rol
 const deleteRole = async (roleId: string) => {
-  if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
-    await deleteRoleApi(roleId);
-    await fetchAllRoles();
-    if (selectedRoleId.value === roleId) {
-      selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
-    }
+  await api.deleteRole(roleId)
+  if (selectedRoleId.value === roleId) {
+    selectedRoleId.value = null
   }
 }
 
-watch(selectedRoleId, (roleId) => {
-  if (!roleId) {
-    selectedPermissions.value = []
-    return
-  }
-  const role = roles.value.find((r: RoleFromApi) => r.id === roleId)
-  if (role && Array.isArray(role.permissions)) {
-    // Aplanar los permisos del rol al formato 'subject:action' para los checkboxes
-    selectedPermissions.value = role.permissions.flatMap((p: ApiRolePermission) =>
-      p.actions.map((action: string) => `${p.subject}:${action}`)
-    )
-  } else {
-    selectedPermissions.value = []
-  }
-}, { immediate: true }) // Ejecutar inmediatamente si ya hay un selectedRoleId al inicio
-
-onMounted(async () => {
-  await fetchAllPermissions()
-})
-
-const showEditRoleModal = ref(false)
-const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string; fields?: string }[] }>({
-  name: '',
-  description: '',
-  permissions: [{ subject: '', actions: '', fields: '' }]
-})
-const editRoleIdForModal = ref<string | null>(null)
-
-function openEditRoleModal(role: RoleFromApi) {
-  showEditRoleModal.value = true
-  editRoleIdForModal.value = role.id
-  editRoleModalData.value.name = role.role
-  editRoleModalData.value.description = role.description
-  editRoleModalData.value.permissions = (role.permissions || []).map(p => ({
-    subject: p.subject,
-    actions: Array.isArray(p.actions) ? p.actions.join(',') : (p.actions ?? ''),
-    fields: (p as any).fields ?? ''
-  }))
-}
-
-function closeEditRoleModal() {
-  showEditRoleModal.value = false
-  editRoleIdForModal.value = null
-  editRoleModalData.value.name = ''
-  editRoleModalData.value.description = ''
-  editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
-}
-
-function closeNewRoleModal() {
-  showNewRoleModal.value = false
-  resetRoleForm()
-}
-
-function addEditRoleModalPermission() {
-  editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
-}
-
-function removeEditRoleModalPermission(idx: number) {
-  editRoleModalData.value.permissions.splice(idx, 1)
-}
-
-const saveEditRoleModal = async () => {
-  if (!editRoleIdForModal.value) return;
-
-  const { name, description, permissions } = editRoleModalData.value;
-  if (!name || !description) return;
-
-  const cleanPermissions = permissions
-    .filter(p => p.subject && p.actions)
-    .map(p => ({
-      subject: p.subject,
-      actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
-      ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
-        ? { fields: p.fields.join(',') }
-        : {})
-    }));
-
-  await updateRoleApi(editRoleIdForModal.value, {
-    name,
-    description,
-    permissions: cleanPermissions
-  });
-
-  closeEditRoleModal();
-  await fetchAllRoles();
-}
-
-const roleColumns = [
-  { key: 'role', label: 'Nombre', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[220px]' },
-  { key: 'description', label: 'Descripción', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[320px]' },
-  // { key: 'permissions', label: 'Permisos', ... } // Eliminado
-  { key: 'actions', label: 'Acciones', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[180px]' },
-]
-
-function resetRoleForm() {
-  newRoleName.value = ''
-  newRoleDescription.value = ''
-  permissions.value = []
-  newPermission.value = { subject: '', actions: [], fields: [] }
-}
-
-const showNewRoleModal = ref(false)
-
+// Filtros y helpers
 const search = ref('')
-
 const filteredRoles = computed(() => {
-  if (!search.value) return roles.value
+  if (!search.value) return api.roles.value
   const term = search.value.toLowerCase()
-  return roles.value.filter(role =>
+  return api.roles.value.filter(role =>
     (role.role && String(role.role).toLowerCase().includes(term)) ||
     (role.description && String(role.description).toLowerCase().includes(term)) ||
     (Array.isArray(role.permissions) &&
@@ -725,8 +441,7 @@ const subjectOptions = [
   'RequestMedicTest',
   'MedicTestCatalog',
   'all'
-];
-
+]
 const actionsOptions = [
   'create',
   'read',
@@ -734,33 +449,26 @@ const actionsOptions = [
   'delete',
   'manage',
   'set_state'
-];
+]
 
-const showRoleDetailsModal = ref(false)
-const selectedRole = ref<RoleFromApi | null>(null)
+// Tabla
+const roleColumns = [
+  { key: 'role', label: 'Nombre', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[220px]' },
+  { key: 'description', label: 'Descripción', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[320px]' },
+  { key: 'actions', label: 'Acciones', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[180px]' },
+]
 
-function onRowClick(event: { item: RoleFromApi }) {
-  // Evita abrir el modal si el click fue en los botones de acción
-  // (esto ya se maneja con @click.stop en los botones)
+// Modal detalles
+function onRowClick(event: { item: any }) {
   selectedRole.value = event.item
   showRoleDetailsModal.value = true
 }
-
-// Opcional: resalta la fila seleccionada
-function getRowClass(row: RoleFromApi) {
+function getRowClass(row: any) {
   return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
 }
 
-// Agrega los computeds para los botones de guardar
-const canSaveNewRole = computed(() => {
-  if (!newRoleName.value.trim() || !newRoleDescription.value.trim()) return false
-  if (!permissions.value.length) return false
-  for (const p of permissions.value) {
-    if (!p.subject || !p.actions || !Array.isArray(p.actions) || p.actions.length === 0) return false
-  }
-  return true
-})
-
+// Guardar botones
+// canSaveNewRole viene de useRoleActions
 const canSaveEditRole = computed(() => {
   if (!editRoleModalData.value.name.trim() || !editRoleModalData.value.description.trim()) return false
   if (!editRoleModalData.value.permissions.length) return false
@@ -768,6 +476,29 @@ const canSaveEditRole = computed(() => {
     if (!p.subject || !p.actions || (Array.isArray(p.actions) ? p.actions.length === 0 : !p.actions)) return false
   }
   return true
+})
+
+// Reset form
+// resetRoleForm viene de useRoleForm
+
+// Watchers y lifecycle
+watch(selectedRoleId, (roleId) => {
+  if (!roleId) {
+    selectedPermissions.value = []
+    return
+  }
+  const role = api.roles.value.find((r: any) => r.id === roleId)
+  if (role && Array.isArray(role.permissions)) {
+    selectedPermissions.value = role.permissions.flatMap((p: any) =>
+      p.actions.map((action: string) => `${p.subject}:${action}`)
+    )
+  } else {
+    selectedPermissions.value = []
+  }
+}, { immediate: true })
+
+onMounted(async () => {
+  await api.fetchAllPermissions()
 })
 </script>
 
