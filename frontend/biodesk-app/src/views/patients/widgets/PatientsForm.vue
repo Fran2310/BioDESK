@@ -182,7 +182,7 @@
             v-model="newUser.ci"
             label="CI"
             class="w-full sm:w-1/2"
-            :rules="[validator.required]"
+            :rules="[validator.required, validator.onlyNumbers, validator.onlyLength7to8]"
             name="ci"
           />
         </div>
@@ -222,7 +222,7 @@
               <VaInput
                 v-model="newUser.phoneNums[index]"
                 label="Teléfono"
-                :rules="[validator.required]"
+                :rules="[validator.required, validator.onlyNumbers]"
                 :name="`phone-${index}`"
               />
               <VaButton
