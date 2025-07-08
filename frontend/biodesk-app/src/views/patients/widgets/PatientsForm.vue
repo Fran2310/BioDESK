@@ -51,9 +51,12 @@
     loadEntities,
   } = useCascadingDPT();
 
+  const isDptLoading = ref(true);
+
   onMounted(async () => {
     await loginApiDPT();
     await loadEntities();
+    isDptLoading.value = false;
   });
 
   // CI letter select (V or E)
@@ -295,7 +298,7 @@
             text-by="label"
             label="Estado"
             searchable
-            
+            :loading="isDptLoading"
             />
             <VaSelect
             v-model="dirInput.municipality"
@@ -304,7 +307,7 @@
             text-by="label"
             label="Municipio"
             searchable
-            
+            :loading="isDptLoading"
             />
             <VaSelect
             v-model="dirInput.parish"
@@ -313,6 +316,7 @@
             text-by="label"
             label="Parroquia"
             searchable
+            :loading="isDptLoading"
             />
             <VaSelect
             v-model="dirInput.community"
@@ -321,6 +325,7 @@
             text-by="label"
             label="Comunidad"
             searchable
+            :loading="isDptLoading"
             />
             </div>
             <VaTextarea
@@ -359,7 +364,7 @@
               />
           
             </div>
-            <VaButton size="small" @click="addPhone">Add Phone</VaButton>
+            <VaButton size="small" @click="addPhone">Añadir teléfono</VaButton>
           </div>
         </div>
 

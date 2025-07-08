@@ -6,7 +6,7 @@
           <div
             class="flex flex-col md:flex-row gap-2 justify-start items-center"
           >
-            <VaInput v-model="filters.search" placeholder="Nombre, apellido, cédula.">
+            <VaInput v-model="filters.search" placeholder="Nombre, apellido, cédula." @keyup.enter="onSearchByName">
               <template #prependInner>
                 <VaIcon name="search" color="secondary" size="small" />
               </template>

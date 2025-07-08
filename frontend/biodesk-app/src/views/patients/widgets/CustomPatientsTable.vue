@@ -7,9 +7,9 @@
   import { computed, toRef, ref } from 'vue';
   // Removed Pagination and Sorting import as they are not needed
   import { useVModel } from '@vueuse/core';
-  import { useI18n } from 'vue-i18n';
+  /* import { useI18n } from 'vue-i18n'; */
 
-  const { t } = useI18n();
+ /*  const { t } = useI18n(); */
 
   //AGE CALCULATION
 
@@ -237,7 +237,7 @@
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>
 
     <div class="p-4 space-y-4">
-      <div class="grid grid-cols-2 gap-4 capitalize">
+      <div class="grid grid-cols-2 gap-4">
         <div>
           <strong>Nombre:</strong>
           <p>{{ selectedPatient?.name || '-' }}</p>
