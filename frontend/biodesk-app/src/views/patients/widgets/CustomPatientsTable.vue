@@ -357,4 +357,9 @@
   .va-data-table .va-data-table__table-tr {
     border-bottom: 1px solid var(--va-background-border);
   }
+.ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 </style>

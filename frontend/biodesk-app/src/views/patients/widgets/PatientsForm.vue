@@ -230,7 +230,7 @@
           </div>
         </div>
 
-        <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
+        <div class="flex gap-4 flex-col sm:flex-row w-full items-centera ver, ">
           <div class="flex flex-col w-full sm:w-1/2">
             <VaInput
               v-model="newUser.email"
@@ -241,25 +241,24 @@
             />
             <div style="min-height: 20px;"></div>
           </div>
-          <div class="w-full sm:w-1/2 flex gap-2 items-start">
+          <div class="flex gap-2 items-center w-full sm:w-1/2">
             <VaSelect
               v-model="ciLetter"
               :options="['V', 'E']"
-              class="w-16 self-center"
+              class="w-16"
+             
               name="ciLetter"
-              style="min-width: 60px; max-width: 60px; height: 35px;"
             />
-            <div class="flex flex-col flex-1">
-              <VaInput
-                v-model="ciNumber"
-                label="CI"
-                :rules="[validator.required, validator.onlyNumbers, validator.onlyLength7to8]"
-                name="ci"
-                maxlength="8"
-                style="max-width: 190px;"
-              />
-              <div style="min-height: 6px;"></div>
-            </div>
+            <div style="height: 20px;"></div>
+
+            <VaInput
+              v-model="ciNumber"
+              label="CI"
+              :rules="[validator.required, validator.onlyNumbers, validator.onlyLength7to8]"
+              name="ci"
+              maxlength="10"
+              :messages="['\u00A0']"
+            />
           </div>
         </div>
 
@@ -293,6 +292,7 @@
             text-by="label"
             label="Estado"
             searchable
+            
             />
             <VaSelect
             v-model="dirInput.municipality"
@@ -301,6 +301,7 @@
             text-by="label"
             label="Municipio"
             searchable
+            
             />
             <VaSelect
             v-model="dirInput.parish"
