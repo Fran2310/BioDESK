@@ -5,6 +5,7 @@ import { SystemPrismaService } from './system-prisma.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipLabIdCheck } from 'src/auth/decorators/skip-lab-id-check.decorator';
 
+// DISCLAIMER: Controller solo para endpoints de testing para desarrolladores
 @ApiTags('[Testing] SystemPrisma')
 @Controller('system')
 export class SystemPrismaController {

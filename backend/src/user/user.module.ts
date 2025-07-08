@@ -8,8 +8,8 @@ import { RoleModule } from 'src/role/role.module';
 import { UserController } from './user.controller';
 import { SystemUserModule } from './system-user/system-user.module';
 import { MailModule } from 'src/mail/mail.module';
-import { SystemPrismaModule } from 'src/prisma-manage/system-prisma/system-prisma.module';
-import { LabPrismaModule } from 'src/prisma-manage/lab-prisma/lab-prisma.module';
+import { SystemPrismaModule } from 'src/prisma-manager/system-prisma/system-prisma.module';
+import { LabPrismaModule } from 'src/prisma-manager/lab-prisma/lab-prisma.module';
 
 @Module({
   imports: [

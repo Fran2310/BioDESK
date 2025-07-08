@@ -1,6 +1,9 @@
 // /src/casl/app-ability.type.ts
 import { MongoAbility, createMongoAbility, MongoQuery } from '@casl/ability';
 
+/**
+ * Tipado para las habilidades, solamente se tiparon las acciones y sujetos (recursos, tablas), los campos no fue necesario tipar
+ */
 export type Actions =
   | 'create'
   | 'read'

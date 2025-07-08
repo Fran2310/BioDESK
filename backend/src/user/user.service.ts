@@ -1,5 +1,10 @@
 // backend/src/user/user.service.ts
-import { Injectable, ConflictException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { DEFAULT_ADMIN_ROLE } from 'src/role/constants/default-role';
 
 import { RegisterDto } from 'src/auth/dto/register.dto';
@@ -15,9 +20,9 @@ import { SystemUserService } from './system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
 import { AssignExistingUserDto } from './lab-user/dto/assign-existing-user.dto';
 import { MailService } from 'src/mail/mail.service';
-import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { intelligentSearch } from 'src/common/utils/intelligentSearch';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
 
 @Injectable()
 export class UserService {
@@ -46,11 +51,25 @@ export class UserService {
    */
 
   async getDataUserMe(performedByUserUuid: string) {
-    const user = await this.systemUserService.getSystemUser({ uuid: performedByUserUuid });
+    const user = await this.systemUserService.getSystemUser({
+      uuid: performedByUserUuid,
+    });
     const { password, salt, ...userWithoutSensitiveData } = user;
     return userWithoutSensitiveData;
   }
 
+  /**
+   * Obtiene una lista paginada y enriquecida de usuarios de laboratorio, combinando información del sistema central
+   * con detalles específicos del laboratorio. Permite búsqueda inteligente y opción para incluir permisos de roles.
+   *
+   * @param labId ID del laboratorio para el cual se obtendrán los usuarios.
+   * @param includePermissions Si es true, incluye los permisos asociados al rol de cada usuario (por defecto false).
+   * @param offset Número de usuarios a omitir (para paginación, por defecto 0).
+   * @param limit Número máximo de usuarios a retornar (por defecto 20).
+   * @param searchTerm (Opcional) Término de búsqueda para filtrar usuarios.
+   * @param searchFields (Opcional) Campos específicos sobre los que aplicar la búsqueda.
+   * @returns Objeto con: total de usuarios encontrados, offset, límite y lista de usuarios enriquecidos.
+   */
   async getDataLabUsers(
     labId: number,
     includePermissions = false,
@@ -67,7 +86,7 @@ export class UserService {
       skip: offset,
       take: limit,
       omit: {
-        roleId: true
+        roleId: true,
       },
       include: {
         role: {
@@ -82,13 +101,11 @@ export class UserService {
     };
 
     // Obtener usuarios del laboratorio con filtro inteligente
-    const { results: labUsersResults, total: labUsersTotal } = await intelligentSearch(
-      labPrisma.labUser,
-      labUsersSearchOptions,
-    );
+    const { results: labUsersResults, total: labUsersTotal } =
+      await intelligentSearch(labPrisma.labUser, labUsersSearchOptions);
 
     // Obtener UUIDs de los usuarios del sistema encontrados
-    const systemUserUuids = labUsersResults.map(item => item.systemUserUuid);
+    const systemUserUuids = labUsersResults.map((item) => item.systemUserUuid);
 
     // Si no hay usuarios en el laboratorio, devolver respuesta vacía
     if (systemUserUuids.length === 0) {
@@ -106,7 +123,7 @@ export class UserService {
       take: systemUserUuids.length,
       where: {
         uuid: { in: systemUserUuids },
-      }
+      },
     };
 
     // Obtener usuarios del sistema con filtro inteligente
@@ -124,26 +141,29 @@ export class UserService {
     }, {});
 
     // Filtrar y enriquecer datos
-    const enrichedData = labUsersResults.map((labUser) => {
-      const systemUser = systemUsersMap[labUser.systemUserUuid];
-      
-      if (!systemUser) return null; // Filtrar usuarios sin systemUser
+    const enrichedData = labUsersResults
+      .map((labUser) => {
+        const systemUser = systemUsersMap[labUser.systemUserUuid];
 
-      return { // Devuelve los dos users de las dos tablas diferentes
-        systemUser: { // Acá filtramos para no devolver datos sensibles
-          id: systemUser.id,
-          uuid: systemUser.uuid,
-          ci: systemUser.ci,
-          name: systemUser.name,
-          lastName: systemUser.lastName,
-          email: systemUser.email,
-          isActive: systemUser.isActive,
-          lastAccess: systemUser.lastAccess
-        },
-        labUser,
-      };
-    })
-    .filter(item => item !== null); // Eliminar nulls del array
+        if (!systemUser) return null; // Filtrar usuarios sin systemUser
+
+        return {
+          // Devuelve los dos users de las dos tablas diferentes
+          systemUser: {
+            // Acá filtramos para no devolver datos sensibles
+            id: systemUser.id,
+            uuid: systemUser.uuid,
+            ci: systemUser.ci,
+            name: systemUser.name,
+            lastName: systemUser.lastName,
+            email: systemUser.email,
+            isActive: systemUser.isActive,
+            lastAccess: systemUser.lastAccess,
+          },
+          labUser,
+        };
+      })
+      .filter((item) => item !== null); // Eliminar nulls del array
 
     // Actualizar el total real (puede ser menor si filtramos algunos registros)
     const filteredTotal = enrichedData.length;
@@ -153,6 +173,37 @@ export class UserService {
       offset,
       limit,
       data: enrichedData, // Ahora devolvemos los datos combinados
+    };
+  }
+
+  /**
+   * Obtiene la lista de laboratorios asociados a un usuario del sistema, con información resumida esencial.
+   * Filtra y retorna solo campos clave de cada laboratorio para una respuesta optimizada.
+   *
+   * @param uuid UUID único del usuario del sistema para el cual se buscarán laboratorios asociados.
+   * @returns Objeto con propiedad 'labs' conteniendo array de laboratorios con campos: id, name, status, rif y logoPath.
+   * @throws NotFoundException Si el usuario no está asociado a ningún laboratorio.
+   */
+  async getLabList(uuid: string) {
+    const user = await this.systemUserService.getSystemUser({
+      uuid,
+      includeLabs: true,
+    });
+
+    if (!user?.labs?.length) {
+      throw new NotFoundException(
+        'Este usuario no está asociado a ningún laboratorio.',
+      );
+    }
+
+    return {
+      labs: user.labs.map((lab) => ({
+        id: lab.id,
+        name: lab.name,
+        status: lab.status,
+        rif: lab.rif,
+        logoPath: lab.logoPath,
+      })),
     };
   }
 
@@ -207,6 +258,18 @@ export class UserService {
     };
   }
 
+  /**
+   * Crea un nuevo usuario en el sistema central y lo asocia a un laboratorio específico con un rol existente.
+   * Realiza validación del rol, creación del usuario, asociación al laboratorio y registro de auditoría completo.
+   *
+   * @param labId ID del laboratorio donde se asociará el usuario.
+   * @param userDto Datos del usuario a crear (nombre, apellido, email, etc.).
+   * @param roleId ID del rol existente que se asignará al usuario en el laboratorio.
+   * @param performedByUserUuid UUID del usuario que realiza la operación (para auditoría).
+   * @returns Objeto con UUID y email del usuario creado.
+   * @throws NotFoundException Si el rol especificado no existe en el laboratorio.
+   * @throws ConflictException Si ocurre error durante la creación del usuario o asociación al laboratorio.
+   */
   async createUserWithExistingRole(
     labId: number,
     userDto: CreateUserDto,
@@ -264,17 +327,16 @@ export class UserService {
 
     try {
       await this.mailService.sendWelcomeEmail(userDto); // Colocar esto de primero si se quiere hacer la verificación por correo
-      const user = await this.systemUserService.createSystemUser( // ✅ Primero creas el usuario y ya tienes el UUID
+      const user = await this.systemUserService.createSystemUser(
+        // ✅ Primero creas el usuario y ya tienes el UUID
         userDto,
       );
-      
+
       return {
         uuid: user.uuid,
       };
     } catch (error) {
-      this.logger.error(
-        `❌ Error al crear el usuario ${error}`,
-      );
+      this.logger.error(`❌ Error al crear el usuario ${error}`);
       throw error;
     }
   }
@@ -374,7 +436,7 @@ export class UserService {
     // 2. Asociarlo a la DB central (si no lo está)
     await this.systemUserService.linkSystemUserToLab(user.uuid, labId);
 
-    await this.mailService.sendWelcomeToLabEmail(user.email, labId, role.role)
+    await this.mailService.sendWelcomeToLabEmail(user.email, labId, role.role);
 
     await this.auditService.logAction(labId, performedByUserUuid, {
       action: 'create',
@@ -579,30 +641,6 @@ export class UserService {
 
     return {
       message: `Usuario ${deleted.name} ${deleted.lastName} eliminado completamente del sistema.`,
-    };
-  }
-
-  async getLabList(uuid: string) {
-
-    const user = await this.systemUserService.getSystemUser({
-      uuid, 
-      includeLabs: true
-    })
-
-    if (!user?.labs?.length) {
-      throw new NotFoundException(
-        'Este usuario no está asociado a ningún laboratorio.',
-      );
-    }
-
-    return {
-      labs: user.labs.map((lab) => ({
-        id: lab.id,
-        name: lab.name,
-        status: lab.status,
-        rif: lab.rif,
-        logoPath: lab.logoPath,
-      })),
     };
   }
 }

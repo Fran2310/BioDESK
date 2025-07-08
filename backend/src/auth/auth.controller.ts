@@ -10,20 +10,12 @@ import {
 import { Public } from './decorators/public.decorator'; // Ruta pública, no requiere autenticación
 import { AuthService } from './auth.service';
 import { MailService } from 'src/mail/mail.service';
-import { RegisterDto } from './dto/register.dto';
-import { CreateLabDto } from 'src/lab/dto/create-lab.dto';
 import { CreateUserDto } from 'src/user/system-user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiExtraModels,
-  getSchemaPath,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -34,7 +26,6 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @ApiExtraModels(CreateUserDto, CreateLabDto) // Registrar los DTOs anidados
   @ApiOperation({
     summary: 'Registro de usuario',
     description: `Registra un nuevo usuario admin a un laboratorio asociado.
@@ -42,13 +33,9 @@ export class AuthController {
   })
   @ApiBody({
     description: 'Datos de registro',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(CreateUserDto) },
-      ],
-    },
+    type: CreateUserDto,
   })
-  async register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: CreateUserDto) {
     return this.authService.register(dto);
   }
 

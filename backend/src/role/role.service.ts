@@ -6,14 +6,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UserService } from 'src/user/user.service';
 import { AuditService } from 'src/audit/audit.service';
-import { LabDbManageService } from '../prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from '../prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
-import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
+import { intelligentSearch } from 'src/common/utils/intelligentSearch';
 
 /**
  * Servicio encargado de gestionar roles dentro de un laboratorio, incluyendo su creación, actualización, eliminación y consulta.
@@ -77,22 +77,32 @@ export class RoleService {
   }
 
   /**
-   * Obtiene una lista paginada de todos los roles y el total de registros.
+   * Obtiene una lista paginada de roles con opciones de búsqueda inteligente.
+   * Utiliza el servicio intelligentSearch para filtrar resultados basados en campos específicos.
    *
-   * @param prisma Instancia de LabPrismaService para acceder a la base de datos.
-   * @param options Opcional. Parámetros de paginación: limit (límite de resultados) y offset (desplazamiento).
-   * @returns Un objeto con los roles encontrados, el total, el límite y el offset aplicados.
+   * @param prisma Instancia del servicio LabPrisma para acceso a la base de datos.
+   * @param options Opciones de paginación y búsqueda:
+   *                - limit: Número máximo de roles a retornar (por defecto 10).
+   *                - offset: Número de roles a omitir (por defecto 0).
+   *                - searchTerm: Término de búsqueda para filtrar roles.
+   *                - searchFields: Campos específicos sobre los que aplicar la búsqueda.
+   * @returns Objeto con: lista de roles, total de roles encontrados, límite aplicado y offset aplicado.
    */
   async getAllRoles(
     prisma: LabPrismaService,
-    options?: { limit?: number; offset?: number; searchTerm?: string; searchFields?: string[] },
+    options?: {
+      limit?: number;
+      offset?: number;
+      searchTerm?: string;
+      searchFields?: string[];
+    },
   ) {
     const { limit = 10, offset = 0, searchTerm, searchFields } = options || {};
 
     const searchOptions = {
       skip: offset,
-        take: limit,
-        orderBy: { id: 'asc' },
+      take: limit,
+      orderBy: { id: 'asc' },
     };
 
     // Usar intelligentSearch o la búsqueda normal según si hay searchTerm
@@ -101,7 +111,7 @@ export class RoleService {
       searchOptions,
       searchTerm,
       searchFields,
-    )
+    );
 
     return {
       data,
@@ -112,43 +122,49 @@ export class RoleService {
   }
 
   /**
-   * Obtiene los usuarios asociados a un rol específico por su ID.
-   * Lanza una ConflictException si no se encuentran usuarios para el rol dado.
-   * Retorna un arreglo con los campos básicos de cada usuario: ci, name, lastName y email.
+   * Obtiene usuarios del sistema asociados a un rol específico, con paginación y capacidades de búsqueda.
+   * Primero recupera las asociaciones rol-usuario en la base del laboratorio, luego obtiene detalles completos
+   * de los usuarios desde el servicio del sistema central. Retorna solo campos esenciales de los usuarios.
    *
-   * @param prisma Instancia de LabPrismaService para acceder a la base de datos del laboratorio.
-   * @param roleId ID del rol para buscar los usuarios asociados.
-   * @returns Promesa que resuelve con un arreglo de objetos de usuario.
+   * @param prisma Instancia del servicio LabPrisma para acceso a la base de datos del laboratorio.
+   * @param roleId ID del rol para el cual se buscan usuarios asociados.
+   * @param offset (Opcional) Número de usuarios a omitir (para paginación).
+   * @param limit (Opcional) Número máximo de usuarios a retornar.
+   * @param searchTerm (Opcional) Término de búsqueda para filtrar usuarios.
+   * @param searchFields (Opcional) Campos específicos sobre los que aplicar la búsqueda.
+   * @returns Objeto con: lista de usuarios (campos esenciales), total de usuarios encontrados, límite y offset aplicados.
+   * @throws ConflictException Si no se encuentran usuarios asociados al rol especificado.
    */
   async getUsersByRoleId(
-    prisma: LabPrismaService, 
-    roleId: number, 
+    prisma: LabPrismaService,
+    roleId: number,
     offset?: number,
     limit?: number,
     searchTerm?: string,
-    searchFields?: string[]) {
-  
+    searchFields?: string[],
+  ) {
     // Opciones para intelligentSearch
     const searchOptions = {
       skip: offset,
       take: limit,
       where: { roleId },
-      select: { systemUserUuid: true }
+      select: { systemUserUuid: true },
     };
-  
-    const { results: dataFromIntelligentSearch, total } = await intelligentSearch(
-      prisma.labUser,
-      searchOptions,
-      searchTerm,
-      searchFields,
-    );
-  
+
+    const { results: dataFromIntelligentSearch, total } =
+      await intelligentSearch(
+        prisma.labUser,
+        searchOptions,
+        searchTerm,
+        searchFields,
+      );
+
     if (dataFromIntelligentSearch.length === 0) {
       throw new ConflictException(
         `No se encontraron usuarios asociados al rol con ID ${roleId}`,
       );
     }
-  
+
     // Consultar la info del usuario en la base de datos del sistema
     const users = await Promise.all(
       dataFromIntelligentSearch.map((labUser) =>
@@ -158,7 +174,7 @@ export class RoleService {
         }),
       ),
     );
-  
+
     // Mapear solo los campos necesarios para el resultado final
     const data = users.map((u) => ({
       uuid: u.uuid,
@@ -167,7 +183,7 @@ export class RoleService {
       lastName: u.lastName,
       email: u.email,
     }));
-  
+
     return {
       data,
       total,
@@ -275,17 +291,16 @@ export class RoleService {
 
     // 4. Update cache only if there are users with this role
     try {
-    const users = await this.getUsersByRoleId(prisma, updatedRole.id);
-    if (users.data.length > 0) {
-      await Promise.all(
-        users.data.map(user => 
-          this.sharedCacheService.setUser(user.uuid, labId, updatedRole)
-        )
-      );
-    }
-    // If no users, skip cache update silently
-    } catch (error) {
-    }
+      const users = await this.getUsersByRoleId(prisma, updatedRole.id);
+      if (users.data.length > 0) {
+        await Promise.all(
+          users.data.map((user) =>
+            this.sharedCacheService.setUser(user.uuid, labId, updatedRole),
+          ),
+        );
+      }
+      // If no users, skip cache update silently
+    } catch (error) {}
 
     // 4. Auditoria
     await this.auditService.logAction(labId, performedByUserUuid, {
@@ -329,7 +344,7 @@ export class RoleService {
     roleId: number,
     performedByUserUuid: string,
   ): Promise<{ message: string }> {
-    const role = await this.validateRoleExists(labId, roleId)
+    const role = await this.validateRoleExists(labId, roleId);
 
     if (role.role === 'admin' || roleId === 1) {
       throw new BadRequestException('No puedes eliminar el rol "admin"');

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { SupabaseService } from './services/supabase.service'; // Asegúrate de que la ruta sea correcta
-import { FileResponseDto } from './dto/file-response.dto'; // Si este DTO se usa en el wrapper
+import { SupabaseService } from './supabase.service'; // Asegúrate de que la ruta sea correcta
+import { FileResponseDto } from '../dto/file-response.dto'; // Si este DTO se usa en el wrapper
 
 @Injectable()
 export class StorageService {
@@ -48,13 +48,8 @@ export class StorageService {
     return this.supabaseService.getFileUrl(fullPath);
   }
 
-  // Puedes añadir aquí otros métodos de tu SupabaseService si quieres exponerlos,
-  // como deleteFile, etc., o crear métodos más genéricos si cambias de proveedor.
-
-  // Ejemplo: Podrías querer un método para eliminar archivos:
-  // async deleteFile(fullPath: string): Promise<void> {
-  //   // Asume que SupabaseService tiene un método deleteFile(bucket, relativePath)
-  //   // o que fullPath es suficiente para su lógica interna.
-  //   return this.supabaseService.deleteFile(fullPath);
-  // }
+  /**
+   * SUGGESTIONS:
+   * método para eliminar archivos
+   */
 }

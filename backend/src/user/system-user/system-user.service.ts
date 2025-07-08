@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { SystemPrismaService } from '../../prisma-manage/system-prisma/system-prisma.service';
+import { SystemPrismaService } from '../../prisma-manager/system-prisma/system-prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateSystemUserDto } from './dto/update-system-user.dto';

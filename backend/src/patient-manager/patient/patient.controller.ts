@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Patch,
-  Headers,
   Request,
   Query,
   ParseIntPipe,
@@ -50,17 +49,19 @@ export class PatientController {
   @ApiQuery({
     name: 'search-term',
     required: false,
-    description: 'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
+    description:
+      'Término a buscar. Si no está definido devuelve la lista paginada sin búsqueda',
     example: '',
     type: String,
   })
   @ApiQuery({
     name: 'search-fields',
     required: false,
-    description: 'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
+    description:
+      'Campos donde buscar (array de strings) si existe un search-term. Si está vacío devuelve la lista paginada sin búsqueda',
     type: [String], // Esto indica que es un array de strings
     isArray: true, // Esto indica que el parámetro puede recibir múltiples valores
-    example: ['name', 'gender', 'email'], // Ejemplo con valores
+    example: ['name', 'gender', 'email'],
   })
   @ApiQuery({
     name: 'limit',
@@ -81,11 +82,15 @@ export class PatientController {
   })
   getDataPatients(
     @Query('search-term') searchTerm,
-    @Query('search-fields', new ParseArrayPipe({ 
-      optional: true,
-      items: String,
-      separator: ','
-    })) searchFields: string[] = [],
+    @Query(
+      'search-fields',
+      new ParseArrayPipe({
+        optional: true,
+        items: String,
+        separator: ',',
+      }),
+    )
+    searchFields: string[] = [],
     @Query('limit', ParseIntPipe) limit = 20,
     @Query('offset', ParseIntPipe) offset = 0,
     @Query('includeData', ParseBoolPipe) includeData = false,
@@ -93,9 +98,9 @@ export class PatientController {
   ) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
     return this.patientService.getAllPatients(
-      +labId, 
-      limit, 
-      offset, 
+      +labId,
+      limit,
+      offset,
       includeData,
       searchTerm,
       searchFields,
@@ -104,21 +109,19 @@ export class PatientController {
 
   @Get(':patientId')
   @ApiOperation({ summary: 'Obtener datos de un paciente de un laboratorio' })
-  @ApiParam({ 
+  @ApiParam({
     name: 'patientId',
     required: true,
     type: Number,
     description: 'Id del paciente para obtener todos sus datos',
   })
   @CheckAbility({ actions: 'read', subject: 'Patient' })
-  getDataPatient(
-    @Param('patientId') patientId: number, 
-    @Request() req) {
+  getDataPatient(@Param('patientId') patientId: number, @Request() req) {
     const labId = Number(req.headers['x-lab-id']); // Obtenemos labId del header
     return this.patientService.getPatient(+labId, +patientId);
   }
 
-  @Patch(':patientId') // Cambia la ruta para incluir el parámetro de path
+  @Patch(':patientId')
   @ApiOperation({
     summary: 'Actualizar datos de un paciente de un laboratorio',
   })
@@ -130,13 +133,13 @@ export class PatientController {
   })
   @CheckAbility({ actions: 'update', subject: 'Patient' })
   update(
-    @Param('patientId') patientId: number, // Cambia de Query a Param
+    @Param('patientId') patientId: number,
     @Body() dto: UpdatePatientDto,
     @Request() req,
   ) {
     const labId = Number(req.headers['x-lab-id']);
     const performedByUserUuid = req.user.sub;
-  
+
     return this.patientService.updatePatient(
       +labId,
       +patientId,
@@ -144,21 +147,19 @@ export class PatientController {
       performedByUserUuid,
     );
   }
-  
+
   @Delete(':patientId')
   @ApiOperation({
     summary: 'Eliminar un paciente de un laboratorio',
   })
-  @ApiParam({ // Cambia de ApiQuery a ApiParam
+  @ApiParam({
     name: 'patientId',
     required: true,
     type: Number,
     description: 'Id del paciente para borrar',
   })
   @CheckAbility({ actions: 'delete', subject: 'Patient' })
-  delete(
-    @Param('patientId') patientId: number, 
-    @Request() req) {
+  delete(@Param('patientId') patientId: number, @Request() req) {
     const labId = Number(req.headers['x-lab-id']);
     const performedByUserUuid = req.user.sub;
 

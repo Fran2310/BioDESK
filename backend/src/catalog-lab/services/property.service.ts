@@ -4,10 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateMedicTestPropertyDto } from '../dto/update-property.dto';
-import { LabPrismaService } from 'src/prisma-manage/lab-prisma/services/lab-prisma.service';
+import { LabPrismaService } from 'src/prisma-manager/lab-prisma/services/lab-prisma.service';
 import { AuditService } from 'src/audit/audit.service';
 import { MedicTestPropertyDto } from '../dto/property.dto';
 
+/**
+ * DEPRECADO: Este servicio quedo obsoleto por catalog-lab service, se mantiene unicamente con efectos practicos de consultas para el desarrollador
+ */
 @Injectable()
 export class PropertyService {
   constructor(private readonly auditService: AuditService) {}

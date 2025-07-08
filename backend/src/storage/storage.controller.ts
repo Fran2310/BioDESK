@@ -10,20 +10,25 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
-  HttpCode,
-  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileResponseDto } from './dto/file-response.dto';
-import { UploadFileBodyDto } from './dto/upload-file.dto'; // Asegúrate de importar tu DTO
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { UploadFileBodyDto } from './dto/upload-file.dto';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { SkipLabIdCheck } from 'src/auth/decorators/skip-lab-id-check.decorator';
-import { StorageService } from './storage.service';
+import { StorageService } from './services/storage.service';
 
 @ApiBearerAuth()
 @SkipLabIdCheck()
-@ApiTags('[Testing] Storage') // Para agrupar los endpoints en Swagger UI
+@ApiTags('[Testing] Storage')
 @Controller('storage')
 export class StorageController {
   private readonly logger = new Logger(StorageController.name);
@@ -50,13 +55,13 @@ export class StorageController {
           type: 'string',
           description: 'El nombre deseado para el archivo.',
         },
-        customPath: { // Agrega el nuevo campo customPath aquí
+        customPath: {
           type: 'string',
           description: 'La ruta personalizada dentro del bucket (opcional).',
           example: 'images/profiles',
         },
       },
-      required: ['file', 'fileName'], // 'customPath' no es requerido aquí si es opcional en el DTO
+      required: ['file', 'fileName'],
     },
   })
   async uploadPublicFile(
@@ -71,16 +76,14 @@ export class StorageController {
     file: Express.Multer.File,
     @Body() body: UploadFileBodyDto,
   ): Promise<FileResponseDto> {
-    this.logger.log(`Uploading public file: ${body.fileName} to path: ${body.customPath || 'default'}`);
+    this.logger.log(
+      `Uploading public file: ${body.fileName} to path: ${body.customPath || 'default'}`,
+    );
 
     // Usa body.customPath si existe, de lo contrario usa un valor por defecto.
     const path = body.customPath || 'images'; // Define un valor por defecto si customPath no viene
 
-    return this.storageService.uploadPublicFile(
-      file,
-      body.fileName,
-      path,
-    );
+    return this.storageService.uploadPublicFile(file, body.fileName, path);
   }
 
   /**
@@ -103,7 +106,7 @@ export class StorageController {
           type: 'string',
           description: 'El nombre deseado para el archivo.',
         },
-        customPath: { // Agrega el nuevo campo customPath aquí
+        customPath: {
           type: 'string',
           description: 'La ruta personalizada dentro del bucket (opcional).',
           example: 'documents/invoices/2024',
@@ -124,35 +127,37 @@ export class StorageController {
     file: Express.Multer.File,
     @Body() body: UploadFileBodyDto,
   ): Promise<{ path: string }> {
-    this.logger.log(`Uploading private file: ${body.fileName} to path: ${body.customPath || 'default'}`);
+    this.logger.log(
+      `Uploading private file: ${body.fileName} to path: ${body.customPath || 'default'}`,
+    );
 
     // Usa body.customPath si existe, de lo contrario usa un valor por defecto.
-    const path = body.customPath || 'documents/general'; // Define un valor por defecto
+    const path = body.customPath || 'documents/general';
 
-    return this.storageService.uploadPrivateFile(
-      file,
-      body.fileName,
-      path,
-    );
+    return this.storageService.uploadPrivateFile(file, body.fileName, path);
   }
 
-  @Get('file/:bucketName/*filePath') // Usamos :*filePath para capturar el resto de la ruta
-  @ApiOperation({ summary: 'Obtiene la URL de un archivo por su ruta completa.' })
+  @Get('file/:bucketName/*filePath') // se usa :*filePath para capturar el resto de la ruta
+  @ApiOperation({
+    summary: 'Obtiene la URL de un archivo por su ruta completa.',
+  })
   @ApiParam({
     name: 'bucketName',
-    description: 'El nombre del bucket donde se encuentra el archivo (ej: images, documents).',
+    description:
+      'El nombre del bucket donde se encuentra el archivo (ej: images, documents).',
     type: 'string',
     example: 'images',
   })
   @ApiParam({
     name: 'filePath',
-    description: 'La ruta completa del archivo dentro del bucket (ej: profile-pictures/avatar.png).',
+    description:
+      'La ruta completa del archivo dentro del bucket (ej: profile-pictures/avatar.png).',
     type: 'string',
     example: 'profile-pictures/user123/avatar.png',
   })
   async getFile(
     @Param('bucketName') bucketName: string,
-    @Param('filePath') filePath: string, // NestJS combina automáticamente el resto de la ruta
+    @Param('filePath') filePath: string,
   ): Promise<{ url: string }> {
     // Reconstruye la fullPath para pasarla al servicio
     const fullPath = `${bucketName}/${filePath}`;

@@ -4,9 +4,9 @@ import { extname } from 'path'; // path.join y fs ya no son necesarios para el g
 import * as sharp from 'sharp';
 // import { existsSync, mkdirSync } from 'fs'; // No necesarios para el guardado en la nube
 // import { promises as fs } from 'fs'; // No necesarios para el guardado en la nube
-import { SystemPrismaService } from '../../prisma-manage/system-prisma/system-prisma.service';
+import { SystemPrismaService } from '../../prisma-manager/system-prisma/system-prisma.service';
 import { AuditService } from 'src/audit/audit.service';
-import { StorageService } from 'src/storage/storage.service'; // Asegúrate que la ruta es correcta
+import { StorageService } from 'src/storage/services/storage.service'; // Asegúrate que la ruta es correcta
 import { STORAGE_BUCKETS } from '../../storage/constants/storage.constants'; // Para saber el nombre del bucket
 
 @Injectable()
@@ -37,7 +37,8 @@ export class ManageLogoLabService {
     file: Express.Multer.File,
     labId: number,
     userUuid: string,
-  ): Promise<{ logoUrl: string }> { // Cambia el tipo de retorno a logoUrl
+  ): Promise<{ logoUrl: string }> {
+    // Cambia el tipo de retorno a logoUrl
     this.validateFile(file);
 
     if (file.mimetype === 'image/png') {
@@ -72,7 +73,9 @@ export class ManageLogoLabService {
     const newLogoPathInDb = uploadResult.url; // Guardamos la URL pública en la DB
 
     // Determinar si es necesario actualizar la base de datos
-    if (await this.needsDbUpdate(labId, newLogoPathInDb, hasDifferentExtension)) {
+    if (
+      await this.needsDbUpdate(labId, newLogoPathInDb, hasDifferentExtension)
+    ) {
       await this.updateLabLogoInDatabase(labId, newLogoPathInDb);
     } else {
       this.logger.log(
@@ -122,7 +125,10 @@ export class ManageLogoLabService {
     // (lo que podría indicar un cambio de convención o un error previo),
     // también lo tratamos como un cambio.
     const currentFilenameFromUrl = currentDbUrl.split('/').pop(); // Obtener el último segmento de la URL
-    return currentExt !== newExt || !currentFilenameFromUrl?.startsWith(`logo_lab_${labId}`);
+    return (
+      currentExt !== newExt ||
+      !currentFilenameFromUrl?.startsWith(`logo_lab_${labId}`)
+    );
   }
 
   /**
@@ -174,29 +180,48 @@ export class ManageLogoLabService {
         // Necesitamos extraer "bucket-name/path/to/file.ext"
         const fullPathInStorage = currentDbUrl.split('/public/')[1]; // Esto puede ser frágil
         if (fullPathInStorage) {
-          this.logger.log(`Intentando eliminar logo antiguo de la nube: ${fullPathInStorage}`);
+          this.logger.log(
+            `Intentando eliminar logo antiguo de la nube: ${fullPathInStorage}`,
+          );
           try {
             // Llama directamente al SupabaseService para eliminar si tu StorageService no expone delete
             // Si tu StorageService expone un deleteFile(fullPathInStorage), úsalo aquí.
-            const { bucket: existingBucket, relativePath: existingRelativePath } =
-              this.storageService['supabaseService']['_parseFilePath'](fullPathInStorage);
+            const {
+              bucket: existingBucket,
+              relativePath: existingRelativePath,
+            } =
+              this.storageService['supabaseService']['_parseFilePath'](
+                fullPathInStorage,
+              );
 
-            const { error } = await this.storageService['supabaseService']['supabase'].storage
+            const { error } = await this.storageService['supabaseService'][
+              'supabase'
+            ].storage
               .from(existingBucket)
               .remove([existingRelativePath]);
 
             if (error) {
-              this.logger.warn(`Error al eliminar logo antiguo ${fullPathInStorage} de la nube: ${error.message}`);
+              this.logger.warn(
+                `Error al eliminar logo antiguo ${fullPathInStorage} de la nube: ${error.message}`,
+              );
             } else {
-              this.logger.log(`Logo antiguo ${fullPathInStorage} eliminado exitosamente de la nube.`);
+              this.logger.log(
+                `Logo antiguo ${fullPathInStorage} eliminado exitosamente de la nube.`,
+              );
             }
           } catch (parseError) {
-            this.logger.warn(`No se pudo parsear la URL del logo antiguo para eliminarlo: ${currentDbUrl}`, parseError);
+            this.logger.warn(
+              `No se pudo parsear la URL del logo antiguo para eliminarlo: ${currentDbUrl}`,
+              parseError,
+            );
           }
         }
       }
     } catch (error) {
-      this.logger.error(`Error al intentar eliminar logos antiguos de la nube para lab ${labId}`, error);
+      this.logger.error(
+        `Error al intentar eliminar logos antiguos de la nube para lab ${labId}`,
+        error,
+      );
     }
   }
 
@@ -246,13 +271,17 @@ export class ManageLogoLabService {
         where: { id: labId },
         data: { logoPath: logoUrl }, // Guarda la URL completa
       });
-      this.logger.log(`Logo URL actualizado en DB para laboratorio ID: ${labId}`);
+      this.logger.log(
+        `Logo URL actualizado en DB para laboratorio ID: ${labId}`,
+      );
     } catch (error) {
       this.logger.error(
         `Error actualizando URL de logo en base de datos para lab ${labId}`,
         error,
       );
-      throw new BadRequestException('Error actualizando URL de logo en base de datos');
+      throw new BadRequestException(
+        'Error actualizando URL de logo en base de datos',
+      );
     }
   }
 
@@ -292,7 +321,8 @@ export class ManageLogoLabService {
     }
   }
 
-  // private createUploadDirectory(): void { // Ya no es necesario
+  // Ya no es necesario para almacenamiento en la nube
+  // private createUploadDirectory(): void {
   //   if (!existsSync(this.uploadDir)) {
   //     mkdirSync(this.uploadDir, { recursive: true });
   //   }

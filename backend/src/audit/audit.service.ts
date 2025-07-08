@@ -1,11 +1,10 @@
 // src/audit/audit.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
+import { LabPrismaFactory } from 'src/prisma-manager/lab-prisma/lab-prisma.factory';
 import { CreateAuditLogDto } from './dto/create-audit-log.dto';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
-import { intelligentSearch } from 'src/common/services/intelligentSearch.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { intelligentSearch } from 'src/common/utils/intelligentSearch';
 
 @Injectable()
 export class AuditService {
@@ -18,8 +17,6 @@ export class AuditService {
     private readonly labPrismaFactory: LabPrismaFactory,
     private readonly systemPrisma: SystemPrismaService,
     private readonly systemUserService: SystemUserService,
-    private readonly labDbManageService: LabDbManageService,
-
   ) {}
 
   /**
@@ -37,44 +34,44 @@ export class AuditService {
     limit = 20,
     includeData = true,
     searchTerm?: string,
-    searchFields?: string[]
+    searchFields?: string[],
   ) {
     const dbName = await this.systemPrisma.getLabDbName(labId);
     const prisma = this.labPrismaFactory.createInstanceDB(dbName);
     await prisma.$connect();
-  
+
     // Primero: Obtener IDs con intelligentSearch (sin relaciones)
     const baseOptions = {
       skip: offset,
       take: limit,
       omit: { operationData: !includeData, labUserId: true },
-      orderBy: { madeAt: 'desc' } // Mantener el orden de más nuevo al más viejo
+      orderBy: { madeAt: 'desc' }, // Mantener el orden de más nuevo al más viejo
     };
-  
+
     const { results: partialLogs, total } = await intelligentSearch(
       prisma.actionHistory,
       baseOptions,
       searchTerm,
       searchFields,
     );
-  
+
     // Segundo: Cargar relaciones para los resultados
     const data = await prisma.actionHistory.findMany({
       where: {
-        id: { in: partialLogs.map(log => log.id) }
+        id: { in: partialLogs.map((log) => log.id) },
       },
       include: {
         labUser: {
           select: {
-            systemUserUuid: true
-          }
-        }
+            systemUserUuid: true,
+          },
+        },
       },
-      orderBy: { madeAt: 'desc' } // Mantener el orden de más nuevo al más viejo
+      orderBy: { madeAt: 'desc' }, // Mantener el orden de más nuevo al más viejo
     });
 
     await prisma.$disconnect();
-  
+
     return { total, data, offset, limit };
   }
   /**
@@ -93,8 +90,8 @@ export class AuditService {
     offset = 0,
     limit = 20,
     includeData = true,
-    searchTerm?: string,  // Opcional: para futuras implementaciones
-    searchFields?: string[]  // Opcional: para futuras implementaciones
+    searchTerm?: string, // Opcional: para futuras implementaciones
+    searchFields?: string[], // Opcional: para futuras implementaciones
   ): Promise<{ total: number; offset: number; limit: number; data: any[] }> {
     try {
       // 1. Obtener logs usando la función existente (ya incluye labUser si es necesario)
@@ -103,29 +100,34 @@ export class AuditService {
         offset,
         limit,
         includeData,
-        searchTerm,  // Pasamos parámetros adicionales (si getActionHistory los soporta)
+        searchTerm, // Pasamos parámetros adicionales (si getActionHistory los soporta)
         searchFields,
       );
-  
+
       // 2. Enriquecer con datos de usuarios (igual que antes)
       const uuids = logsResult.data
         .map((log) => log.labUser?.systemUserUuid)
         .filter(Boolean);
-  
+
       const usersMap = includeData
         ? await this.systemUserService.batchFinderSystemUsers(uuids)
         : {};
-  
+
       const enrichedData = logsResult.data.map(({ labUser, ...rest }) => ({
         ...rest,
-        performedBy: includeData && labUser?.systemUserUuid
-          ? usersMap[labUser.systemUserUuid] ?? { ci: '', name: '', lastName: '' }
-          : null,
+        performedBy:
+          includeData && labUser?.systemUserUuid
+            ? (usersMap[labUser.systemUserUuid] ?? {
+                ci: '',
+                name: '',
+                lastName: '',
+              })
+            : null,
       }));
-  
+
       // 3. Retornar en el nuevo formato
       return {
-        total: logsResult.total,  // Asume que getActionHistory devuelve "total"
+        total: logsResult.total, // Asume que getActionHistory devuelve "total"
         offset,
         limit,
         data: enrichedData,
@@ -134,7 +136,6 @@ export class AuditService {
       throw new NotFoundException(error.message);
     }
   }
-  
 
   /**
    * Registra una acción de auditoría en la base de datos del laboratorio.

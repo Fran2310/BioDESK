@@ -7,6 +7,9 @@ export interface AbilityMetadata {
   fields?: string;
 }
 
+/**
+ * Decorador para el manejo de la autorizacion dinamica para cada endpoint
+ */
 export const CHECK_ABILITY_KEY = 'check_ability';
 export const CheckAbility = (...abilities: AbilityMetadata[]) =>
   SetMetadata(CHECK_ABILITY_KEY, abilities);

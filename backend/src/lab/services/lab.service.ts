@@ -9,10 +9,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
+import { LabPrismaFactory } from 'src/prisma-manager/lab-prisma/lab-prisma.factory';
 import { SharedCacheService } from 'src/shared-cache/shared-cache.service';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { Lab } from '@prisma/client-system';
 
 import { UserCache } from 'src/shared-cache/dto/user-cache.interface';
@@ -42,8 +42,9 @@ export class LabService {
    * @throws ConflictException si ya existe un laboratorio con el mismo RIF o nombre de base de datos.
    */
   private async validateUniqueLab(
-    dto: CreateLabDto | UpdateLabDto, 
-    idToExclude?: number) {
+    dto: CreateLabDto | UpdateLabDto,
+    idToExclude?: number,
+  ) {
     const { rif, name } = dto;
 
     const existing = await this.systemPrisma.lab.findFirst({
@@ -51,7 +52,7 @@ export class LabService {
         OR: [{ rif }, { name }],
         NOT: {
           id: idToExclude,
-        }
+        },
       },
     });
 
@@ -166,59 +167,89 @@ export class LabService {
     return lab;
   }
 
-  async getLabById(labId: number) { // Esta función se puede pasar a otro lado
-      try {
-        const lab = await this.systemPrisma.lab.findUnique({
-          where: { id: Number(labId) },
-        });
-  
-        if (!lab) {
-          throw new NotFoundException(`Lab with ID ${labId} not found`);
-        }
-        return lab;
-      } catch (error) {
-        if (error instanceof NotFoundException) {
-          throw error;
-        }
-        this.logger.error(`Error al validar laboratorio: ${error.message}`);
-        throw new InternalServerErrorException('Error al validar laboratorio');
-      }
-    }
-    async getThisLabById(labId: number) { // Esta función se puede pasar a otro lado
-      try {
-        const lab = await this.systemPrisma.lab.findUnique({
-          where: { 
-            id: Number(labId) 
-          },
-          omit: {
-            dbName: true,
-            logoPath: false, // Devolver la ruta del logo en Supabase
-          }
-        });
-  
-        if (!lab) {
-          throw new NotFoundException(`Lab with ID ${labId} not found`);
-        }
-        return lab;
-      } catch (error) {
-        if (error instanceof NotFoundException) {
-          throw error;
-        }
-        this.logger.error(`Error al validar laboratorio: ${error.message}`);
-        throw new InternalServerErrorException('Error al validar laboratorio');
-      }
-    }
-
-  async updateLab(
-    labId: number, 
-    dto: UpdateLabDto, 
-    performedByUserUuid
-    ) {
+  /**
+   * Obtiene un laboratorio por su ID desde la base de datos del sistema. expone toda la info
+   *
+   * Lanza una excepción NotFoundException si el laboratorio no existe.
+   * Lanza una excepción InternalServerErrorException si ocurre un error inesperado.
+   *
+   * @param labId ID numérico del laboratorio a buscar.
+   * @returns El laboratorio encontrado.
+   */
+  async getLabById(labId: number) {
     try {
-      await this.validateUniqueLab(dto, labId)
+      const lab = await this.systemPrisma.lab.findUnique({
+        where: { id: Number(labId) },
+      });
 
-      const systemUser = await this.systemUserService.getSystemUser({uuid: performedByUserUuid});
-      
+      if (!lab) {
+        throw new NotFoundException(`Lab with ID ${labId} not found`);
+      }
+      return lab;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Error al validar laboratorio: ${error.message}`);
+      throw new InternalServerErrorException('Error al validar laboratorio');
+    }
+  }
+
+  /**
+   * Obtiene la información de un laboratorio por su ID desde la base de datos del sistema, sin exponer el nombre de la base de datos.
+   * Lanza una excepción NotFoundException si el laboratorio no existe.
+   * En caso de error inesperado, registra el error y lanza una InternalServerErrorException.
+   *
+   * @param labId - ID numérico del laboratorio a buscar.
+   * @returns El objeto Lab correspondiente si se encuentra.
+   * @throws NotFoundException si no se encuentra el laboratorio.
+   * @throws InternalServerErrorException en caso de error inesperado.
+   */
+  async getThisLabById(labId: number) {
+    // Esta función se puede pasar a otro lado
+    try {
+      const lab = await this.systemPrisma.lab.findUnique({
+        where: {
+          id: Number(labId),
+        },
+        omit: {
+          dbName: true,
+          logoPath: false, // Devolver la ruta del logo en Supabase
+        },
+      });
+
+      if (!lab) {
+        throw new NotFoundException(`Lab with ID ${labId} not found`);
+      }
+      return lab;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Error al validar laboratorio: ${error.message}`);
+      throw new InternalServerErrorException('Error al validar laboratorio');
+    }
+  }
+
+  /**
+   * Actualiza la información de un laboratorio existente por su ID.
+   *
+   * Valida la unicidad del laboratorio, verifica su existencia y registra la acción en el sistema de auditoría.
+   * Lanza una excepción NotFoundException si el laboratorio no existe y ConflictException ante otros errores.
+   *
+   * @param labId ID numérico del laboratorio a actualizar.
+   * @param dto Objeto UpdateLabDto con los datos a modificar.
+   * @param performedByUserUuid UUID del usuario que realiza la operación.
+   * @returns El laboratorio actualizado.
+   */
+  async updateLab(labId: number, dto: UpdateLabDto, performedByUserUuid) {
+    try {
+      await this.validateUniqueLab(dto, labId);
+
+      const systemUser = await this.systemUserService.getSystemUser({
+        uuid: performedByUserUuid,
+      });
+
       // Verificar existencia del laboratorio
       const before = await this.getThisLabById(labId);
       if (!before) {
@@ -227,7 +258,7 @@ export class LabService {
 
       const updated = await this.systemPrisma.lab.update({
         where: { id: Number(labId) },
-        data: dto
+        data: dto,
       });
 
       await this.auditService.logAction(labId, performedByUserUuid, {

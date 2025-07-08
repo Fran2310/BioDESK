@@ -46,17 +46,38 @@ export class SharedCacheService {
     return userData;
   }
 
+  // Metodos para logica de cambio de contraseña
+  /**
+   * Almacena un token asociado a un email en la caché con un tiempo de expiración de 1 hora.
+   * Registra la acción en el sistema de logs.
+   *
+   * @param email Dirección de email que se usará como clave de almacenamiento.
+   * @param token Token a almacenar (normalmente un código de verificación o acceso).
+   */
   async setEmailToken(email: string, token: string) {
-    await this.cacheManager.set(email, token, 3600*1000); // 3600 segundos = 1 hora
+    await this.cacheManager.set(email, token, 3600 * 1000); // 3600 segundos = 1 hora
     this.logger.log(`Token de email cacheado para ${email}`);
   }
 
+  /**
+   * Recupera un token previamente almacenado asociado a un email desde la caché.
+   * Registra la acción en el sistema de logs.
+   *
+   * @param email Dirección de email asociada al token que se desea recuperar.
+   * @returns El token almacenado o null si ha expirado o no existe.
+   */
   async getEmailToken(email: string) {
     this.logger.log(`Token obtenido de email para ${email}`);
     return await this.cacheManager.get(email);
   }
 
-  async delEmailToken(email:string) {
+  /**
+   * Elimina un token asociado a un email de la caché antes de su expiración natural.
+   * Registra la acción en el sistema de logs.
+   *
+   * @param email Dirección de email cuyo token se desea eliminar.
+   */
+  async delEmailToken(email: string) {
     await this.cacheManager.del(email);
     this.logger.log(`Token de email borrado del cache para ${email}`);
   }

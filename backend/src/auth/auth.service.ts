@@ -29,7 +29,7 @@ export class AuthService {
    * @returns Un objeto con el token de acceso y los datos del laboratorio creado.
    */
   async register(dto: RegisterDto) {
-    const uuid  = await this.usersService.createUser(dto);
+    const uuid = await this.usersService.createUser(dto);
 
     const payload = { sub: uuid };
 
@@ -41,7 +41,7 @@ export class AuthService {
   }
 
   /**
-   * Valida las credenciales de un usuario por email y contraseña.
+   * Valida las credenciales de un usuario por email y contraseña, esto se usa en la estrategia local de passport.
    * @param email - Email del usuario a validar.
    * @param password - Contraseña del usuario a validar.
    * @returns El usuario si las credenciales son correctas, o un mensaje de error si no lo son.
@@ -65,7 +65,6 @@ export class AuthService {
    * @returns Un objeto con el token de acceso y los datos de los laboratorios asociados al usuario.
    */
   async login(user: any) {
-    
     const payload = {
       sub: user.uuid, // solo UUID en el token
     };
@@ -77,6 +76,17 @@ export class AuthService {
     };
   }
 
+  /**
+   * Restablece la contraseña de un usuario.
+   *
+   * @param dto - Objeto que contiene el email del usuario, el token de recuperación y la nueva contraseña.
+   * @throws {UnauthorizedException} Si el token es inválido o ha expirado.
+   *
+   * Este método realiza las siguientes acciones:
+   * 1. Valida que el token recibido coincida con el almacenado.
+   * 2. Cambia la contraseña del usuario.
+   * 3. Invalida el token después de su uso para garantizar la seguridad.
+   */
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
     // 1. Validar que el token recibido coincide con el almacenado
     const storedToken = await this.sharedCacheService.getEmailToken(dto.email);

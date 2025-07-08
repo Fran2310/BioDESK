@@ -30,7 +30,7 @@ import { SharedCacheModule } from 'src/shared-cache/shared-cache.module';
       imports: [],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET'),
+        secret: config.get<string>('JWT_SECRET'), //toma el secret del entorno
         signOptions: { expiresIn: '1d' },
       }),
     }),

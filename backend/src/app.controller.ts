@@ -10,13 +10,13 @@ import { AppService } from './app.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('[Testing] App')
-@Controller() // Opcional: Puedes poner un prefijo como @Controller('api') si no quieres que estas rutas estén en la raíz
+@Controller()
 @UseInterceptors(ClassSerializerInterceptor)
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Public() // Ruta pública, no requiere autenticación
-  @Get('saludar') // Ejemplo por defecto
+  @Get('saludar') // Ejemplo por defecto, este endpoint se usa para evitar que se duerma el backend desplegado en el Render
   @ApiOperation({ summary: 'devuelve saludo para comprobar conexion' })
   getHello(): string {
     return this.appService.getHello();

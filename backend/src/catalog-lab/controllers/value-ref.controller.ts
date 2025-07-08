@@ -19,9 +19,12 @@ import {
 import { X_LAB_ID_HEADER } from 'src/common/constants/api-headers.constant';
 import { ValueReferenceDto } from '../dto/value-ref.dto';
 import { UpdateValueReferenceDto } from '../dto/update-value-ref.dto';
-import { LabDbManageService } from 'src/prisma-manage/lab-prisma/services/lab-db-manage.service';
+import { LabDbManageService } from 'src/prisma-manager/lab-prisma/services/lab-db-manage.service';
 import { ValueReferenceService } from '../services/value-reference.service';
 
+/**
+ * DEPRECADO: Este controlador quedo obsoleto por catalog-lab controller, se mantiene unicamente con efectos practicos de consultas para el desarrollador
+ */
 @ApiBearerAuth()
 @ApiTags('[Propiedades de Exámen] Valores de Referencia')
 @ApiHeaders([X_LAB_ID_HEADER])

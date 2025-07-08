@@ -13,8 +13,8 @@ import {
   ParseArrayPipe,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
-import { LabPrismaFactory } from 'src/prisma-manage/lab-prisma/lab-prisma.factory';
-import { SystemPrismaService } from 'src/prisma-manage/system-prisma/system-prisma.service';
+import { LabPrismaFactory } from 'src/prisma-manager/lab-prisma/lab-prisma.factory';
+import { SystemPrismaService } from 'src/prisma-manager/system-prisma/system-prisma.service';
 import { CheckAbility } from 'src/casl/decorators/check-ability.decorator';
 import { RoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
