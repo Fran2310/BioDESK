@@ -400,7 +400,7 @@
                 />
                 <VaButton
                   v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
-                  preset="secondary"
+                  preset="primary"
                   size="medium"
                   icon="cancel"
                   color="danger"
@@ -409,7 +409,7 @@
                 />
                 <VaButton
                   v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
-                  preset="secondary"
+                  preset="primary"
                   size="medium"
                   icon="delete"
                   color="danger"
