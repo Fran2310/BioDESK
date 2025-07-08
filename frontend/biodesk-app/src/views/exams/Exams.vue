@@ -17,6 +17,7 @@
   import DetailsExam from './modals/DetailsExam.vue';
 
   import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
+import ToProcessExam from './modals/ToProcessExam.vue';
 
   const { init: notify } = useToast();
   const router = useRouter();
@@ -37,6 +38,9 @@
 
   const showStateModal = ref(false);
   const changePriorityRequestId = ref<number | null>(null);
+
+  const showToProcessModal = ref(false);
+  const examToProcess = ref<ExamRow | null>(null);
 
   const showCancelModal = ref(false);
   const examToCancel = ref<ExamRow | null>(null);
@@ -191,20 +195,6 @@
     }
   }
 
-  async function toInProcessExam(id: number) {
-    try {
-      await medicTestRequestApi.updateMedicTestRequestState(
-        String(id),
-        'IN_PROCESS'
-      );
-      notify({ message: 'Examen puesto en proceso correctamente', color: 'success' });
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      refreshExams()
-    }
-  }
-
   function openChangePriorityModal(examId: number) {
     changePriorityRequestId.value = examId;
     showStateModal.value = true;
@@ -223,6 +213,15 @@
 
   function handleStateUpdated() {
     showStateModal.value = false;
+    refreshExams();
+  }
+
+  function onProcessExam(exam: ExamRow) {
+    examToProcess.value = exam
+    showToProcessModal.value = true;
+  }
+  function ProcessedExam() {
+    showToProcessModal.value = false;
     refreshExams();
   }
 
@@ -380,7 +379,7 @@
                   icon="arrow_forward"
                   color="info"
                   aria-label="Empezar examen"
-                  @click.stop="toInProcessExam(rowData.id)"
+                  @click.stop="onProcessExam(rowData)"
                 />
                 <VaButton
                   v-if="rowData.state === 'CANCELED'"
@@ -443,6 +442,16 @@
             @close="showStateModal = false"
             @updated="handleStateUpdated"
           />
+        </VaModal>
+
+        <!-- Empezar examen Modal -->
+        <VaModal v-model="showToProcessModal" hide-default-actions>
+          <ToProcessExam
+          :examToProcess="examToProcess"
+          @close="showToProcessModal = false"
+          @processed="ProcessedExam()"
+          >
+          </ToProcessExam>
         </VaModal>
 
         <!-- Cancelar examen Modal -->
