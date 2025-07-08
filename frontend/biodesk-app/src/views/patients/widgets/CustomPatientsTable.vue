@@ -1,18 +1,18 @@
 <script setup lang="ts">
+  // Importaciones de utilidades y tipos de Vuestic UI y Vue
   import { defineVaDataTableColumns, useModal } from 'vuestic-ui';
   import type { DataTableSortingOrder } from 'vuestic-ui';
   import type { Patient } from '@/services/types/patientType';
-
   import type { PropType } from 'vue';
   import { computed, toRef, ref } from 'vue';
-  // Removed Pagination and Sorting import as they are not needed
   import { useVModel } from '@vueuse/core';
-  import { useI18n } from 'vue-i18n';
 
-  const { t } = useI18n();
+  // ---------------------- FUNCIONES AUXILIARES ----------------------
 
-  //AGE CALCULATION
-
+  /**
+   * Calcula la edad a partir de la fecha de nacimiento en formato YYYY-MM-DD.
+   * Si la fecha es inválida, retorna '-'.
+   */
   const calculateAge = (birthDate: string): number | string => {
     if (!birthDate) return '-';
     // Try to match YYYY-MM-DD
@@ -30,20 +30,24 @@
     return age;
   };
 
-  //SELECTED PATIENT
+  // ---------------------- ESTADO DE MODAL Y PACIENTE SELECCIONADO ----------------------
 
+  // Paciente seleccionado para mostrar detalles
   const selectedPatient = ref<Patient | null>(null);
+  // Estado de visibilidad del modal de detalles
   const isDetailsModalOpen = ref(false);
 
-  //THIS IS THE EVENT HANDLER, IT WAS EVENT.ITEM, NOT ROWDATA
-
+  /**
+   * Maneja el click en una fila de la tabla, mostrando el modal de detalles del paciente.
+   */
   const handleRowClick = (event: { item: Patient }) => {
     selectedPatient.value = event.item;
     isDetailsModalOpen.value = true;
   };
 
-  //COLUMNS DEFINITION
+  // ---------------------- DEFINICIÓN DE COLUMNAS DE LA TABLA ----------------------
 
+  // Columnas de la tabla de pacientes, con sus llaves y opciones de ordenamiento
   const columns = defineVaDataTableColumns([
     { label: 'Nombre', key: 'name', sortable: true },
     { label: 'Apellido', key: 'lastName', sortable: true },
@@ -56,19 +60,19 @@
     { label: 'CI', key: 'ci', sortable: true },
     { label: 'Fecha de Nacimiento', key: 'birthDate', sortable: true },
     { label: 'Dirección', key: 'dir', sortable: true },
-    /* { label: t('patients.phoneNums'), key: 'phoneNums' } */
-    /* { label: t('patients.active'), key: 'active' }, */
+    // { label: t('patients.phoneNums'), key: 'phoneNums' }
+    // { label: t('patients.active'), key: 'active' },
     { label: 'Acciones', key: 'actions', align: 'right' },
   ]);
 
-  //PROPS PASSED BY PARENT
+  // ---------------------- PROPIEDADES Y EMISIONES ----------------------
 
+  // Props recibidas del componente padre
   const props = defineProps({
     patients: {
       type: Array as PropType<Patient[]>,
       required: true,
     },
-
     loading: { type: Boolean, default: false },
     pagination: {
       type: Object as PropType<{
@@ -85,8 +89,7 @@
     },
   });
 
-  //EMITS
-
+  // Definición de los eventos emitidos por la tabla
   const emit = defineEmits<{
     (event: 'edit-patient', patient: Patient): void;
     (event: 'delete-patient', patient: Patient): void;
@@ -97,16 +100,24 @@
     ): void;
   }>();
 
+  // Referencias reactivas para los props y el estado de ordenamiento
   const patients = toRef(props, 'patients');
   const sortByVModel = useVModel(props, 'sortBy', emit);
   const sortingOrderVModel = useVModel(props, 'sortingOrder', emit);
 
+  // Cálculo del total de páginas para la paginación
   const totalPages = computed(() =>
     Math.ceil(props.pagination.total / props.pagination.perPage)
   );
 
+  // ---------------------- ACCIONES DE LA TABLA ----------------------
+
+  // Modal de confirmación para eliminar paciente
   const { confirm } = useModal();
 
+  /**
+   * Solicita confirmación y emite el evento para eliminar un paciente.
+   */
   const onPatientDelete = async (patient: Patient) => {
     const agreed = await confirm({
       title: 'Delete user',
@@ -122,36 +133,47 @@
     }
   };
 
-  //HELPER FUNCTION FOR PHONE NUMBERS
-
+  /**
+   * Formatea y muestra los teléfonos de un paciente como string separado por comas.
+   */
   const displayPhones = (phones: string[]) => {
     return phones.filter(Boolean).join(', ');
   };
 
-  //HELPER FUNCTION FOR DATES
-
+  /**
+   * Formatea la fecha a formato local legible.
+   */
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString();
   };
 
+  // ---------------------- ACCIONES DE NAVEGACIÓN ----------------------
+
   import { useRouter } from 'vue-router';
   import { formatCi } from '@/services/utils';
   const router = useRouter();
 
+  /**
+   * Navega a la vista de exámenes del paciente seleccionado.
+   */
   function onViewExams(patient) {
     if (patient) {
       router.push({ name: 'Exams', params: { medicHistoryId: patient.id } });
     }
   }
+  /**
+   * Acción placeholder para añadir examen (puede ser implementada según necesidad).
+   */
   function onAddExam(patient) {
-    // Implement navigation to NewExam or open modal as needed
+    // Implementar navegación o modal según necesidad
     // router.push({ name: 'NewExam', query: { patientId: patient.id } })
     console.log('Add Exam for patient:', patient);
   }
 </script>
 
 <template>
+  <!-- Tabla de pacientes con slots personalizados para cada columna -->
   <VaDataTable
     v-model:sort-by="sortByVModel"
     v-model:sorting-order="sortingOrderVModel"
@@ -162,6 +184,7 @@
     @row:click="handleRowClick"
     class="va-table--hoverable"
   >
+    <!-- Slots para personalizar la visualización de cada columna -->
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis capitalize">
         <!-- <UserAvatar :user="rowData as Patient" size="small" /> -->
@@ -232,12 +255,12 @@
     </template>
   </VaDataTable>
 
-  <!-- Patient Details Modal -->
-  <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large">
+  <!-- Modal de detalles del paciente -->
+  <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large" blur>
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>
 
     <div class="p-4 space-y-4">
-      <div class="grid grid-cols-2 gap-4 capitalize">
+      <div class="grid grid-cols-2 gap-4">
         <div>
           <strong>Nombre:</strong>
           <p>{{ selectedPatient?.name || '-' }}</p>
@@ -312,6 +335,7 @@
     </template>
   </VaModal>
 
+  <!-- Paginación y selección de resultados por página -->
   <div
     class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
   >
@@ -321,7 +345,7 @@
       <VaSelect
         v-model="$props.pagination.perPage"
         class="!w-20"
-        :options="[10, 50, 100]"
+        :options="[10, 20, 50, 100]"
       />
     </div>
 
@@ -356,5 +380,10 @@
 <style scoped>
   .va-data-table .va-data-table__table-tr {
     border-bottom: 1px solid var(--va-background-border);
+  }
+.ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>

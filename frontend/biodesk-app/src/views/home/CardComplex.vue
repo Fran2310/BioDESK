@@ -6,9 +6,8 @@
         <!-- Título y subtítulo con animación de slide-out -->
         <transition name="fade" mode="out-in">
             <div v-if="!showOptions" key="main-content" class="main-content">
-            <p class="font-semibold text-3xl">{{ props.title }}</p>
-            <p class="text-card"> {{ props.subtitle }} </p>
-
+                <p class="font-semibold text-3xl">{{ props.title }}</p>
+                <p class="text-card"> {{ props.subtitle }} </p>
             </div>
         </transition>
 
@@ -16,16 +15,17 @@
         <transition name="slide-fade-right" mode="out-in">
             <div v-if="showOptions" key="options-content" class="options-content">
                 <p class="text-card italic back-title"> Regresar al título... </p>
-                <p v-if="props.option1" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToX()"> {{ props.option1 }} </p>
+                <p v-if="props.option1" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToZ()"> {{ props.option1 }} </p>
                 <p v-if="props.option2" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToY()"> {{ props.option2 }} </p>
-                <p v-if="props.option3" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToZ()"> {{ props.option3 }} </p>
+                <p v-if="props.option3" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToX()"> {{ props.option3 }} </p>
+                <p v-if="props.option4" class="text-card font-semibold italic option" style="cursor: pointer" @click="goToW()"> {{ props.option4 }} </p>
             </div>
         </transition>
 
         <!-- Triángulo de la esquina -->
         <div class="triangle"></div>
 
-        <!-- Flecha -->
+        <!-- Flecha sobre el triángulo-->
         <transition name="fade" mode="out-in">
             <VaIcon v-if="showOptions" name="arrow_back" color="base" size="32px" class="material-symbols-outlined arrow"/>
         </transition>
@@ -34,9 +34,10 @@
 
 
 <script setup lang="ts">
-    import { useRouter } from 'vue-router'
+    import { useRouter } from 'vue-router';
     import { ref, defineProps } from 'vue'
 
+    //      Contenido de la tarjeta
     const props = defineProps<{
         title?: string
         icon?: string
@@ -47,31 +48,37 @@
         routeName2?: string
         option3?: string
         routeName3?: string
+        option4?: string
+        routeName4?: string
     }>()
 
-    //      Desplegar el menú
+    // Desplegar el menú
     const showOptions = ref(false)
 
     function toggleOptions() {
     showOptions.value = !showOptions.value
     }
     
-    //      Atajos de navegación
-    const router = useRouter()
-
-    function goToX() {
-    router.push({ name: props.routeName1 })
-    }
-    function goToY() {
-        router.push({ name: props.routeName2 })
-    }
-    function goToZ() {
-    router.push({ name: props.routeName3 })
-    }
-
+    // Flecha de la esquina
     const arrow = ref(true)
     function changeArrow() {
         arrow.value = !arrow.value
+    }
+
+    // Atajos de navegación
+    const router = useRouter()
+
+    function goToZ() {
+    router.push({ name: props.routeName1 })
+    }
+    function goToY() {
+    router.push({ name: props.routeName2 })
+    }
+    function goToX() {
+        router.push({ name: props.routeName3 })
+    }
+    function goToW() {
+    router.push({ name: props.routeName4 })
     }
 </script>
 
@@ -97,7 +104,7 @@
         background-color: var(--va-background-light-secondary);
         border: 3px solid var(--va-primary);
         border-radius: 8px;
-        transition: transform 0.2s;
+        transition: transform 0.2s;     /* duración de la transformación del tamaño */
     }
 
     @media (min-width: 1420px) {    /* límite de tamaño de la tarjeta */
@@ -112,12 +119,12 @@
         }
     }
 
-    .card:hover {
+    .card:hover {       /* al pasar el cursor por encima */
         background-color: var(--va-base);
         transform: scale(1.05);
     }
 
-    .card:active {
+    .card:active {      /* al hacer click */
         filter: brightness(0.92);
         background-color: var(--va-background-border);
         transition: filter 0.1s, background-color 0.1s;
@@ -154,6 +161,7 @@
         right: 0;
     }
 
+
     /*      Contenido de la tarjeta      */
 
     .main-content, .options-content {
@@ -188,13 +196,14 @@
     }
 
 
-    /*      Flecha      */
+    /*      Flecha sobre el triángulo      */
 
     .arrow {        /* posición */
         position: absolute;
         bottom: -2px;
         right: -2px;
     }
+
 
     /*    Animaciones para el contenido de las tarjetas   */
 
@@ -206,7 +215,7 @@
         opacity: 0;
     }
 
-    /* Deslizar hacia la izquierda */
+    /* Deslizar hacia la izquierda + Aparecer/Desvanecer */
     .slide-fade-left-enter-active,
     .slide-fade-left-leave-active {
     transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
@@ -225,7 +234,7 @@
     opacity: 0;
     }
 
-    /* Deslizar hacia la derecha */
+    /* Deslizar hacia la derecha + Aparecer/Desvanecer */
     .slide-fade-right-enter-active,
     .slide-fade-right-leave-active {
     transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
