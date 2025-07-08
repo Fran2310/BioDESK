@@ -11,9 +11,11 @@
 
   import { formatCi, formatDate } from '@/services/utils';
 
-  import DeleteExam from '@/views/exams/modals/DeleteExam.vue'
+  import DeleteExam from './modals/DeleteExam.vue'
   import CompleteExam from './modals/CompleteExam.vue';
+  import CancelExam from './modals/CancelExam.vue';
   import DetailsExam from './modals/DetailsExam.vue';
+
   import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
 
   const { init: notify } = useToast();
@@ -35,6 +37,9 @@
 
   const showStateModal = ref(false);
   const changePriorityRequestId = ref<number | null>(null);
+
+  const showCancelModal = ref(false);
+  const examToCancel = ref<ExamRow | null>(null);
 
   const showCompleteModal = ref(false);
   const examToComplete = ref<ExamRow | null>(null);
@@ -200,20 +205,6 @@
     }
   }
 
-  async function onCancelExam(id: number) {
-    try {
-      await medicTestRequestApi.updateMedicTestRequestState(
-        String(id),
-        'CANCELED'
-      );
-      notify({ message: 'Examen cancelado correctamente', color: 'success' });
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      refreshExams()
-    }
-  }
-
   function openChangePriorityModal(examId: number) {
     changePriorityRequestId.value = examId;
     showStateModal.value = true;
@@ -232,6 +223,15 @@
 
   function handleStateUpdated() {
     showStateModal.value = false;
+    refreshExams();
+  }
+
+  function onCancelExam(exam: ExamRow) {
+    examToCancel.value = exam
+    showCancelModal.value = true;
+  }
+  function CanceledExam() {
+    showCancelModal.value = false;
     refreshExams();
   }
 
@@ -405,7 +405,7 @@
                   icon="cancel"
                   color="danger"
                   aria-label="Cancelar examen"
-                  @click.stop="onCancelExam(rowData.id)"
+                  @click.stop="onCancelExam(rowData)"
                 />
                 <VaButton
                   v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
@@ -443,6 +443,16 @@
             @close="showStateModal = false"
             @updated="handleStateUpdated"
           />
+        </VaModal>
+
+        <!-- Cancelar examen Modal -->
+        <VaModal v-model="showCancelModal" hide-default-actions>
+          <CancelExam
+          :examToCancel="examToCancel"
+          @close="showCancelModal = false"
+          @canceled="CanceledExam()"
+          >
+          </CancelExam>
         </VaModal>
 
         <!-- Completar examen Modal -->
