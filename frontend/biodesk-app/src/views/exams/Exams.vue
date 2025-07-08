@@ -75,7 +75,7 @@
                   v-if="rowData.state === 'COMPLETED'"
                   message="Descargar Resultados"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -91,7 +91,7 @@
                   v-if="rowData.state === 'TO_VERIFY'"
                   message="Completar Examen"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -107,7 +107,7 @@
                   v-if="rowData.state === 'IN_PROCESS'"
                   message="Subir Resultados"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -123,7 +123,7 @@
                   v-if="rowData.state === 'PENDING'"
                   message="Empezar Examen"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -139,7 +139,7 @@
                   v-if="rowData.state === 'CANCELED'"
                   message="Colocar Examen en Pendiente"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -154,7 +154,7 @@
                 <VaPopover
                   message="Modificar Prioridad"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -169,7 +169,7 @@
                   v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
                   message="Cancelar Examen"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -185,7 +185,7 @@
                   v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
                   message="Eliminar Examen"
                   class="flex items-center justify-center"
-                  hoverOutTimeout=0
+                  hover-out-timeout=0
                 >
                   <VaButton
                     preset="primary"
@@ -580,3 +580,13 @@ import ToPendExam from './modals/ToPendExam.vue';
     { label: 'Baja', value: 'LOW' },
   ];
 </script>
+
+<style scoped>
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
+</style>
