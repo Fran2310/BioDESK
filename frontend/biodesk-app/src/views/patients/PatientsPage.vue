@@ -125,9 +125,6 @@
       console.log('Patients API response:', responseData);
       patients.value = responseData.data;
       pagination.value.total = responseData.total;
-      pagination.value.page =
-        Math.floor(responseData.offset / responseData.limit) + 1;
-      pagination.value.perPage = responseData.limit;
     } catch (e: any) {
       error.value = e;
       console.error('fetchPatients error', e);
@@ -160,6 +157,15 @@
   watch(
     () => pagination.value.page,
     () => {
+      fetchPatients();
+    }
+  );
+
+  // Observa cambios en la cantidad de resultados por página para recargar la lista
+  watch(
+    () => pagination.value.perPage,
+    () => {
+      pagination.value.page = 1;
       fetchPatients();
     }
   );

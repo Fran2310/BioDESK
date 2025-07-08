@@ -345,7 +345,7 @@
       <VaSelect
         v-model="$props.pagination.perPage"
         class="!w-20"
-        :options="[10, 50, 100]"
+        :options="[10, 20, 50, 100]"
       />
     </div>
 
