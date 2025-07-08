@@ -57,25 +57,21 @@
   const waitMinTime = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
+  //    Cargar la info para el banner
+  const { loadUserRole } = useUserRole();
+
   // 🧠 Cuando el componente se monta, inicia precarga + espera
   onMounted(async () => {
-    await Promise.all([preloadAppChunks(), waitMinTime(6000)]);
+    await Promise.all([preloadAppChunks(), loadUserRole(), waitMinTime(6000)]);
     isLeaving.value = true; // 🔁 Inicia transición de salida
     setTimeout(() => {
       router.push({ name: 'HomeView' }); // ✅ Redirige cuando termina la animación
     }, 1300);
   });
-
-  //    Cargar la info para el banner
-  const { loadUserRole } = useUserRole()
-
-  onMounted(() => {
-    loadUserRole()
-  })
 </script>
 
 <style scoped>
-  /* 🌈 Animación de gradiente de fondo */
+  /*  Animación de gradiente de fondo */
   @keyframes gradient-move {
     0% {
       background-position: 0% 50%;
