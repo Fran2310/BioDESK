@@ -134,8 +134,16 @@
                       {{ action }}
                     </VaChip>
                   </div>
-                  <div class="col-span-1 permission-fields">
-                    {{ Array.isArray(permission.fields) ? permission.fields.join(', ') : permission.fields }}
+                  <div class="col-span-1 permission-fields flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(field, fIdx) in (Array.isArray(permission.fields) ? permission.fields : String(permission.fields || '').split(',').filter(f => f.trim() !== ''))"
+                      :key="fIdx"
+                      size="small"
+                      color="info"
+                      class="mr-1 mb-1"
+                    >
+                      {{ field }}
+                    </VaChip>
                   </div>
                   <div class="flex justify-end">
                     <VaButton
@@ -279,18 +287,31 @@
                 <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
                   <td class="border px-2 py-1 mr-1">{{ perm.subject }}</td>
                   <td class="border px-2 py-1 mr-1">
-                    <span v-if="Array.isArray(perm.actions)">
-                      {{ perm.actions.join(', ') }}
-                    </span>
-                    <span v-else>
-                      {{ perm.actions }}
-                    </span>
+                    <div class="flex flex-wrap gap-1">
+                      <VaChip
+                        v-for="(action, aIdx) in (Array.isArray(perm.actions) ? perm.actions : String(perm.actions).split(',').filter(a => a.trim() !== ''))"
+                        :key="aIdx"
+                        size="small"
+                        color="primary"
+                        class="mr-1 mb-1"
+                      >
+                        {{ action }}
+                      </VaChip>
+                    </div>
                   </td>
                   <td class="border px-2 py-1 mr-1">
-                    <span v-if="'fields' in perm && perm.fields">
-                      {{ perm.fields }}
-                    </span>
-                    <span v-else>-</span>
+                    <div class="flex flex-wrap gap-1">
+                      <VaChip
+                        v-for="(field, fIdx) in (('fields' in perm && perm.fields) ? (Array.isArray(perm.fields) ? perm.fields : String(perm.fields).split(',').filter(f => f.trim() !== '')) : [])"
+                        :key="fIdx"
+                        size="small"
+                        color="info"
+                        class="mr-1 mb-1"
+                      >
+                        {{ field }}
+                      </VaChip>
+                      <span v-if="!('fields' in perm) || !perm.fields || (Array.isArray(perm.fields) && perm.fields.length === 0)">-</span>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -469,11 +490,8 @@ function removePermission(index) {
 }
 
 const createRole = async () => {
-  if (!newRoleName.value || !newRoleDescription.value) {
-    alert('El nombre y la descripción del rol son obligatorios.')
-    return
-  }
-  // Usar el array de permisos que realmente se muestra/agrega en el modal
+  if (!newRoleName.value || !newRoleDescription.value) return;
+
   const perms = permissions.value
     .filter(p => p.subject && p.actions && p.actions.length > 0)
     .map(p => ({
@@ -483,27 +501,22 @@ const createRole = async () => {
         ? { fields: p.fields.join(',') }
         : {})
     }));
-  if (perms.length === 0) {
-    alert('Debes agregar al menos un permiso válido.')
-    return
-  }
-  try {
-    const payload = {
-      name: newRoleName.value,
-      description: newRoleDescription.value,
-      permissions: perms,
-    };
-    await createRoleApi(payload)
-    newRoleName.value = ''
-    newRoleDescription.value = ''
-    permissions.value = []
-    // dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }] // ya no es necesario
-    await fetchAllRoles() // Recargar roles
-    alert('Rol creado con éxito.')
-  } catch (error) {
-    console.error('Error creating role:', error)
-    alert('Error al crear el rol.')
-  }
+
+  if (perms.length === 0) return;
+
+  const payload = {
+    name: newRoleName.value,
+    description: newRoleDescription.value,
+    permissions: perms,
+  };
+
+  await createRoleApi(payload);
+  newRoleName.value = '';
+  newRoleDescription.value = '';
+  permissions.value = [];
+  showNewRoleModal.value = false; // <-- Cierra el modal al guardar
+
+  await fetchAllRoles();
 }
 
 const assignPermissions = async () => {
@@ -532,30 +545,23 @@ function startEditRole(role: RoleFromApi) {
     };
 }
 
-
 const saveEditRole = async (role: RoleFromApi) => {
-  const fields = editRoleFields.value[role.id]
+  const fields = editRoleFields.value[role.id];
   if (!fields.name || !fields.description) {
-    alert('El nombre y la descripción no pueden estar vacíos.')
-    return
+    return;
   }
-  try {
-    // Si quieres permitir editar permisos junto con nombre/desc, usa selectedPermissions
-    const permissions = groupPermissions(selectedPermissions.value)
-    const payload = {
-      name: fields.name,
-      description: fields.description,
-      permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
-    }
-    await updateRoleApi(role.id, payload)
-    editingRoleId.value = null
-    delete editRoleFields.value[role.id]
-    await fetchAllRoles()
-    alert('Rol actualizado con éxito.')
-  } catch (error) {
-    console.error('Error saving role:', error)
-    alert('Error al actualizar rol.')
-  }
+
+  const permissions = groupPermissions(selectedPermissions.value);
+  const payload = {
+    name: fields.name,
+    description: fields.description,
+    permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
+  };
+
+  await updateRoleApi(role.id, payload);
+  editingRoleId.value = null;
+  delete editRoleFields.value[role.id];
+  await fetchAllRoles();
 }
 
 const cancelEditRole = () => {
@@ -565,16 +571,10 @@ const cancelEditRole = () => {
 
 const deleteRole = async (roleId: string) => {
   if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
-    try {
-      await deleteRoleApi(roleId)
-      await fetchAllRoles()
-      if (selectedRoleId.value === roleId) {
-        selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
-      }
-      alert('Rol eliminado con éxito.')
-    } catch (error) {
-      console.error('Error deleting role:', error)
-      alert('Error al eliminar rol.')
+    await deleteRoleApi(roleId);
+    await fetchAllRoles();
+    if (selectedRoleId.value === roleId) {
+      selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
     }
   }
 }
@@ -636,12 +636,11 @@ function removeEditRoleModalPermission(idx: number) {
 }
 
 const saveEditRoleModal = async () => {
-  if (!editRoleIdForModal.value) return
-  const { name, description, permissions } = editRoleModalData.value
-  if (!name || !description) {
-    alert('El nombre y la descripción no pueden estar vacíos.')
-    return
-  }
+  if (!editRoleIdForModal.value) return;
+
+  const { name, description, permissions } = editRoleModalData.value;
+  if (!name || !description) return;
+
   const cleanPermissions = permissions
     .filter(p => p.subject && p.actions)
     .map(p => ({
@@ -650,19 +649,16 @@ const saveEditRoleModal = async () => {
       ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
         ? { fields: p.fields.join(',') }
         : {})
-    }))
-  try {
-    await updateRoleApi(editRoleIdForModal.value, {
-      name,
-      description,
-      permissions: cleanPermissions
-    })
-    closeEditRoleModal()
-    await fetchAllRoles()
-    alert('Rol actualizado con éxito.')
-  } catch (error) {
-    alert('Error al actualizar rol.')
-  }
+    }));
+
+  await updateRoleApi(editRoleIdForModal.value, {
+    name,
+    description,
+    permissions: cleanPermissions
+  });
+
+  closeEditRoleModal();
+  await fetchAllRoles();
 }
 
 const roleColumns = [
