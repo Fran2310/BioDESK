@@ -1,3 +1,268 @@
+<template>
+  <div>
+    <VaCard>
+      <VaCardContent>
+        <!-- Search -->
+        <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
+          <div
+            class="flex flex-col md:flex-row gap-2 justify-start items-center"
+          >
+            <VaSelect
+              v-model="filters.state"
+              placeholder="Filtrar por estado"
+              :options="states"
+              text-by="label"
+              value-by="value"
+              clearable
+              class="w-[200px]"
+            />
+
+            <VaSelect
+              v-model="filters.priority"
+              placeholder="Filtrar por prioridad"
+              :options="priorities"
+              text-by="label"
+              value-by="value"
+              clearable
+              class="w-[200px]"
+            />
+
+            <VaButton
+              color="primary"
+              icon="search"
+              class="ml-2"
+              @click="searchExams"
+            >
+              Buscar
+            </VaButton>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="relative">
+          <VaDataTable
+            :columns="[
+              { label: 'CI', key: 'ci' },
+              { label: 'Nombre', key: 'name' },
+              { label: 'Apellido', key: 'lastName' },
+              { label: 'Examen', key: 'examName' },
+              { label: 'Solicitado', key: 'requestedAt' },
+              { label: 'Estado', key: 'state' },
+              { label: 'Prioridad', key: 'priority' },
+              { label: 'Acciones', key: 'actions', align: 'right' },
+            ]"
+            :items="
+              exams.map((e) => ({ ...e, examName: e.medicTestCatalog.name }))
+            "
+            :loading="isLoading"
+            @row:click="handleRowClick"
+          >
+            <template #cell(requestedAt)="{ rowData }">
+              {{ formatDate(rowData.requestedAt) }}
+            </template>
+            <template #cell(state)="{ rowData }">
+              <va-chip size="small" :color="stateColor(rowData.state)">
+                {{ stateLabels[rowData.state] ?? rowData.state }}
+              </va-chip>
+            </template>
+            <template #cell(priority)="{ rowData }">
+              <va-chip size="small" :color="priorityColor(rowData.priority)">
+                {{ priorityLabels[rowData.priority] ?? rowData.priority }}
+              </va-chip>
+            </template>
+            <template #cell(actions)="{ rowData }">
+              <div class="flex gap-2 justify-start">
+                <VaButton
+                  v-if="rowData.state === 'COMPLETED'"
+                  preset="primary"
+                  size="medium"
+                  icon="download"
+                  color="info"
+                  aria-label="Acceder a examen"
+                  @click.stop="downloadResults(rowData.id)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'TO_VERIFY'"
+                  preset="primary"
+                  size="medium"
+                  icon="check"
+                  color="success"
+                  aria-label="Completar examen"
+                  @click.stop="onCompleteExam(rowData)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'IN_PROCESS'"
+                  preset="primary"
+                  size="medium"
+                  icon="cloud_upload"
+                  color="success"
+                  aria-label="Subir resultados"
+                  @click.stop="goToUploadResults(rowData.id)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'PENDING'"
+                  preset="primary"
+                  size="medium"
+                  icon="arrow_forward"
+                  color="info"
+                  aria-label="Empezar examen"
+                  @click.stop="onProcessExam(rowData)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'CANCELED'"
+                  preset="primary"
+                  size="medium"
+                  icon="arrow_forward"
+                  color="info"
+                  aria-label="Colocar examen en pendiente"
+                  @click.stop="onPendExam(rowData)"
+                />
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="priority_high"
+                  aria-label="Modificar examen"
+                  @click.stop="openChangePriorityModal(rowData.id)"
+                />
+                <VaButton
+                  v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
+                  preset="primary"
+                  size="medium"
+                  icon="cancel"
+                  color="danger"
+                  aria-label="Cancelar examen"
+                  @click.stop="onCancelExam(rowData)"
+                />
+                <VaButton
+                  v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
+                  preset="primary"
+                  size="medium"
+                  icon="delete"
+                  color="danger"
+                  aria-label="Eliminar examen"
+                  @click.stop="onDeleteExam(rowData)"
+                />
+              </div>
+            </template>
+          </VaDataTable>
+
+          <!-- Loading overlay -->
+          <div
+            v-if="isLoading"
+            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10"
+          >
+            <VaProgressCircle indeterminate size="large" color="primary" />
+          </div>
+        </div>
+
+        <!-- Exam Details Modal -->
+        <VaModal v-model="showModal" hide-default-actions>
+          <DetailsExam
+          :selectedExam="selectedExam">
+          </DetailsExam>
+        </VaModal>
+
+        <!-- Change Priority Modal -->
+        <VaModal v-model="showStateModal" hide-default-actions>
+          <ChangePriorityModal
+            :changePriorityRequestId="changePriorityRequestId"
+            @close="showStateModal = false"
+            @updated="handleStateUpdated"
+          />
+        </VaModal>
+
+        <!-- Poner en pendiente examen Modal -->
+        <VaModal v-model="showToPendModal" hide-default-actions>
+          <ToPendExam
+          :examToPend="examToPend"
+          @close="showToPendModal = false"
+          @processed="PendedExam()"
+          >
+          </ToPendExam>
+        </VaModal>
+
+        <!-- Empezar examen Modal -->
+        <VaModal v-model="showToProcessModal" hide-default-actions>
+          <ToProcessExam
+          :examToProcess="examToProcess"
+          @close="showToProcessModal = false"
+          @processed="ProcessedExam()"
+          >
+          </ToProcessExam>
+        </VaModal>
+
+        <!-- Cancelar examen Modal -->
+        <VaModal v-model="showCancelModal" hide-default-actions>
+          <CancelExam
+          :examToCancel="examToCancel"
+          @close="showCancelModal = false"
+          @canceled="CanceledExam()"
+          >
+          </CancelExam>
+        </VaModal>
+
+        <!-- Completar examen Modal -->
+        <VaModal v-model="showCompleteModal" hide-default-actions>
+          <CompleteExam 
+          :examToComplete="examToComplete"
+          @close="showCompleteModal = false"
+          @completed="CompletedExam()"
+          >
+          </CompleteExam>
+        </VaModal>
+
+        <!-- Delete Confirmation Modal -->
+        <VaModal v-model="showDeleteModal" hide-default-actions>
+          <DeleteExam 
+          :examToDelete="examToDelete"
+          @close="showDeleteModal = false"
+          @deleted="DeletedExam()"
+          >
+          </DeleteExam>
+        </VaModal>
+        <!-- Pagination -->
+        <div
+          class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
+        >
+          <div>
+            <b>{{ pagination.total }} resultados.</b>
+            Resultados por página
+            <VaSelect
+              v-model="pagination.perPage"
+              class="!w-20"
+              :options="[5, 10, 20, 50]"
+            />
+          </div>
+          <div v-if="totalPages > 1" class="flex items-center gap-2">
+            <VaButton
+              preset="secondary"
+              icon="va-arrow-left"
+              aria-label="Anterior"
+              :disabled="pagination.page === 1"
+              @click="pagination.page--"
+            />
+            <VaButton
+              preset="secondary"
+              icon="va-arrow-right"
+              aria-label="Siguiente"
+              :disabled="pagination.page === totalPages"
+              @click="pagination.page++"
+            />
+            <VaPagination
+              v-model="pagination.page"
+              buttons-preset="secondary"
+              :pages="totalPages"
+              :visible-pages="5"
+              :boundary-links="false"
+              :direction-links="false"
+            />
+          </div>
+        </div>
+      </VaCardContent>
+    </VaCard>
+  </div>
+</template>
+
 <script setup lang="ts">
   import { ref, computed, watch, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
@@ -269,268 +534,3 @@ import ToPendExam from './modals/ToPendExam.vue';
     { label: 'Baja', value: 'LOW' },
   ];
 </script>
-
-<template>
-  <div>
-    <VaCard>
-      <VaCardContent>
-        <!-- Search -->
-        <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-          <div
-            class="flex flex-col md:flex-row gap-2 justify-start items-center"
-          >
-            <VaSelect
-              v-model="filters.state"
-              placeholder="Filtrar por estado"
-              :options="states"
-              text-by="label"
-              value-by="value"
-              clearable
-              class="w-[200px]"
-            />
-
-            <VaSelect
-              v-model="filters.priority"
-              placeholder="Filtrar por prioridad"
-              :options="priorities"
-              text-by="label"
-              value-by="value"
-              clearable
-              class="w-[200px]"
-            />
-
-            <VaButton
-              color="primary"
-              icon="search"
-              class="ml-2"
-              @click="searchExams"
-            >
-              Buscar
-            </VaButton>
-          </div>
-        </div>
-
-        <!-- Table -->
-        <div class="relative">
-          <VaDataTable
-            :columns="[
-              { label: 'CI', key: 'ci' },
-              { label: 'Nombre', key: 'name' },
-              { label: 'Apellido', key: 'lastName' },
-              { label: 'Examen', key: 'examName' },
-              { label: 'Solicitado', key: 'requestedAt' },
-              { label: 'Estado', key: 'state' },
-              { label: 'Prioridad', key: 'priority' },
-              { label: 'Acciones', key: 'actions', align: 'right' },
-            ]"
-            :items="
-              exams.map((e) => ({ ...e, examName: e.medicTestCatalog.name }))
-            "
-            :loading="isLoading"
-            @row:click="handleRowClick"
-          >
-            <template #cell(requestedAt)="{ rowData }">
-              {{ formatDate(rowData.requestedAt) }}
-            </template>
-            <template #cell(state)="{ rowData }">
-              <va-chip size="small" :color="stateColor(rowData.state)">
-                {{ stateLabels[rowData.state] ?? rowData.state }}
-              </va-chip>
-            </template>
-            <template #cell(priority)="{ rowData }">
-              <va-chip size="small" :color="priorityColor(rowData.priority)">
-                {{ priorityLabels[rowData.priority] ?? rowData.priority }}
-              </va-chip>
-            </template>
-            <template #cell(actions)="{ rowData }">
-              <div class="flex gap-2 justify-start">
-                <VaButton
-                  v-if="rowData.state === 'COMPLETED'"
-                  preset="primary"
-                  size="medium"
-                  icon="download"
-                  color="info"
-                  aria-label="Acceder a examen"
-                  @click.stop="downloadResults(rowData.id)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'TO_VERIFY'"
-                  preset="primary"
-                  size="medium"
-                  icon="check"
-                  color="success"
-                  aria-label="Completar examen"
-                  @click.stop="onCompleteExam(rowData)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'IN_PROCESS'"
-                  preset="primary"
-                  size="medium"
-                  icon="cloud_upload"
-                  color="success"
-                  aria-label="Subir resultados"
-                  @click.stop="goToUploadResults(rowData.id)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'PENDING'"
-                  preset="primary"
-                  size="medium"
-                  icon="arrow_forward"
-                  color="info"
-                  aria-label="Empezar examen"
-                  @click.stop="onProcessExam(rowData)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'CANCELED'"
-                  preset="primary"
-                  size="medium"
-                  icon="arrow_forward"
-                  color="info"
-                  aria-label="Colocar examen en pendiente"
-                  @click.stop="onPendExam(rowData)"
-                />
-                <VaButton
-                  preset="primary"
-                  size="medium"
-                  icon="priority_high"
-                  aria-label="Modificar examen"
-                  @click.stop="openChangePriorityModal(rowData.id)"
-                />
-                <VaButton
-                  v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
-                  preset="primary"
-                  size="medium"
-                  icon="cancel"
-                  color="danger"
-                  aria-label="Cancelar examen"
-                  @click.stop="onCancelExam(rowData)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
-                  preset="primary"
-                  size="medium"
-                  icon="delete"
-                  color="danger"
-                  aria-label="Eliminar examen"
-                  @click.stop="onDeleteExam(rowData)"
-                />
-              </div>
-            </template>
-          </VaDataTable>
-
-          <!-- Loading overlay -->
-          <div
-            v-if="isLoading"
-            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10"
-          >
-            <VaProgressCircle indeterminate size="large" color="primary" />
-          </div>
-        </div>
-
-        <!-- Exam Details Modal -->
-        <VaModal v-model="showModal" hide-default-actions>
-          <DetailsExam
-          :selectedExam="selectedExam">
-          </DetailsExam>
-        </VaModal>
-
-        <!-- Change Priority Modal -->
-        <VaModal v-model="showStateModal" hide-default-actions>
-          <ChangePriorityModal
-            :changePriorityRequestId="changePriorityRequestId"
-            @close="showStateModal = false"
-            @updated="handleStateUpdated"
-          />
-        </VaModal>
-
-        <!-- Poner en pendiente examen Modal -->
-        <VaModal v-model="showToPendModal" hide-default-actions>
-          <ToPendExam
-          :examToPend="examToPend"
-          @close="showToPendModal = false"
-          @pended="PendedExam()"
-          >
-          </ToPendExam>
-        </VaModal>
-
-        <!-- Empezar examen Modal -->
-        <VaModal v-model="showToProcessModal" hide-default-actions>
-          <ToProcessExam
-          :examToProcess="examToProcess"
-          @close="showToProcessModal = false"
-          @processed="ProcessedExam()"
-          >
-          </ToProcessExam>
-        </VaModal>
-
-        <!-- Cancelar examen Modal -->
-        <VaModal v-model="showCancelModal" hide-default-actions>
-          <CancelExam
-          :examToCancel="examToCancel"
-          @close="showCancelModal = false"
-          @canceled="CanceledExam()"
-          >
-          </CancelExam>
-        </VaModal>
-
-        <!-- Completar examen Modal -->
-        <VaModal v-model="showCompleteModal" hide-default-actions>
-          <CompleteExam 
-          :examToComplete="examToComplete"
-          @close="showCompleteModal = false"
-          @completed="CompletedExam()"
-          >
-          </CompleteExam>
-        </VaModal>
-
-        <!-- Delete Confirmation Modal -->
-        <VaModal v-model="showDeleteModal" hide-default-actions>
-          <DeleteExam 
-          :examToDelete="examToDelete"
-          @close="showDeleteModal = false"
-          @deleted="DeletedExam()"
-          >
-          </DeleteExam>
-        </VaModal>
-        <!-- Pagination -->
-        <div
-          class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
-        >
-          <div>
-            <b>{{ pagination.total }} resultados.</b>
-            Resultados por página
-            <VaSelect
-              v-model="pagination.perPage"
-              class="!w-20"
-              :options="[5, 10, 20, 50]"
-            />
-          </div>
-          <div v-if="totalPages > 1" class="flex items-center gap-2">
-            <VaButton
-              preset="secondary"
-              icon="va-arrow-left"
-              aria-label="Anterior"
-              :disabled="pagination.page === 1"
-              @click="pagination.page--"
-            />
-            <VaButton
-              preset="secondary"
-              icon="va-arrow-right"
-              aria-label="Siguiente"
-              :disabled="pagination.page === totalPages"
-              @click="pagination.page++"
-            />
-            <VaPagination
-              v-model="pagination.page"
-              buttons-preset="secondary"
-              :pages="totalPages"
-              :visible-pages="5"
-              :boundary-links="false"
-              :direction-links="false"
-            />
-          </div>
-        </div>
-      </VaCardContent>
-    </VaCard>
-  </div>
-</template>
