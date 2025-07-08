@@ -18,6 +18,7 @@
 
   import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
 import ToProcessExam from './modals/ToProcessExam.vue';
+import ToPendExam from './modals/ToPendExam.vue';
 
   const { init: notify } = useToast();
   const router = useRouter();
@@ -38,6 +39,9 @@ import ToProcessExam from './modals/ToProcessExam.vue';
 
   const showStateModal = ref(false);
   const changePriorityRequestId = ref<number | null>(null);
+
+  const showToPendModal = ref(false);
+  const examToPend = ref<ExamRow | null>(null);
 
   const showToProcessModal = ref(false);
   const examToProcess = ref<ExamRow | null>(null);
@@ -181,20 +185,6 @@ import ToProcessExam from './modals/ToProcessExam.vue';
     }
   }
 
-  async function toPendingExam(id: number) {
-    try {
-      await medicTestRequestApi.updateMedicTestRequestState(
-        String(id),
-        'PENDING'
-      );
-      notify({ message: 'Examen puesto en pendiente correctamente', color: 'success' });
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      refreshExams()
-    }
-  }
-
   function openChangePriorityModal(examId: number) {
     changePriorityRequestId.value = examId;
     showStateModal.value = true;
@@ -213,6 +203,15 @@ import ToProcessExam from './modals/ToProcessExam.vue';
 
   function handleStateUpdated() {
     showStateModal.value = false;
+    refreshExams();
+  }
+
+  function onPendExam(exam: ExamRow) {
+    examToPend.value = exam
+    showToPendModal.value = true;
+  }
+  function PendedExam() {
+    showToPendModal.value = false;
     refreshExams();
   }
 
@@ -387,8 +386,8 @@ import ToProcessExam from './modals/ToProcessExam.vue';
                   size="medium"
                   icon="arrow_forward"
                   color="info"
-                  aria-label="Empezar examen"
-                  @click.stop="toPendingExam(rowData.id)"
+                  aria-label="Colocar examen en pendiente"
+                  @click.stop="onPendExam(rowData)"
                 />
                 <VaButton
                   preset="primary"
@@ -442,6 +441,16 @@ import ToProcessExam from './modals/ToProcessExam.vue';
             @close="showStateModal = false"
             @updated="handleStateUpdated"
           />
+        </VaModal>
+
+        <!-- Poner en pendiente examen Modal -->
+        <VaModal v-model="showToPendModal" hide-default-actions>
+          <ToPendExam
+          :examToPend="examToPend"
+          @close="showToPendModal = false"
+          @pended="PendedExam()"
+          >
+          </ToPendExam>
         </VaModal>
 
         <!-- Empezar examen Modal -->
