@@ -25,7 +25,7 @@
     lastName: '',
     secondName: '',
     secondLastName: '',
-    gender: 'ANY',
+    gender: 'MALE',
     email: '',
     phoneNums: [''],
     dir: '',
@@ -33,6 +33,10 @@
   };
 
   const newUser = ref<Patient>({ ...defaultNewPatient } as Patient);
+
+  // CI letter select (V or E)
+  const ciLetter = ref('V');
+  const ciNumber = ref('');
 
   const isFormHasUnsavedChanges = computed(() => {
     return (
@@ -56,6 +60,8 @@
       console.log('Watcher fired! props.patient:', props.patient);
       if (!props.patient) {
         newUser.value = { ...defaultNewPatient } as Patient;
+        ciLetter.value = 'V';
+        ciNumber.value = '';
         console.log('newUser reset to default:', newUser.value);
         return;
       }
@@ -67,6 +73,20 @@
         ...rest,
         phoneNums: rest?.phoneNums?.length ? [...rest.phoneNums] : [''],
       } as Patient;
+      // Parse CI into letter and number if possible
+      if (rest.ci && typeof rest.ci === 'string') {
+        const match = rest.ci.match(/^([VEve])[- ]?(\d+)$/);
+        if (match) {
+          ciLetter.value = match[1].toUpperCase();
+          ciNumber.value = match[2];
+        } else {
+          ciLetter.value = 'V';
+          ciNumber.value = rest.ci.replace(/[^0-9]/g, '');
+        }
+      } else {
+        ciLetter.value = 'V';
+        ciNumber.value = '';
+      }
       console.log('newUser set to patient:', newUser.value);
     },
     { immediate: true }
@@ -79,6 +99,8 @@
   const onSave = () => {
     console.log('onSave called, newUser.value:', newUser.value);
     if (form.validate()) {
+      // Concatenate CI letter and number before saving
+      newUser.value.ci = ciLetter.value + ciNumber.value;
       // Ensure birthDate is in ISO 8601 UTC format
       if (newUser.value.birthDate) {
         let iso = '';
@@ -137,57 +159,80 @@
       </VaFileUpload>
  -->
       <div class="self-stretch flex-col justify-start items-start gap-4 flex">
-        <div class="flex gap-4 flex-col sm:flex-row w-full">
-          <VaInput
-            v-model="newUser.name"
-            label="Nombre"
-            class="w-full sm:w-1/2"
-            :rules="[validator.required]"
-            name="name"
-          />
-          <VaInput
-            v-model="newUser.lastName"
-            label="Apellido"
-            class="w-full sm:w-1/2"
-            :rules="[validator.required]"
-            name="lastName"
-          />
+        <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
+          <div class="flex flex-col w-full sm:w-1/2">
+            <VaInput
+              v-model="newUser.name"
+              label="Nombre"
+              :rules="[validator.required]"
+              name="name"
+            />
+            <div style="min-height: 20px;"></div>
+          </div>
+          <div class="flex flex-col w-full sm:w-1/2">
+            <VaInput
+              v-model="newUser.lastName"
+              label="Apellido"
+              :rules="[validator.required]"
+              name="lastName"
+            />
+            <div style="min-height: 20px;"></div>
+          </div>
         </div>
 
-        <div class="flex gap-4 flex-col sm:flex-row w-full">
-          <VaInput
-            v-model="newUser.secondName"
-            label="Segundo Nombre"
-            class="w-full sm:w-1/2"
-            name="secondName"
-          />
-          <VaInput
-            v-model="newUser.secondLastName"
-            label="Segundo Apellido"
-            class="w-full sm:w-1/2"
-            name="secondLastName"
-          />
+        <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
+          <div class="flex flex-col w-full sm:w-1/2">
+            <VaInput
+              v-model="newUser.secondName"
+              label="Segundo Nombre"
+              name="secondName"
+            />
+            <div style="min-height: 20px;"></div>
+          </div>
+          <div class="flex flex-col w-full sm:w-1/2">
+            <VaInput
+              v-model="newUser.secondLastName"
+              label="Segundo Apellido"
+              name="secondLastName"
+            />
+            <div style="min-height: 20px;"></div>
+          </div>
         </div>
 
-        <div class="flex gap-4 flex-col sm:flex-row w-full">
-          <VaInput
-            v-model="newUser.email"
-            label="Email"
-            class="w-full sm:w-1/2"
-            :rules="[validator.required, validator.email]"
-            name="email"
-            type="email"
-          />
-          <VaInput
-            v-model="newUser.ci"
-            label="CI"
-            class="w-full sm:w-1/2"
-            :rules="[validator.required, validator.onlyNumbers, validator.onlyLength7to8]"
-            name="ci"
-          />
+        <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
+          <div class="flex flex-col w-full sm:w-1/2">
+            <VaInput
+              v-model="newUser.email"
+              label="Email"
+              :rules="[validator.required, validator.email]"
+              name="email"
+              type="email"
+            />
+            <div style="min-height: 20px;"></div>
+          </div>
+          <div class="w-full sm:w-1/2 flex gap-2 items-end">
+            <VaSelect
+              v-model="ciLetter"
+              :options="['V', 'E']"
+              class="w-16 self-center"
+              name="ciLetter"
+              style="min-width: 60px; max-width: 60px;"
+            />
+            <div class="flex flex-col flex-1">
+              <VaInput
+                v-model="ciNumber"
+                label="CI"
+                :rules="[validator.required, validator.onlyNumbers, validator.onlyLength7to8]"
+                name="ci"
+                maxlength="8"
+                style="max-width: 190px;"
+              />
+              <div style="min-height: 20px;"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="flex gap-4 flex-col sm:flex-row w-full">
+        <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
           <VaDateInput
             v-model="newUser.birthDate"
             label="Fecha de Nacimiento"
@@ -206,25 +251,31 @@
         </div>
 
         <div class="flex gap-4 flex-col sm:flex-row w-full">
-          <VaInput
-            v-model="newUser.dir"
-            label="Dirección"
-            class="w-full sm:w-1/2"
-            name="dir"
-          />
+          <div class="flex flex-col w-full sm:w-1/2">
+            <VaInput
+              v-model="newUser.dir"
+              label="Dirección"
+              class="w-full"
+              name="dir"
+            />
+            <div style="min-height: 20px;"></div>
+          </div>
           <div class="w-full sm:w-1/2">
             <label class="block mb-1 font-semibold">Números de Teléfono</label>
             <div
               v-for="(_, index) in newUser.phoneNums"
               :key="index"
-              class="flex items-center gap-2 mb-2"
+              class="flex items-center gap-2 mb-2 pr-8"
             >
-              <VaInput
-                v-model="newUser.phoneNums[index]"
-                label="Teléfono"
-                :rules="[validator.required, validator.onlyNumbers]"
-                :name="`phone-${index}`"
-              />
+              <div class="flex flex-col flex-1">
+                <VaInput
+                  v-model="newUser.phoneNums[index]"
+                  label="Teléfono"
+                  :rules="[validator.required, validator.onlyNumbers]"
+                  :name="`phone-${index}`"
+                />
+                <div style="min-height: 20px;"></div>
+              </div>
               <VaButton
                 icon="delete"
                 color="danger"
