@@ -500,7 +500,7 @@
       return;
     }
     try {
-      await validateLogoFile(file); // Usa tu función de validación aquí
+      await validateLogoFile(file);
       const res = await labApi.uploadLogo(file);
       lab.value.logoPath = res.data.logoUrl;
       logoKey.value = Date.now();
