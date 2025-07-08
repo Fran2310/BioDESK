@@ -139,7 +139,8 @@
                   </div>
                   <div class="flex justify-end">
                     <VaButton
-                      icon="delete"
+                      preset="primary" 
+                      icon="va-delete"
                       color="danger"
                       size="small"
                       @click="removePermission(index)"
