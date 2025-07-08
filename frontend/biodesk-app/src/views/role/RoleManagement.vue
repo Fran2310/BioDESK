@@ -160,7 +160,11 @@
             </div>
             <div class="flex justify-end gap-2 mt-6">
               <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
-              <VaButton color="primary" type="submit">Guardar</VaButton>
+              <VaButton
+                color="primary"
+                type="submit"
+                :disabled="!canSaveNewRole"
+              >Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -256,7 +260,11 @@
             </div>
             <div class="flex justify-end gap-2 mt-6">
               <VaButton color="danger" type="reset" @click="closeEditRoleModal">Cancelar</VaButton>
-              <VaButton color="primary" type="submit">Guardar</VaButton>
+              <VaButton
+                color="primary"
+                type="submit"
+                :disabled="!canSaveEditRole"
+              >Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -411,6 +419,8 @@ const permissions = ref([]);
 const newPermission = ref({ subject: '', actions: [], fields: [] });
 
 const loadingRoles = ref(false)
+const savingNewRole = ref(false)
+const savingEditRole = ref(false)
 
 const fetchAllRoles = async () => {
   loadingRoles.value = true
@@ -627,6 +637,11 @@ function closeEditRoleModal() {
   editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
 }
 
+function closeNewRoleModal() {
+  showNewRoleModal.value = false
+  resetRoleForm()
+}
+
 function addEditRoleModalPermission() {
   editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
 }
@@ -672,14 +687,10 @@ function resetRoleForm() {
   newRoleName.value = ''
   newRoleDescription.value = ''
   permissions.value = []
+  newPermission.value = { subject: '', actions: [], fields: [] }
 }
 
 const showNewRoleModal = ref(false)
-
-function closeNewRoleModal() {
-  showNewRoleModal.value = false
-  resetRoleForm()
-}
 
 const search = ref('')
 
@@ -739,6 +750,25 @@ function onRowClick(event: { item: RoleFromApi }) {
 function getRowClass(row: RoleFromApi) {
   return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
 }
+
+// Agrega los computeds para los botones de guardar
+const canSaveNewRole = computed(() => {
+  if (!newRoleName.value.trim() || !newRoleDescription.value.trim()) return false
+  if (!permissions.value.length) return false
+  for (const p of permissions.value) {
+    if (!p.subject || !p.actions || !Array.isArray(p.actions) || p.actions.length === 0) return false
+  }
+  return true
+})
+
+const canSaveEditRole = computed(() => {
+  if (!editRoleModalData.value.name.trim() || !editRoleModalData.value.description.trim()) return false
+  if (!editRoleModalData.value.permissions.length) return false
+  for (const p of editRoleModalData.value.permissions) {
+    if (!p.subject || !p.actions || (Array.isArray(p.actions) ? p.actions.length === 0 : !p.actions)) return false
+  }
+  return true
+})
 </script>
 
 <style scoped>
