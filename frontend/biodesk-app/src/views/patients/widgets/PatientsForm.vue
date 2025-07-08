@@ -5,6 +5,9 @@
 
   import type { Patient } from '@/services/types/patientType';
   import { validator } from '../../../services/utils';
+  import { useCascadingDPT } from '@/composables/useCascadingDPT.ts';
+  import { loginApiDPT } from '@/services/apiDPT';
+  import { onMounted } from 'vue';
 
   const props = defineProps({
     patient: {
@@ -33,6 +36,21 @@
   };
 
   const newUser = ref<Patient>({ ...defaultNewPatient } as Patient);
+
+  // Dirección DPT
+  const {
+    dirInput,
+    entityOptions,
+    municipalityOptions,
+    parishOptions,
+    communityOptions,
+    loadEntities,
+  } = useCascadingDPT();
+
+  onMounted(async () => {
+    await loginApiDPT();
+    await loadEntities();
+  });
 
   // CI letter select (V or E)
   const ciLetter = ref('V');
@@ -96,11 +114,24 @@
 
   const emit = defineEmits(['close', 'save']);
 
+  function formatDir(input) {
+    const parts = [
+      input.entity?.label,
+      input.municipality?.label,
+      input.parish?.label,
+      input.community?.label,
+      input.restDir,
+    ].filter(Boolean);
+    return parts.join(', ');
+  }
+
   const onSave = () => {
     console.log('onSave called, newUser.value:', newUser.value);
     if (form.validate()) {
       // Concatenate CI letter and number before saving
       newUser.value.ci = ciLetter.value + ciNumber.value;
+      // Concatenate DPT dirección
+      newUser.value.dir = formatDir(dirInput);
       // Ensure birthDate is in ISO 8601 UTC format
       if (newUser.value.birthDate) {
         let iso = '';
@@ -133,7 +164,7 @@
 </script>
 
 <template>
-  <div>
+  <div class="w-full max-w-3x1 mx-auto">
     <VaForm
       v-slot="{ isValid }"
       ref="add-patient-form"
@@ -252,12 +283,49 @@
 
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <div class="flex flex-col w-full sm:w-1/2">
-            <VaInput
-              v-model="newUser.dir"
-              label="Dirección"
-              class="w-full"
-              name="dir"
+            <!-- Dirección DPT -->
+            <div class="flex flex-col gap-2 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <VaSelect
+            v-model="dirInput.entity"
+            :options="entityOptions"
+            track-by="value"
+            text-by="label"
+            label="Estado"
+            searchable
             />
+            <VaSelect
+            v-model="dirInput.municipality"
+            :options="municipalityOptions"
+            track-by="value"
+            text-by="label"
+            label="Municipio"
+            searchable
+            />
+            <VaSelect
+            v-model="dirInput.parish"
+            :options="parishOptions"
+            track-by="value"
+            text-by="label"
+            label="Parroquia"
+            searchable
+            />
+            <VaSelect
+            v-model="dirInput.community"
+            :options="communityOptions"
+            track-by="value"
+            text-by="label"
+            label="Comunidad"
+            searchable
+            />
+            </div>
+            <VaTextarea
+            v-model="dirInput.restDir"
+            label="Dirección detallada"
+            :min-rows="1"
+            :max-rows="2"
+            />
+            </div>
             <div style="min-height: 70px;"></div>
           </div>
           <div class="w-full sm:w-1/2 pr-10">

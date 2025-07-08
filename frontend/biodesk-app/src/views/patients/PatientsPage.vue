@@ -44,7 +44,8 @@
     </VaCard>
     <VaModal
       v-model="doShowEditPatientModal"
-      size="small"
+      size="medium"
+      blur
       mobile-fullscreen
       close-button
       hide-default-actions

@@ -233,7 +233,7 @@
   </VaDataTable>
 
   <!-- Patient Details Modal -->
-  <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large">
+  <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large" blur>
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>
 
     <div class="p-4 space-y-4">
