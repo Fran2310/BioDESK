@@ -123,10 +123,7 @@
   import dayjs from 'dayjs';
   import relativeTimePlugin from 'dayjs/plugin/relativeTime';
   import 'dayjs/locale/es';
-
   import { medicTestRequestApi } from '@/services/api';
-  import { useLabStore } from '@/stores/labStore';
-  import type { LabData } from '@/services/interfaces/lab';
   import type { GetExtendQuerys } from '@/services/interfaces/global';
 
   dayjs.extend(relativeTimePlugin);
@@ -239,15 +236,6 @@
 
   // 📥 Cargar solicitudes paginadas
   async function fetchRequests() {
-    const lab: LabData = {
-      id: 29,
-      name: 'Laboratorium',
-      status: 'active',
-      rif: 'j853946049',
-      logoPath: null,
-    };
-    useLabStore().setCurrentLab(lab);
-
     const queries: GetExtendQuerys = {
       offset: offset.value,
       limit,

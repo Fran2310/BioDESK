@@ -3,104 +3,81 @@
     v-for="(content, idx) in banner"
     :key="idx"
     :labName="content.labName"
-    :role="content.role ? content.role.charAt(0).toUpperCase() + content.role.slice(1) : ''"
+    :role="content.role.charAt(0).toUpperCase() + content.role.slice(1)"
   />
-  
+
   <div class="card-container">
     <CardSimple
       v-for="(content, idx) in simpleCards"
       :key="idx"
-      :title="content.title"
-      :icon="content.icon"
-      :subtitle="content.subtitle"
-      :routeName="content.routeName"
+      v-bind="content"
     />
 
-    <CardComplex 
+    <CardComplex
       v-for="(content, idx) in complexCard"
       :key="idx"
-      :title="content.title"
-      :icon="content.icon"
-      :subtitle="content.subtitle"
-      :option1="content.option1"
-      :routeName1="content.routeName1"
-      :option2="content.option2"
-      :routeName2="content.routeName2"
-      :option3="content.option3"
-      :routeName3="content.routeName3"
+      v-bind="content"
     />
   </div>
 </template>
 
-
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
-  import { useLabStore } from '@/stores/labStore'
-  import CardSimple from './CardSimple.vue'
-  import CardComplex from './CardComplex.vue'
-  import BannerHome from './BannerHome.vue'
-  import { useUserRole } from '@/composables/getBannerData'
+  import { ref, onMounted, computed } from 'vue';
+  import { useLabStore } from '@/stores/labStore';
+  import CardSimple from './CardSimple.vue';
+  import CardComplex from './CardComplex.vue';
+  import BannerHome from './BannerHome.vue';
+  import navigationRoutes from '@/components/sidebar/NavigationRoutes';
+  import { useUserRole } from '@/composables/getBannerData';
 
-  //    Contenido del banner cargado
+  //    Contenido del banner
   const banner = ref([
     {
       labName: '',
-      role: ''
-    }
-  ])
-  
-  const { userRole } = useUserRole()
-  banner.value[0].role = userRole.value
+      role: '',
+    },
+  ]);
 
-
-  const labStore = useLabStore()
+  // Nombre del laboratorio
+  const labStore = useLabStore();
+  // Rol precargado durante la pantalla de carga
+  const { userRole } = useUserRole();
   onMounted(() => {
-    banner.value[0].labName = labStore.currentLab?.name
-  })
+    banner.value[0].labName = labStore.currentLab?.name;
+    banner.value[0].role = userRole.value;
+  });
 
   //    Contenido para las tarjetas simples
-  const simpleCards = ref([
-    {   // Tarjeta al dashboard
-      title: 'Dashboard',
-      icon: 'dashboard',
-      subtitle: 'Ver las estadísticas recientes del laboratorio',
-      routeName: 'Dashboard'
-    },
-    {   // Tarjeta a pacientes
-      title: 'Pacientes',
-      icon: 'healing',
-      subtitle: 'Añadir, buscar, editar o eliminar pacientes',
-      routeName: 'Patients'
-    },
-  ])
+  const simpleCards = computed(() =>
+    navigationRoutes.routes
+      .filter((route) => !route.children && route.name !== 'HomeView') // Se excluyen las rutas con "hijos" y el home
+      .map((route) => ({
+        title: route.displayName,
+        icon: route.meta?.icon,
+        subtitle: route.subtitle,
+        routeName: route.name,
+      }))
+  );
 
   //    Contenido para las tarjetas complejas
-  const complexCard = ref([
-    {     // Tarjeta a sistemas
-      title: 'Sistema',
-      icon: 'group',
-      subtitle: 'Administrar el personal asignado a este laboratorio',
-      option1: 'Usuarios',
-      routeName1: 'UsersView',
-      option2: 'Roles',
-      routeName2: 'RoleManagement',
-      option3: '',
-      routeName3: ''
-    },
-    {     // Tarjeta a exámenes
-      title: 'Exámenes',
-      icon: 'troubleshoot',
-      subtitle: 'Administrar los análisis disponibles y los que están en proceso',
-      option1: 'Exámenes',
-      routeName1: 'Exams',
-      option2: 'Catálogo',
-      routeName2: 'LaboratoryCatalog',
-      option3: 'Nueva solicitud',
-      routeName3: 'NewRequest'
-    }
-  ])
+  const complexCard = computed(() =>
+    navigationRoutes.routes
+      .filter((route) => route.children) // Sólo usar las rutas con "hijos"
+      .map((route) => ({
+        title: route.displayName,
+        icon: route.meta?.icon,
+        subtitle: route.subtitle,
+        option1: route.children[0]?.displayName,
+        routeName1: route.children[0]?.name,
+        option2: route.children[1]?.displayName,
+        routeName2: route.children[1]?.name,
+        option3: route.children[2]?.displayName,
+        routeName3: route.children[2]?.name,
+        option4: route.children[3]?.displayName,
+        routeName4: route.children[3]?.name,
+      }))
+  );
 </script>
-
 
 <style>
   .home {
@@ -110,7 +87,7 @@
     padding: 30px;
     gap: 20px;
   }
-    
+
   .card-container {
     display: flex;
     margin-top: 5px;

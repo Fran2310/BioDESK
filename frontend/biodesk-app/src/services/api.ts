@@ -748,11 +748,10 @@ export const medicTestRequestApi = {
 };
 
 export const storageApi = {
-  getStorage(requestId: string) {
+  getMedicResultsPdf(requestId: string) {
     return api.get(
-      `/storage/file/medic-tests/${
-        headerLabId().headers['x-lab-id']
-      }%2F${requestId}.pdf`
+      `/request-medic-tests/${requestId}/results/pdf`,
+      headerLabId()
     );
   },
 };

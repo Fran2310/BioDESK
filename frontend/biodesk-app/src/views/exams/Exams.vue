@@ -1,60 +1,356 @@
+<template>
+  <div>
+    <VaCard>
+      <VaCardContent>
+        <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
+          <div
+            class="flex flex-col md:flex-row gap-2 justify-start items-center"
+          >
+            <VaSelect
+              v-model="filters.state"
+              placeholder="Filtrar por estado"
+              :options="states"
+              text-by="label"
+              value-by="value"
+              clearable
+              class="w-[200px]"
+            />
+
+            <VaSelect
+              v-model="filters.priority"
+              placeholder="Filtrar por prioridad"
+              :options="priorities"
+              text-by="label"
+              value-by="value"
+              clearable
+              class="w-[200px]"
+            />
+
+            <VaButton
+              color="primary"
+              icon="search"
+              class="ml-2"
+              @click="searchExams"
+            >
+              Buscar
+            </VaButton>
+          </div>
+        </div>
+
+        <div class="relative overflow-x-hidden">
+          <VaDataTable
+            :columns="[
+              { label: 'CI', key: 'ci' },
+              { label: 'Nombre', key: 'name' },
+              { label: 'Apellido', key: 'lastName' },
+              { label: 'Examen', key: 'examName' },
+              { label: 'Solicitado', key: 'requestedAt' },
+              { label: 'Estado', key: 'state' },
+              { label: 'Prioridad', key: 'priority' },
+              { label: 'Acciones', key: 'actions', align: 'right' },
+            ]"
+            :items="
+              exams.map((e) => ({ ...e, examName: e.medicTestCatalog.name }))
+            "
+            :loading="isLoading"
+            @row:click="handleRowClick"
+          >
+            <template #cell(requestedAt)="{ rowData }">
+              {{ formatDate(rowData.requestedAt) }}
+            </template>
+            <template #cell(state)="{ rowData }">
+              <va-chip size="small" :color="stateColor(rowData.state)">
+                {{ stateLabels[rowData.state] ?? rowData.state }}
+              </va-chip>
+            </template>
+            <template #cell(priority)="{ rowData }">
+              <va-chip size="small" :color="priorityColor(rowData.priority)">
+                {{ priorityLabels[rowData.priority] ?? rowData.priority }}
+              </va-chip>
+            </template>
+            
+            <template #cell(actions)="{ rowData }">
+              <div class="flex gap-2 justify-start">
+                <VaPopover
+                  v-if="rowData.state === 'COMPLETED'"
+                  message="Descargar Resultados"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="download"
+                    color="info"
+                    aria-label="Acceder a examen"
+                    @click.stop="downloadResults(rowData.id)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  v-if="rowData.state === 'TO_VERIFY'"
+                  message="Completar Examen"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="check"
+                    color="success"
+                    aria-label="Completar examen"
+                    @click.stop="onCompleteExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  v-if="rowData.state === 'IN_PROCESS'"
+                  message="Subir Resultados"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="cloud_upload"
+                    color="success"
+                    aria-label="Subir resultados"
+                    @click.stop="goToUploadResults(rowData.id)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  v-if="rowData.state === 'PENDING'"
+                  message="Empezar Examen"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="arrow_forward"
+                    color="info"
+                    aria-label="Empezar examen"
+                    @click.stop="onProcessExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  v-if="rowData.state === 'CANCELED'"
+                  message="Colocar Examen en Pendiente"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="arrow_forward"
+                    color="info"
+                    aria-label="Colocar examen en pendiente"
+                    @click.stop="onPendExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  message="Modificar Prioridad"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="priority_high"
+                    aria-label="Modificar examen"
+                    @click.stop="openChangePriorityModal(rowData.id)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
+                  message="Cancelar Examen"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="cancel"
+                    color="danger"
+                    aria-label="Cancelar examen"
+                    @click.stop="onCancelExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
+                  message="Eliminar Examen"
+                  class="flex items-center justify-center"
+                  hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="delete"
+                    color="danger"
+                    aria-label="Eliminar examen"
+                    @click.stop="onDeleteExam(rowData)"
+                  />
+                </VaPopover>
+              </div>
+            </template>
+          </VaDataTable>
+
+          <div
+            v-if="isLoading"
+            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10"
+          >
+            <VaProgressCircle indeterminate size="large" color="primary" />
+          </div>
+        </div>
+
+        <VaModal v-model="showModal" hide-default-actions>
+          <DetailsExam
+          :selectedExam="selectedExam">
+          </DetailsExam>
+        </VaModal>
+
+        <VaModal v-model="showStateModal" hide-default-actions>
+          <ChangePriorityModal
+            :changePriorityRequestId="changePriorityRequestId"
+            @close="showStateModal = false"
+            @updated="handleStateUpdated"
+          />
+        </VaModal>
+
+        <VaModal v-model="showToPendModal" hide-default-actions>
+          <ToPendExam
+          :examToPend="examToPend"
+          @close="showToPendModal = false"
+          @processed="PendedExam()"
+          >
+          </ToPendExam>
+        </VaModal>
+
+        <VaModal v-model="showToProcessModal" hide-default-actions>
+          <ToProcessExam
+          :examToProcess="examToProcess"
+          @close="showToProcessModal = false"
+          @processed="ProcessedExam()"
+          >
+          </ToProcessExam>
+        </VaModal>
+
+        <VaModal v-model="showCancelModal" hide-default-actions>
+          <CancelExam
+          :examToCancel="examToCancel"
+          @close="showCancelModal = false"
+          @canceled="CanceledExam()"
+          >
+          </CancelExam>
+        </VaModal>
+
+        <VaModal v-model="showCompleteModal" hide-default-actions>
+          <CompleteExam 
+          :examToComplete="examToComplete"
+          @close="showCompleteModal = false"
+          @completed="CompletedExam()"
+          >
+          </CompleteExam>
+        </VaModal>
+
+        <VaModal v-model="showDeleteModal" hide-default-actions>
+          <DeleteExam 
+          :examToDelete="examToDelete"
+          @close="showDeleteModal = false"
+          @deleted="DeletedExam()"
+          >
+          </DeleteExam>
+        </VaModal>
+        
+        <div
+          class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
+        >
+          <div>
+            <b>{{ pagination.total }} resultados.</b>
+            Resultados por página
+            <VaSelect
+              v-model="pagination.perPage"
+              class="!w-20"
+              :options="[5, 10, 20, 50]"
+            />
+          </div>
+          <div v-if="totalPages > 1" class="flex items-center gap-2">
+            <VaButton
+              preset="secondary"
+              icon="va-arrow-left"
+              aria-label="Anterior"
+              :disabled="pagination.page === 1"
+              @click="pagination.page--"
+            />
+            <VaButton
+              preset="secondary"
+              icon="va-arrow-right"
+              aria-label="Siguiente"
+              :disabled="pagination.page === totalPages"
+              @click="pagination.page++"
+            />
+            <VaPagination
+              v-model="pagination.page"
+              buttons-preset="secondary"
+              :pages="totalPages"
+              :visible-pages="5"
+              :boundary-links="false"
+              :direction-links="false"
+            />
+          </div>
+        </div>
+      </VaCardContent>
+    </VaCard>
+  </div>
+</template>
+
 <script setup lang="ts">
   import { ref, computed, watch, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { useToast } from 'vuestic-ui';
 
   import { medicTestRequestApi, storageApi } from '@/services/api';
-  import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
-  import { Priority } from '@/services/types/global.type';
-
-  import ChangeStateModal from './ChangeStateModal.vue';
+  import ChangePriorityModal from './modals/ChangePriorityModal.vue';
 
   import type { GetExtendQuerys } from '@/services/interfaces/global';
   import type { SearchField } from '@/services/types/searchFields.type';
 
-  import { formatCi } from '@/services/utils';
+  import { formatCi, formatDate } from '@/services/utils';
+
+  import DeleteExam from './modals/DeleteExam.vue'
+  import CompleteExam from './modals/CompleteExam.vue';
+  import CancelExam from './modals/CancelExam.vue';
+  import DetailsExam from './modals/DetailsExam.vue';
+
+  import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
+import ToProcessExam from './modals/ToProcessExam.vue';
+import ToPendExam from './modals/ToPendExam.vue';
 
   const { init: notify } = useToast();
   const router = useRouter();
 
   const props = defineProps<{ medicHistoryId?: string }>();
-
-  interface ExamRow
-    extends Omit<CreateMedicTestRequestData, 'resultProperties'> {
-    id: number;
-    requestedAt: string;
-    completedAt?: string;
-    state: string;
-    priority: Priority;
-    resultProperties: Record<string, string>;
-    observation: string;
-    byLabUserId: number | null;
-    medicTestCatalogId: number;
-    medicTestCatalog: {
-      id: number;
-      name: string;
-      description: string;
-      price: number;
-      supplies: string[];
-    };
-    medicHistory: {
-      id: number;
-      patientId: number;
-      patient: {
-        id: number;
-        ci: string;
-        name: string;
-        lastName: string;
-        secondName: string;
-        secondLastName: string;
-        gender: string;
-        email: string;
-        phoneNums: string[];
-        dir: string;
-        birthDate: string;
-      };
-    };
-  }
 
   const exams = ref<ExamRow[]>([]);
   const filters = ref({
@@ -69,69 +365,22 @@
   const selectedExam = ref<ExamRow | null>(null);
 
   const showStateModal = ref(false);
-  const selectedExamId = ref<number | null>(null);
+  const changePriorityRequestId = ref<number | null>(null);
+
+  const showToPendModal = ref(false);
+  const examToPend = ref<ExamRow | null>(null);
+
+  const showToProcessModal = ref(false);
+  const examToProcess = ref<ExamRow | null>(null);
+
+  const showCancelModal = ref(false);
+  const examToCancel = ref<ExamRow | null>(null);
 
   const showCompleteModal = ref(false);
   const examToComplete = ref<ExamRow | null>(null);
-  const isCompletingExam = ref(false);
 
   const showDeleteModal = ref(false);
   const examToDelete = ref<ExamRow | null>(null);
-
-  const stateLabels: Record<string, string> = {
-    PENDING: 'Pendiente',
-    IN_PROCESS: 'En proceso',
-    COMPLETED: 'Completado',
-    TO_VERIFY: 'Por verificar',
-    CANCELED: 'Cancelado',
-  };
-
-  const priorityLabels: Record<string, string> = {
-    HIGH: 'Alta',
-    MEDIUM: 'Media',
-    LOW: 'Baja',
-  };
-
-  function priorityColor(priority: string) {
-    switch (priority?.toUpperCase()) {
-      case 'HIGH':
-        return 'danger';
-      case 'MEDIUM':
-        return 'warning';
-      case 'LOW':
-        return 'success';
-      default:
-        return 'info';
-    }
-  }
-
-  function stateColor(state: string) {
-    switch (state?.toUpperCase()) {
-      case 'PENDING':
-        return 'warning';
-      case 'TO_VERIFY':
-        return 'info';
-      case 'COMPLETED':
-        return 'success';
-      case 'CANCELED':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
-  function formatDate(dateString: string) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
 
   const fetchExams = async () => {
     isLoading.value = true;
@@ -222,23 +471,22 @@
   };
 
 
-// If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
-onMounted(() => {
-  if (props.medicHistoryId) {
-    console.log(props.medicHistoryId)
-    filters.value.medicHistoryId = props.medicHistoryId
-    searchExams()
-  } else {
-    fetchExams()
-  }
-})
+  // If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
+  onMounted(() => {
+    if (props.medicHistoryId) {
+      console.log(props.medicHistoryId)
+      filters.value.medicHistoryId = props.medicHistoryId
+      searchExams()
+    } else {
+      fetchExams()
+    }
+  })
 
   watch(
     () => [pagination.value.page, pagination.value.perPage],
+    // Llama a searchExams() cada vez que la página o los resultados por página cambien.
     () => {
-      const maxPage =
-        Math.ceil(pagination.value.total / pagination.value.perPage) || 1;
-      if (pagination.value.page > maxPage) pagination.value.page = 1;
+      searchExams();
     }
   );
 
@@ -248,7 +496,7 @@ onMounted(() => {
 
   const downloadResults = async (id: number) => {
     try {
-      const response = await storageApi.getStorage(String(id))
+      const response = await storageApi.getMedicResultsPdf(String(id))
       const data = response.data
 
       if (data?.url) {
@@ -264,8 +512,8 @@ onMounted(() => {
     }
   }
 
-  function openChangeStateModal(examId: number) {
-    selectedExamId.value = examId;
+  function openChangePriorityModal(examId: number) {
+    changePriorityRequestId.value = examId;
     showStateModal.value = true;
   }
 
@@ -281,56 +529,53 @@ onMounted(() => {
   };
 
   function handleStateUpdated() {
-    refreshExams();
     showStateModal.value = false;
+    refreshExams();
+  }
+
+  function onPendExam(exam: ExamRow) {
+    examToPend.value = exam
+    showToPendModal.value = true;
+  }
+  function PendedExam() {
+    showToPendModal.value = false;
+    refreshExams();
+  }
+
+  function onProcessExam(exam: ExamRow) {
+    examToProcess.value = exam
+    showToProcessModal.value = true;
+  }
+  function ProcessedExam() {
+    showToProcessModal.value = false;
+    refreshExams();
+  }
+
+  function onCancelExam(exam: ExamRow) {
+    examToCancel.value = exam
+    showCancelModal.value = true;
+  }
+  function CanceledExam() {
+    showCancelModal.value = false;
+    refreshExams();
   }
 
   function onCompleteExam(exam: ExamRow) {
     examToComplete.value = exam;
     showCompleteModal.value = true;
   }
+  function CompletedExam() {
+    showCompleteModal.value = false;
+    refreshExams();
+  }
 
   function onDeleteExam(exam: ExamRow) {
-    examToDelete.value = exam;
+    examToDelete.value = exam
     showDeleteModal.value = true;
   }
-
-  async function confirmCompleteExam() {
-    if (!examToComplete.value) return;
-    isCompletingExam.value = true;
-
-    try {
-      await medicTestRequestApi.updateMedicTestRequestState(
-        String(examToComplete.value.id),
-        'COMPLETED'
-      );
-
-      notify({ message: 'Examen completado correctamente.', color: 'success' });
-      refreshExams();
-      showCompleteModal.value = false;
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      isCompletingExam.value = false;
-      examToComplete.value = null;
-    }
-  }
-
-  async function confirmDeleteExam() {
-    if (!examToDelete.value) return;
-
-    try {
-      await medicTestRequestApi.deleteMedicTestRequest(
-        String(examToDelete.value.id)
-      );
-      notify({ message: 'Examen eliminado correctamente.', color: 'success' });
-      refreshExams();
-    } catch (e: any) {
-      notify({ message: e.message, color: 'danger' });
-    } finally {
-      showDeleteModal.value = false;
-      examToDelete.value = null;
-    }
+  function DeletedExam() {
+    showDeleteModal.value = false;
+    refreshExams();
   }
 
   const totalPages = computed(() =>
@@ -352,389 +597,12 @@ onMounted(() => {
   ];
 </script>
 
-<template>
-  <div>
-    <VaCard>
-      <VaCardContent>
-        <!-- Search -->
-        <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-          <div
-            class="flex flex-col md:flex-row gap-2 justify-start items-center"
-          >
-            <VaSelect
-              v-model="filters.state"
-              placeholder="Filtrar por estado"
-              :options="states"
-              text-by="label"
-              value-by="value"
-              clearable
-              class="w-[200px]"
-            />
-
-            <VaSelect
-              v-model="filters.priority"
-              placeholder="Filtrar por prioridad"
-              :options="priorities"
-              text-by="label"
-              value-by="value"
-              clearable
-              class="w-[200px]"
-            />
-
-            <VaButton
-              color="primary"
-              icon="search"
-              class="ml-2"
-              @click="searchExams"
-            >
-              Buscar
-            </VaButton>
-          </div>
-        </div>
-
-        <!-- Table -->
-        <div class="relative">
-          <VaDataTable
-            :columns="[
-              { label: 'CI', key: 'ci' },
-              { label: 'Nombre', key: 'name' },
-              { label: 'Apellido', key: 'lastName' },
-              { label: 'Examen', key: 'examName' },
-              { label: 'Solicitado', key: 'requestedAt' },
-              { label: 'Estado', key: 'state' },
-              { label: 'Prioridad', key: 'priority' },
-              { label: 'Acciones', key: 'actions', align: 'right' },
-            ]"
-            :items="
-              exams.map((e) => ({ ...e, examName: e.medicTestCatalog.name }))
-            "
-            :loading="isLoading"
-            @row:click="handleRowClick"
-          >
-            <template #cell(requestedAt)="{ rowData }">
-              {{ formatDate(rowData.requestedAt) }}
-            </template>
-            <template #cell(state)="{ rowData }">
-              <va-chip size="small" :color="stateColor(rowData.state)">
-                {{ stateLabels[rowData.state] ?? rowData.state }}
-              </va-chip>
-            </template>
-            <template #cell(priority)="{ rowData }">
-              <va-chip size="small" :color="priorityColor(rowData.priority)">
-                {{ priorityLabels[rowData.priority] ?? rowData.priority }}
-              </va-chip>
-            </template>
-            <template #cell(actions)="{ rowData }">
-              <div class="flex gap-2 justify-end">
-                <VaButton
-                  v-if="rowData.state === 'COMPLETED'"
-                  preset="primary"
-                  size="small"
-                  icon="download"
-                  color="info"
-                  aria-label="Completar examen"
-                  @click.stop="downloadResults(rowData.id)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'TO_VERIFY'"
-                  preset="primary"
-                  size="small"
-                  icon="check"
-                  color="success"
-                  aria-label="Completar examen"
-                  @click.stop="onCompleteExam(rowData)"
-                />
-                <VaButton
-                  v-if="rowData.state === 'IN_PROCESS'"
-                  preset="primary"
-                  size="small"
-                  icon="cloud_upload"
-                  color="success"
-                  aria-label="Subir resultados"
-                  @click.stop="goToUploadResults(rowData.id)"
-                />
-                <VaButton
-                  preset="primary"
-                  size="small"
-                  icon="edit"
-                  aria-label="Modificar examen"
-                  @click.stop="openChangeStateModal(rowData.id)"
-                />
-                <VaButton
-                  preset="primary"
-                  size="small"
-                  icon="va-delete"
-                  color="danger"
-                  aria-label="Eliminar examen"
-                  @click.stop="onDeleteExam(rowData)"
-                />
-              </div>
-            </template>
-          </VaDataTable>
-
-          <!-- Loading overlay -->
-          <div
-            v-if="isLoading"
-            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10"
-          >
-            <VaProgressCircle indeterminate size="large" color="primary" />
-          </div>
-        </div>
-
-        <!-- Exam Details Modal -->
-        <VaModal v-model="showModal" hide-default-actions>
-          <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
-          <div v-if="selectedExam">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(selectedExam.requestedAt) }}
-              </div>
-              <div>
-                <strong>CI:</strong> {{ formatCi(selectedExam.medicHistory.patient.ci) }}
-              </div>
-              <div>
-                <strong>Nombre:</strong>
-                {{ selectedExam.medicHistory.patient.name }}
-              </div>
-              <div>
-                <strong>Apellido:</strong>
-                {{ selectedExam.medicHistory.patient.lastName }}
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ selectedExam.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ selectedExam.medicTestCatalog.description }}
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Estado:</strong>
-                <va-chip size="small" :color="stateColor(selectedExam.state)">
-                  {{ stateLabels[selectedExam.state] ?? selectedExam.state }}
-                </va-chip>
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(selectedExam.priority)"
-                >
-                  {{
-                    priorityLabels[selectedExam.priority] ??
-                    selectedExam.priority
-                  }}
-                </va-chip>
-              </div>
-            </div>
-
-            <h4 class="mt-4 mb-2"><strong>Observación:</strong></h4>
-            <div class="p-3 bg-gray-100 rounded border border-gray-200">
-              {{ selectedExam.observation || 'No se proporcionó observación.' }}
-            </div>
-
-            <h4 class="mt-4 mb-2"><strong>Resultados:</strong></h4>
-            <div class="overflow-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr>
-                    <th class="border-b pb-1">Propiedad</th>
-                    <th class="border-b pb-1">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(value, key) in selectedExam.resultProperties"
-                    :key="key"
-                  >
-                    <td class="pr-4 font-semibold">{{ key }}</td>
-                    <td>{{ value }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div v-else>No se ha seleccionado un examen válido.</div>
-        </VaModal>
-
-        <!-- Change State Modal -->
-        <VaModal v-model="showStateModal" hide-default-actions>
-          <ChangeStateModal
-            :request-id="selectedExamId"
-            @close="showStateModal = false"
-            @updated="handleStateUpdated"
-          />
-        </VaModal>
-
-        <!-- Completar examen Modal -->
-        <VaModal v-model="showCompleteModal" hide-default-actions>
-          <div>
-            <h2 class="va-h4 mb-4 text-success">Confirmar completar examen</h2>
-            <p class="mb-4">¿Está seguro de que desea completar este examen?</p>
-
-            <div v-if="examToComplete" class="space-y-2 mb-4 text-sm">
-              <div>
-                <strong>Paciente:</strong>
-                {{ examToComplete.medicHistory.patient.name }}
-                {{ examToComplete.medicHistory.patient.lastName }} (CI:
-                {{ formatCi(selectedExam.medicHistory.patient.ci) }})
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ examToComplete.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ examToComplete.medicTestCatalog.description }}
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Estado:</strong>
-                <va-chip size="small" :color="stateColor(examToComplete.state)">
-                  {{
-                    stateLabels[examToComplete.state] ?? examToComplete.state
-                  }}
-                </va-chip>
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(examToComplete.priority)"
-                >
-                  {{
-                    priorityLabels[examToComplete.priority] ??
-                    examToComplete.priority
-                  }}
-                </va-chip>
-              </div>
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(examToComplete.requestedAt) }}
-              </div>
-              <div v-if="examToComplete.observation">
-                <strong>Observación:</strong> {{ examToComplete.observation }}
-              </div>
-            </div>
-
-            <div class="flex justify-end gap-2 mt-4">
-              <VaButton
-                color="secondary"
-                :disabled="isCompletingExam"
-                @click="showCompleteModal = false"
-              >
-                Cancelar
-              </VaButton>
-              <VaButton
-                color="success"
-                :loading="isCompletingExam"
-                :disabled="isCompletingExam"
-                @click="confirmCompleteExam"
-              >
-                Completar
-              </VaButton>
-            </div>
-          </div>
-        </VaModal>
-
-        <!-- Delete Confirmation Modal -->
-        <VaModal v-model="showDeleteModal" hide-default-actions>
-          <div>
-            <h2 class="va-h4 mb-4 text-danger">Confirmar eliminación</h2>
-            <p class="mb-4">¿Está seguro de que desea eliminar este examen?</p>
-
-            <div v-if="examToDelete" class="space-y-2 mb-4 text-sm">
-              <div>
-                <strong>Paciente:</strong>
-                {{ examToDelete.medicHistory.patient.name }}
-                {{ examToDelete.medicHistory.patient.lastName }} (CI:
-                {{ formatCi(selectedExam.medicHistory.patient.ci)}})
-              </div>
-              <div>
-                <strong>Examen:</strong>
-                {{ examToDelete.medicTestCatalog.name }}
-              </div>
-              <div>
-                <strong>Descripción:</strong>
-                {{ examToDelete.medicTestCatalog.description }}
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Estado:</strong>
-                <va-chip size="small" :color="stateColor(examToDelete.state)">
-                  {{ stateLabels[examToDelete.state] ?? examToDelete.state }}
-                </va-chip>
-              </div>
-              <div class="flex items-center gap-2">
-                <strong>Prioridad:</strong>
-                <va-chip
-                  size="small"
-                  :color="priorityColor(examToDelete.priority)"
-                >
-                  {{
-                    priorityLabels[examToDelete.priority] ??
-                    examToDelete.priority
-                  }}
-                </va-chip>
-              </div>
-              <div>
-                <strong>Fecha de solicitud:</strong>
-                {{ formatDate(examToDelete.requestedAt) }}
-              </div>
-              <div v-if="examToDelete.observation">
-                <strong>Observación:</strong> {{ examToDelete.observation }}
-              </div>
-            </div>
-
-            <div class="flex justify-end gap-2 mt-4">
-              <VaButton color="secondary" @click="showDeleteModal = false"
-                >Cancelar</VaButton
-              >
-              <VaButton color="danger" @click="confirmDeleteExam"
-                >Eliminar</VaButton
-              >
-            </div>
-          </div>
-        </VaModal>
-
-        <!-- Pagination -->
-        <div
-          class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
-        >
-          <div>
-            <b>{{ pagination.total }} resultados.</b>
-            Resultados por página
-            <VaSelect
-              v-model="pagination.perPage"
-              class="!w-20"
-              :options="[5, 10, 20, 50]"
-            />
-          </div>
-          <div v-if="totalPages > 1" class="flex items-center gap-2">
-            <VaButton
-              preset="secondary"
-              icon="va-arrow-left"
-              aria-label="Anterior"
-              :disabled="pagination.page === 1"
-              @click="pagination.page--"
-            />
-            <VaButton
-              preset="secondary"
-              icon="va-arrow-right"
-              aria-label="Siguiente"
-              :disabled="pagination.page === totalPages"
-              @click="pagination.page++"
-            />
-            <VaPagination
-              v-model="pagination.page"
-              buttons-preset="secondary"
-              :pages="totalPages"
-              :visible-pages="5"
-              :boundary-links="false"
-              :direction-links="false"
-            />
-          </div>
-        </div>
-      </VaCardContent>
-    </VaCard>
-  </div>
-</template>
+<style scoped>
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
+</style>

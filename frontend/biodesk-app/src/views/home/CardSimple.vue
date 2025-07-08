@@ -1,5 +1,5 @@
 <template>
-    <div class="card" @click="goToX" style="cursor: pointer;">
+    <div class="card"  @click="goTo()" style="cursor: pointer;">
             <div>
                 <!-- Ícono -->
                 <VaIcon :name="props.icon" color="primary" class="corner-icon material-symbols-outlined" size="48px"/>
@@ -16,9 +16,10 @@
 
 
 <script setup lang="ts">
-    import { useRouter } from 'vue-router'
+    import { useRouter } from 'vue-router';
     import { defineProps } from 'vue'
 
+    //      Contenido de la tarjeta
     const props = defineProps<{
         title?: string
         icon?: string
@@ -29,7 +30,7 @@
     // Atajo de navegación
     const router = useRouter()
 
-    function goToX() {
+    function goTo() {
     router.push({ name: props.routeName })
     }
 </script>
@@ -69,13 +70,13 @@
         }
     }
 
-    .card:hover {       /* transformar tamaño */
+    .card:hover {       /* al pasar el cursor por encima */
         background-color: var(--va-base);
         transform: scale(1.05);
     }
 
-    .card:active {
-        filter: brightness(0.90);
+    .card:active {      /* al hacer click */
+        filter: brightness(0.92);
         background-color: var(--va-background-border);
         transition: filter 0.1s, background-color 0.1s;
         transform: scale(0.97)

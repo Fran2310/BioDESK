@@ -1,112 +1,110 @@
 <script setup lang="ts">
-import { type PropType, computed, ref, onMounted } from 'vue'
-import { useForm } from 'vuestic-ui'
-import { validator } from '../../../services/utils'
-import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
-import { userApi } from '@/services/api'
-import { useLabStore } from '@/stores/labStore';
-import type { LabData } from '@/services/interfaces/lab'
-import { roleApi } from '@/services/api'
-import type { GetExtendQuerys } from '@/services/interfaces/global';
+  import { type PropType, computed, ref, onMounted } from 'vue';
+  import { useForm } from 'vuestic-ui';
+  import { validator } from '../../../services/utils';
+  import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
+  import { userApi } from '@/services/api';
+  import { roleApi } from '@/services/api';
+  import type { GetExtendQuerys } from '@/services/interfaces/global';
 
-import { useToast } from 'vuestic-ui';
-const { init: notify } = useToast();
+  import { useToast } from 'vuestic-ui';
+  const { init: notify } = useToast();
 
-const props = defineProps({
-  user: {
-    type: Object as PropType<CreateUserWithRoleIdData | null>,
-    default: null,
-  },
-  saveButtonLabel: {
-    type: String,
-    default: 'Save',
-  },
-})
+  const props = defineProps({
+    user: {
+      type: Object as PropType<CreateUserWithRoleIdData | null>,
+      default: null,
+    },
+    saveButtonLabel: {
+      type: String,
+      default: 'Save',
+    },
+  });
 
-const defaultNewUser: CreateUserWithRoleIdData = {
-  name: '',
-  lastName: '',
-  roleId: undefined,
-  email: '',
-  ci: '',
-  password: ''
-}
-
-const newUser = ref<CreateUserWithRoleIdData>({ ...defaultNewUser } as CreateUserWithRoleIdData)
-const roles = ref<{ id: number, role: string, description: string; permissions:object }[]>([])
-const rolesLoading = ref(true)
-const isSavingUser = ref(false) // Añade esto con tus otras refs
-
-const isFormHasUnsavedChanges = computed(() => {
-  return Object.keys(newUser.value).some((key) => {
-    return (
-      newUser.value[key as keyof Omit<CreateUserWithRoleIdData, 'id'>] !== (props.user ?? defaultNewUser)?.[key as keyof Omit<CreateUserWithRoleIdData, 'id'>]
-    )
-  })
-})
-
-defineExpose({
-  isFormHasUnsavedChanges,
-})
-
-const labData: LabData = {
-    id: 29,
-    name: "Laboratorium",
-    status: "active",
-    rif: "j853946049",
-    logoPath: '',
-};
-const lab = useLabStore();
-lab.setCurrentLab(labData);
-
-const form = useForm('add-user-form')
-
-const emit = defineEmits(['close', 'save'])
-
-
-const onSave = async () => {
-  if (form.validate()) {
-    isSavingUser.value = true
-    try {
-      await userApi.createUserWithRoleId(newUser.value)
-      emit('save', newUser.value)
-      notify({
-        message: 'Usuario creado con éxito', // TODO Refactorizar eso
-        color: 'success',
-      })
-    } catch (error) {
-      notify({
-        message: error.message, // TODO Refactorizar eso
-        color: 'danger',
-      })
-    } finally {
-      isSavingUser.value = false // Desactiva el estado de carga siempre
-    }
-  }
-}
-
-async function fetchRoles() {
-  const queries: GetExtendQuerys = {
-  offset: 0,
-  limit: 10,
-  includeData: true
+  const defaultNewUser: CreateUserWithRoleIdData = {
+    name: '',
+    lastName: '',
+    roleId: undefined,
+    email: '',
+    ci: '',
+    password: '',
   };
-  const response = await roleApi.getRoles(queries)
-  roles.value = Array.isArray(response.data.data) ? response.data.data : []
-  rolesLoading.value = false
-  
-  if (!newUser.value.roleId && roles.value.length > 0) {
-    newUser.value.roleId = roles.value[0].id
+
+  const newUser = ref<CreateUserWithRoleIdData>({
+    ...defaultNewUser,
+  } as CreateUserWithRoleIdData);
+  const roles = ref<
+    { id: number; role: string; description: string; permissions: object }[]
+  >([]);
+  const rolesLoading = ref(true);
+  const isSavingUser = ref(false); // Añade esto con tus otras refs
+
+  const isFormHasUnsavedChanges = computed(() => {
+    return Object.keys(newUser.value).some((key) => {
+      return (
+        newUser.value[key as keyof Omit<CreateUserWithRoleIdData, 'id'>] !==
+        (props.user ?? defaultNewUser)?.[
+          key as keyof Omit<CreateUserWithRoleIdData, 'id'>
+        ]
+      );
+    });
+  });
+
+  defineExpose({
+    isFormHasUnsavedChanges,
+  });
+
+  const form = useForm('add-user-form');
+
+  const emit = defineEmits(['close', 'save']);
+
+  const onSave = async () => {
+    if (form.validate()) {
+      isSavingUser.value = true;
+      try {
+        await userApi.createUserWithRoleId(newUser.value);
+        emit('save', newUser.value);
+        notify({
+          message: 'Usuario creado con éxito', // TODO Refactorizar eso
+          color: 'success',
+        });
+      } catch (error) {
+        notify({
+          message: error.message, // TODO Refactorizar eso
+          color: 'danger',
+        });
+      } finally {
+        isSavingUser.value = false; // Desactiva el estado de carga siempre
+      }
+    }
+  };
+
+  async function fetchRoles() {
+    const queries: GetExtendQuerys = {
+      offset: 0,
+      limit: 10,
+      includeData: true,
+    };
+    const response = await roleApi.getRoles(queries);
+    roles.value = Array.isArray(response.data.data) ? response.data.data : [];
+    rolesLoading.value = false;
+
+    if (!newUser.value.roleId && roles.value.length > 0) {
+      newUser.value.roleId = roles.value[0].id;
+    }
+    console.log(roles.value);
   }
-  console.log(roles.value)
-}
-onMounted(() => {
-  fetchRoles();
-});
+  onMounted(() => {
+    fetchRoles();
+  });
 </script>
 
 <template>
-  <VaForm v-slot="{ isValid }" ref="add-user-form" class="flex-col justify-start items-start gap-4 inline-flex w-full">
+  <VaForm
+    v-slot="{ isValid }"
+    ref="add-user-form"
+    class="flex-col justify-start items-start gap-4 inline-flex w-full"
+  >
     <div class="self-stretch flex-col justify-start items-start gap-4 flex">
       <div class="flex gap-4 flex-col sm:flex-row w-full">
         <VaInput
@@ -157,15 +155,24 @@ onMounted(() => {
           v-model="newUser.password"
           label="Contraseña"
           class="w-full sm:w-1/2"
-          :rules="[validator.required, validator.hasUppercase, validator.hasNumber, validator.minLength]"
+          :rules="[
+            validator.required,
+            validator.hasUppercase,
+            validator.hasNumber,
+            validator.minLength,
+          ]"
           name="password"
-        />  
+        />
       </div>
 
-      <div class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center">
-        <VaButton preset="secondary" color="secondary" @click="$emit('close')">Cancelar</VaButton>
-        <VaButton 
-          :disabled="!isValid || isSavingUser" 
+      <div
+        class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center"
+      >
+        <VaButton preset="secondary" color="secondary" @click="$emit('close')"
+          >Cancelar</VaButton
+        >
+        <VaButton
+          :disabled="!isValid || isSavingUser"
           :loading="isSavingUser"
           @click="onSave"
           >{{ saveButtonLabel }}

@@ -27,7 +27,7 @@
         </div>
         <va-data-table
           v-else
-          :columns="columns"
+          :columns="columnsWithoutId"
           :items="filteredExams"
           :loading="loading"
                     class="shadow rounded min-h-[200px]"
@@ -38,24 +38,23 @@
         </template>
 
           <template #cell(actions)="{ row }">
-            <VaButton
-              color="primary"
-              class="ml-2"
-              size="small"
-              icon="delete"
-              @click="editExam(row)"
-            >
-              Editar
-            </VaButton>
-            <VaButton
-              color="danger"
-              class="ml-2"
-              size="small"
-              icon="delete"
-              @click="deleteExam(row, fetchExams, showError)"
-            >
-              Eliminar
-            </VaButton>
+            <div class="flex gap-2 justify-end">
+              <VaButton
+                preset="primary"
+                size="small"
+                icon="edit"
+                aria-label="Editar examen"
+                @click.stop="editExam(row)"
+              />
+              <VaButton
+                preset="primary"
+                size="small"
+                icon="va-delete"
+                color="danger"
+                aria-label="Eliminar examen"
+                @click.stop="deleteExam(row, fetchExams, showError)"
+              />
+            </div>
           </template>
         </va-data-table>
       </va-card-content>
@@ -201,25 +200,25 @@
                 :key="idx"
                 class="property-block mt-4"
               >
-                <!-- Encabezado -->
-                <div class="grid grid-cols-3 gap-2 items-center mb-2">
-                  <div class="col-span-2 font-semibold property-name">
+                <!-- Encabezado: nombre y unidad en una fila -->
+                <div class="property-header grid grid-cols-3 gap-2 items-center mb-2 w-full">
+                  <div class="col-span-2 font-semibold property-name truncate">
                     {{ reference.name }}
                   </div>
-                  <div class="col-span-1 property-unit">
+                  <div class="col-span-1 property-unit truncate text-right">
                     {{ reference.unit }}
                   </div>
                 </div>
 
-                <!-- Variaciones como chips -->
-                <VaChip
-                  v-for="(variation, vIdx) in reference.variations"
-                  :key="vIdx"
-                  outline
-                  size="small"
-                  class="flex items-center gap-2 px-2"
-                >
-                  <!-- Circulito según género -->
+                <!-- Variaciones como chips en una fila separada, con wrap -->
+                <div class="property-variations flex flex-wrap gap-2 w-full mb-2">
+                  <VaChip
+                    v-for="(variation, vIdx) in reference.variations"
+                    :key="vIdx"
+                    outline
+                    size="small"
+                    class="flex items-center gap-2 px-2"
+                  >
                     <span
                       :class="[
                         'inline-block w-3 h-3 rounded-full mr-2',
@@ -229,18 +228,20 @@
                         'bg-purple-300'
                       ]"
                     ></span>
+                    {{ variation.gender }}/{{ variation.ageGroup }}
+                  </VaChip>
+                </div>
 
-                  {{ variation.gender }}/{{ variation.ageGroup }}
-                </VaChip>
-
-                <!-- Botón eliminar propiedad -->
-                <VaButton
-                  icon="delete"
-                  color="danger"
-                  size="small"
-                  @click="removeReference(idx)"
-                  class="ml-2 self-start"
-                />
+                <!-- Botón eliminar propiedad alineado a la derecha -->
+                <div class="flex justify-end w-full">
+                  <VaButton
+                    icon="delete"
+                    color="danger"
+                    size="small"
+                    @click="removeReference(idx)"
+                    class="ml-2 self-start"
+                  />
+                </div>
               </div>
             </div>
 
@@ -249,7 +250,12 @@
               <va-button color="secondary" @click="closeModal" type="button">
                 Cancelar
               </va-button>
-              <va-button color="primary" type="submit">
+              <va-button 
+                color="primary" 
+                type="submit" 
+                @click="closeModal"
+                :disabled="!canSubmitExam"
+              >
                 Guardar
               </va-button>
             </div>
@@ -273,7 +279,6 @@ import { computed, ref, watch } from 'vue'
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
 const {
-  // Tabla y búsqueda
   columns,
   filteredExams,
   tableState,
@@ -376,6 +381,16 @@ function handleSaveReference() {
     }, 0)
   }
 }
+
+const canSubmitExam = computed(() => {
+  // Validar campos requeridos
+  if (!String(newExam.value.name).trim()) return false
+  // Puedes agregar más validaciones aquí si lo necesitas
+  return true
+})
+
+// Filtrar la columna 'id' para no mostrarla en la tabla
+const columnsWithoutId = computed(() => columns.filter(col => col.key !== 'id'))
 
 onMounted(() => {
   fetchExams()
@@ -502,51 +517,48 @@ li {
 
 .property-block {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column; /* Cambia a columna para evitar sobreposición */
+  align-items: stretch;
   padding: 8px 12px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   margin-bottom: 12px;
   background-color: #f9f9f9;
+  min-width: 0;
+  word-break: break-word;
 }
 
-.property-details {
-  display: flex;
-  flex-direction: row; /* Cambia de column a row */
-  gap: 5rem;           /* Espacio entre propiedades */
-  align-items: center; /* Centra verticalmente */
-}
-
-.property-name {
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.property-unit {
-  font-size: 1.1rem;
-  color: #666;
-}
-
-.property-range{
-  font-size: 1rem;
-  color: #666;
+.property-header {
+  min-width: 0;
 }
 
 .property-name,
-.property-unit,
-.property-range,
-va-button {
-  margin: 0;
-  padding: 0;
+.property-unit {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-va-button {
-  line-height: 1;
-  height: auto;
+.property-variations {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+  min-width: 0;
+  word-break: break-word;
 }
 
+@media (max-width: 600px) {
+  .property-header {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .property-name,
+  .property-unit {
+    white-space: normal;
+    text-align: left;
+  }
+}
 
 </style>
 

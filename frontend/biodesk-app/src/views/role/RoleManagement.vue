@@ -30,7 +30,7 @@
           v-else
           :columns="roleColumns"
           :items="filteredRoles"
-          class="shadow rounded min-h-[120px]"
+          class="shadow rounded min-h-[200px]"
           :virtual-scroller="false"
           @row:click="onRowClick"
           :row-class="getRowClass"
@@ -42,9 +42,9 @@
             <span class="text-left w-full block">{{ rowData.description }}</span>
           </template>
           <template #cell(actions)="{ rowData }">
-            <div class="flex gap-2 justify-start" @click.stop>
-              <VaButton icon="edit" size="small" color="warning" @click="openEditRoleModal(rowData)">Editar</VaButton>
-              <VaButton icon="delete" size="small" color="danger" @click="deleteRole(rowData.id)">Eliminar</VaButton>
+            <div class="flex gap-2 justify-start">
+              <VaButton preset="primary" icon="edit" size="small" @click.stop="openEditRoleModal(rowData)"/>
+              <VaButton preset="primary" icon="va-delete" color="danger" size="small" @click.stop="deleteRole(rowData.id)"/>
             </div>
           </template>
         </va-data-table>
@@ -79,68 +79,92 @@
             </div>
             <div class="mb-4">
               <label class="block mb-1 font-semibold text-m">Permisos</label>
-              <div
-                v-for="(perm, idx) in dynamicPermissions"
-                :key="idx"
-                class="flex flex-wrap gap-2 mb-2 items-center"
-              >
+              <div class="grid grid-cols-4 gap-2 m-2">
                 <va-select
-                  v-model="perm.subject"
+                  v-model="newPermission.subject"
                   :options="subjectOptions"
-                  class="input-xs"
-                  placeholder="Subject"
+                  placeholder="Área"
                   size="small"
-                  clearable
-                  style="min-width: 120px; max-width: 180px;"
+                  class="col-span-1"
                 />
                 <va-select
-                  v-model="perm.actions"
+                  v-model="newPermission.actions"
                   :options="actionsOptions"
-                  class="input-xs"
-                  placeholder="Actions"
+                  placeholder="Acciones"
                   size="small"
                   multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  style="min-width: 120px; max-width: 180px;"
+                  class="col-span-1"
                 />
                 <va-select
-                  v-model="perm.fields"
-                  :options="getFieldsOptions(perm.subject)"
-                  class="input-xs"
-                  placeholder="Fields"
+                  v-model="newPermission.fields"
+                  :options="getFieldsOptions(newPermission.subject)"
+                  placeholder="Campos"
                   size="small"
                   multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
-                  style="min-width: 120px; max-width: 180px;"
+                  class="col-span-1"
                 />
                 <va-button
-                  color="danger"
+                  color="primary"
                   size="small"
-                  @click="removePermission(idx)"
-                  icon="delete"
-                  class="ml-1"
-                  aria-label="Eliminar permiso"
-                />
+                  @click="addPermission"
+                  class="col-span-1"
+                >
+                  Agregar permiso
+                </va-button>
               </div>
-              <VaButton
-                color="primary"
-                size="small"
-                class="mt-2"
-                @click="addPermission"
-                icon="add"
-                type="button"
+
+              <!-- Lista de permisos añadidos -->
+              <div
+                v-for="(permission, index) in permissions"
+                :key="index"
+                class="permission-block mt-4"
               >
-                Agregar Permiso
-              </VaButton>
+                <div class="permission-header grid grid-cols-4 gap-2 items-center mb-2 w-full">
+                  <div class="col-span-1 font-semibold permission-name">
+                    {{ permission.subject }}
+                  </div>
+                  <div class="col-span-1 permission-actions flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(action, aIdx) in (Array.isArray(permission.actions) ? permission.actions : String(permission.actions).split(','))"
+                      :key="aIdx"
+                      size="small"
+                      color="primary"
+                      class="mr-1 mb-1"
+                    >
+                      {{ action }}
+                    </VaChip>
+                  </div>
+                  <div class="col-span-1 permission-fields flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(field, fIdx) in (Array.isArray(permission.fields) ? permission.fields : String(permission.fields || '').split(',').filter(f => f.trim() !== ''))"
+                      :key="fIdx"
+                      size="small"
+                      color="info"
+                      class="mr-1 mb-1"
+                    >
+                      {{ field }}
+                    </VaChip>
+                  </div>
+                  <div class="flex justify-end">
+                    <VaButton
+                      preset="primary" 
+                      icon="va-delete"
+                      color="danger"
+                      size="small"
+                      @click="removePermission(index)"
+                      class="ml-2 self-start"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
               <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
-              <VaButton color="primary" type="submit">Guardar</VaButton>
+              <VaButton
+                color="primary"
+                type="submit"
+                :disabled="!canSaveNewRole"
+              >Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -236,7 +260,11 @@
             </div>
             <div class="flex justify-end gap-2 mt-6">
               <VaButton color="danger" type="reset" @click="closeEditRoleModal">Cancelar</VaButton>
-              <VaButton color="primary" type="submit">Guardar</VaButton>
+              <VaButton
+                color="primary"
+                type="submit"
+                :disabled="!canSaveEditRole"
+              >Guardar</VaButton>
             </div>
           </form>
         </va-card-content>
@@ -267,18 +295,31 @@
                 <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
                   <td class="border px-2 py-1 mr-1">{{ perm.subject }}</td>
                   <td class="border px-2 py-1 mr-1">
-                    <span v-if="Array.isArray(perm.actions)">
-                      {{ perm.actions.join(', ') }}
-                    </span>
-                    <span v-else>
-                      {{ perm.actions }}
-                    </span>
+                    <div class="flex flex-wrap gap-1">
+                      <VaChip
+                        v-for="(action, aIdx) in (Array.isArray(perm.actions) ? perm.actions : String(perm.actions).split(',').filter(a => a.trim() !== ''))"
+                        :key="aIdx"
+                        size="small"
+                        color="primary"
+                        class="mr-1 mb-1"
+                      >
+                        {{ action }}
+                      </VaChip>
+                    </div>
                   </td>
                   <td class="border px-2 py-1 mr-1">
-                    <span v-if="'fields' in perm && perm.fields">
-                      {{ perm.fields }}
-                    </span>
-                    <span v-else>-</span>
+                    <div class="flex flex-wrap gap-1">
+                      <VaChip
+                        v-for="(field, fIdx) in (('fields' in perm && perm.fields) ? (Array.isArray(perm.fields) ? perm.fields : String(perm.fields).split(',').filter(f => f.trim() !== '')) : [])"
+                        :key="fIdx"
+                        size="small"
+                        color="info"
+                        class="mr-1 mb-1"
+                      >
+                        {{ field }}
+                      </VaChip>
+                      <span v-if="!('fields' in perm) || !perm.fields || (Array.isArray(perm.fields) && perm.fields.length === 0)">-</span>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -374,11 +415,12 @@ const editingRoleId = ref<string | null>(null)
 const editRoleFields = ref<Record<string, { name: string; description: string }>>({});
 const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
 
-const dynamicPermissions = ref([
-  { subject: '', actions: '', fields: '' }
-]);
+const permissions = ref([]);
+const newPermission = ref({ subject: '', actions: [], fields: [] });
 
 const loadingRoles = ref(false)
+const savingNewRole = ref(false)
+const savingEditRole = ref(false)
 
 const fetchAllRoles = async () => {
   loadingRoles.value = true
@@ -443,20 +485,25 @@ function groupPermissionsWithFields(flatPermissions: string[]) {
 }
 
 function addPermission() {
-  dynamicPermissions.value.push({ subject: '', actions: '', fields: '' });
+  if (newPermission.value.subject && newPermission.value.actions.length > 0) {
+    permissions.value.push({
+      subject: newPermission.value.subject,
+      actions: [...newPermission.value.actions],
+      fields: [...newPermission.value.fields],
+    });
+    newPermission.value = { subject: '', actions: [], fields: [] };
+  }
 }
 
-function removePermission(idx: number) {
-  dynamicPermissions.value.splice(idx, 1);
+function removePermission(index) {
+  permissions.value.splice(index, 1);
 }
 
 const createRole = async () => {
-  if (!newRoleName.value || !newRoleDescription.value) {
-    alert('El nombre y la descripción del rol son obligatorios.')
-    return
-  }
-  const permissions = dynamicPermissions.value
-    .filter(p => p.subject && p.actions)
+  if (!newRoleName.value || !newRoleDescription.value) return;
+
+  const perms = permissions.value
+    .filter(p => p.subject && p.actions && p.actions.length > 0)
     .map(p => ({
       subject: p.subject,
       actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
@@ -464,26 +511,22 @@ const createRole = async () => {
         ? { fields: p.fields.join(',') }
         : {})
     }));
-  if (permissions.length === 0) {
-    alert('Debes agregar al menos un permiso válido.')
-    return
-  }
-  try {
-    const payload = {
-      name: newRoleName.value,
-      description: newRoleDescription.value,
-      permissions,
-    };
-    await createRoleApi(payload)
-    newRoleName.value = ''
-    newRoleDescription.value = ''
-    dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
-    await fetchAllRoles() // Recargar roles
-    alert('Rol creado con éxito.')
-  } catch (error) {
-    console.error('Error creating role:', error)
-    alert('Error al crear el rol.')
-  }
+
+  if (perms.length === 0) return;
+
+  const payload = {
+    name: newRoleName.value,
+    description: newRoleDescription.value,
+    permissions: perms,
+  };
+
+  await createRoleApi(payload);
+  newRoleName.value = '';
+  newRoleDescription.value = '';
+  permissions.value = [];
+  showNewRoleModal.value = false; // <-- Cierra el modal al guardar
+
+  await fetchAllRoles();
 }
 
 const assignPermissions = async () => {
@@ -499,7 +542,7 @@ const assignPermissions = async () => {
     alert('Permisos asignados con éxito.')
   } catch (error) {
     console.error('Error assigning permissions:', error)
-    alert('Error al asignar permisos.')
+    alert('Error al asignar permisos')
   }
 }
 
@@ -512,30 +555,23 @@ function startEditRole(role: RoleFromApi) {
     };
 }
 
-
 const saveEditRole = async (role: RoleFromApi) => {
-  const fields = editRoleFields.value[role.id]
+  const fields = editRoleFields.value[role.id];
   if (!fields.name || !fields.description) {
-    alert('El nombre y la descripción no pueden estar vacíos.')
-    return
+    return;
   }
-  try {
-    // Si quieres permitir editar permisos junto con nombre/desc, usa selectedPermissions
-    const permissions = groupPermissions(selectedPermissions.value)
-    const payload = {
-      name: fields.name,
-      description: fields.description,
-      permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
-    }
-    await updateRoleApi(role.id, payload)
-    editingRoleId.value = null
-    delete editRoleFields.value[role.id]
-    await fetchAllRoles()
-    alert('Rol actualizado con éxito.')
-  } catch (error) {
-    console.error('Error saving role:', error)
-    alert('Error al actualizar rol.')
-  }
+
+  const permissions = groupPermissions(selectedPermissions.value);
+  const payload = {
+    name: fields.name,
+    description: fields.description,
+    permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
+  };
+
+  await updateRoleApi(role.id, payload);
+  editingRoleId.value = null;
+  delete editRoleFields.value[role.id];
+  await fetchAllRoles();
 }
 
 const cancelEditRole = () => {
@@ -545,16 +581,10 @@ const cancelEditRole = () => {
 
 const deleteRole = async (roleId: string) => {
   if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
-    try {
-      await deleteRoleApi(roleId)
-      await fetchAllRoles()
-      if (selectedRoleId.value === roleId) {
-        selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
-      }
-      alert('Rol eliminado con éxito.')
-    } catch (error) {
-      console.error('Error deleting role:', error)
-      alert('Error al eliminar rol.')
+    await deleteRoleApi(roleId);
+    await fetchAllRoles();
+    if (selectedRoleId.value === roleId) {
+      selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
     }
   }
 }
@@ -607,6 +637,11 @@ function closeEditRoleModal() {
   editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
 }
 
+function closeNewRoleModal() {
+  showNewRoleModal.value = false
+  resetRoleForm()
+}
+
 function addEditRoleModalPermission() {
   editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
 }
@@ -616,12 +651,11 @@ function removeEditRoleModalPermission(idx: number) {
 }
 
 const saveEditRoleModal = async () => {
-  if (!editRoleIdForModal.value) return
-  const { name, description, permissions } = editRoleModalData.value
-  if (!name || !description) {
-    alert('El nombre y la descripción no pueden estar vacíos.')
-    return
-  }
+  if (!editRoleIdForModal.value) return;
+
+  const { name, description, permissions } = editRoleModalData.value;
+  if (!name || !description) return;
+
   const cleanPermissions = permissions
     .filter(p => p.subject && p.actions)
     .map(p => ({
@@ -630,19 +664,16 @@ const saveEditRoleModal = async () => {
       ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
         ? { fields: p.fields.join(',') }
         : {})
-    }))
-  try {
-    await updateRoleApi(editRoleIdForModal.value, {
-      name,
-      description,
-      permissions: cleanPermissions
-    })
-    closeEditRoleModal()
-    await fetchAllRoles()
-    alert('Rol actualizado con éxito.')
-  } catch (error) {
-    alert('Error al actualizar rol.')
-  }
+    }));
+
+  await updateRoleApi(editRoleIdForModal.value, {
+    name,
+    description,
+    permissions: cleanPermissions
+  });
+
+  closeEditRoleModal();
+  await fetchAllRoles();
 }
 
 const roleColumns = [
@@ -655,15 +686,11 @@ const roleColumns = [
 function resetRoleForm() {
   newRoleName.value = ''
   newRoleDescription.value = ''
-  dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+  permissions.value = []
+  newPermission.value = { subject: '', actions: [], fields: [] }
 }
 
 const showNewRoleModal = ref(false)
-
-function closeNewRoleModal() {
-  showNewRoleModal.value = false
-  resetRoleForm()
-}
 
 const search = ref('')
 
@@ -723,6 +750,25 @@ function onRowClick(event: { item: RoleFromApi }) {
 function getRowClass(row: RoleFromApi) {
   return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
 }
+
+// Agrega los computeds para los botones de guardar
+const canSaveNewRole = computed(() => {
+  if (!newRoleName.value.trim() || !newRoleDescription.value.trim()) return false
+  if (!permissions.value.length) return false
+  for (const p of permissions.value) {
+    if (!p.subject || !p.actions || !Array.isArray(p.actions) || p.actions.length === 0) return false
+  }
+  return true
+})
+
+const canSaveEditRole = computed(() => {
+  if (!editRoleModalData.value.name.trim() || !editRoleModalData.value.description.trim()) return false
+  if (!editRoleModalData.value.permissions.length) return false
+  for (const p of editRoleModalData.value.permissions) {
+    if (!p.subject || !p.actions || (Array.isArray(p.actions) ? p.actions.length === 0 : !p.actions)) return false
+  }
+  return true
+})
 </script>
 
 <style scoped>
@@ -752,8 +798,30 @@ function getRowClass(row: RoleFromApi) {
 /* Aumenta el tamaño de fuente de los encabezados de la tabla */
 .va-data-table thead th,
 ::v-deep(.va-data-table__table-th) {
-  font-size: 0.9rem !important;
+  font-size: 0.7rem !important;
   font-weight: bold !important;
   /* Puedes ajustar el tamaño aquí */
+}
+
+.permission-block {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+}
+
+.permission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.permission-name,
+.permission-actions,
+.permission-fields {
+  font-size: 14px;
+  color: #333;
+  word-break: break-word; /* Permite que los textos largos se dividan en varias líneas */
 }
 </style>

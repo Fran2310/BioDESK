@@ -33,6 +33,18 @@ export const validator = {
       'Solo se permiten letras y espacios'
     );
   },
+// Valida que el número de teléfono comience con un prefijo válido y tenga 11 dígitos exactos
+  phoneVenezuela: (v: string) => {
+    const validPrefixes = ['0414', '0424', '0416', '0426', '0412'];
+    if (!/^[0-9]{11}$/.test(v)) {
+      return 'El número debe tener exactamente 11 dígitos.';
+    }
+    const prefix = v.slice(0, 4);
+    if (!validPrefixes.includes(prefix)) {
+      return 'El número debe comenzar con un prefijo válido (0414, 0424, 0416, 0426, 0412).';
+    }
+    return true;
+  },
 };
 
 export function mapPermissionsFormat(permissions: any[] = []) {
@@ -132,4 +144,18 @@ export function formatCi(ci: string): string {
   const formattedNumbers = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   // Retorna con o sin letra
   return letter ? `${letter}-${formattedNumbers}` : formattedNumbers;
+}
+
+// Formatea fechas
+export function formatDate(dateString: string) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }

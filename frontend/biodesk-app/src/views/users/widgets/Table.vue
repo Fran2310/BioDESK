@@ -104,22 +104,10 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, watch } from 'vue';
   import { userApi } from '@/services/api';
-  import type { LabData } from '@/services/interfaces/lab';
-  import { useLabStore } from '@/stores/labStore';
   import { formatCi } from '@/services/utils';
   import { useModal, useToast } from 'vuestic-ui';
 
   const { init: notify } = useToast();
-
-  const labData: LabData = {
-    id: 29,
-    name: 'Laboratorium',
-    status: 'active',
-    rif: 'j853946049',
-    logoPath: '',
-  };
-  const lab = useLabStore();
-  lab.setCurrentLab(labData);
 
   const users = ref<any[]>([]);
   const usersLoading = ref(true);
