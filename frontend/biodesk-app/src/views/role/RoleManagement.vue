@@ -79,64 +79,75 @@
             </div>
             <div class="mb-4">
               <label class="block mb-1 font-semibold text-m">Permisos</label>
-              <div
-                v-for="(perm, idx) in dynamicPermissions"
-                :key="idx"
-                class="flex flex-wrap gap-2 mb-2 items-center"
-              >
+              <div class="grid grid-cols-4 gap-2 m-2">
                 <va-select
-                  v-model="perm.subject"
+                  v-model="newPermission.subject"
                   :options="subjectOptions"
-                  class="input-xs"
-                  placeholder="Subject"
+                  placeholder="Área"
                   size="small"
-                  clearable
-                  style="min-width: 120px; max-width: 180px;"
+                  class="col-span-1"
                 />
                 <va-select
-                  v-model="perm.actions"
+                  v-model="newPermission.actions"
                   :options="actionsOptions"
-                  class="input-xs"
-                  placeholder="Actions"
+                  placeholder="Acciones"
                   size="small"
                   multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  style="min-width: 120px; max-width: 180px;"
+                  class="col-span-1"
                 />
                 <va-select
-                  v-model="perm.fields"
-                  :options="getFieldsOptions(perm.subject)"
-                  class="input-xs"
-                  placeholder="Fields"
+                  v-model="newPermission.fields"
+                  :options="getFieldsOptions(newPermission.subject)"
+                  placeholder="Campos"
                   size="small"
                   multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
-                  style="min-width: 120px; max-width: 180px;"
+                  class="col-span-1"
                 />
                 <va-button
-                  color="danger"
+                  color="primary"
                   size="small"
-                  @click="removePermission(idx)"
-                  icon="delete"
-                  class="ml-1"
-                  aria-label="Eliminar permiso"
-                />
+                  @click="addPermission"
+                  class="col-span-1"
+                >
+                  Agregar permiso
+                </va-button>
               </div>
-              <VaButton
-                color="primary"
-                size="small"
-                class="mt-2"
-                @click="addPermission"
-                icon="add"
-                type="button"
+
+              <!-- Lista de permisos añadidos -->
+              <div
+                v-for="(permission, index) in permissions"
+                :key="index"
+                class="permission-block mt-4"
               >
-                Agregar Permiso
-              </VaButton>
+                <div class="permission-header grid grid-cols-4 gap-2 items-center mb-2 w-full">
+                  <div class="col-span-1 font-semibold permission-name">
+                    {{ permission.subject }}
+                  </div>
+                  <div class="col-span-1 permission-actions flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(action, aIdx) in (Array.isArray(permission.actions) ? permission.actions : String(permission.actions).split(','))"
+                      :key="aIdx"
+                      size="small"
+                      color="primary"
+                      class="mr-1 mb-1"
+                    >
+                      {{ action }}
+                    </VaChip>
+                  </div>
+                  <div class="col-span-1 permission-fields">
+                    {{ Array.isArray(permission.fields) ? permission.fields.join(', ') : permission.fields }}
+                  </div>
+                  <div class="flex justify-end">
+                    <VaButton
+                      icon="delete"
+                      color="danger"
+                      size="small"
+                      @click="removePermission(index)"
+                      class="ml-2 self-start"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
               <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
@@ -374,9 +385,8 @@ const editingRoleId = ref<string | null>(null)
 const editRoleFields = ref<Record<string, { name: string; description: string }>>({});
 const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
 
-const dynamicPermissions = ref([
-  { subject: '', actions: '', fields: '' }
-]);
+const permissions = ref([]);
+const newPermission = ref({ subject: '', actions: [], fields: [] });
 
 const loadingRoles = ref(false)
 
@@ -443,11 +453,18 @@ function groupPermissionsWithFields(flatPermissions: string[]) {
 }
 
 function addPermission() {
-  dynamicPermissions.value.push({ subject: '', actions: '', fields: '' });
+  if (newPermission.value.subject && newPermission.value.actions.length > 0) {
+    permissions.value.push({
+      subject: newPermission.value.subject,
+      actions: [...newPermission.value.actions],
+      fields: [...newPermission.value.fields],
+    });
+    newPermission.value = { subject: '', actions: [], fields: [] };
+  }
 }
 
-function removePermission(idx: number) {
-  dynamicPermissions.value.splice(idx, 1);
+function removePermission(index) {
+  permissions.value.splice(index, 1);
 }
 
 const createRole = async () => {
@@ -455,8 +472,9 @@ const createRole = async () => {
     alert('El nombre y la descripción del rol son obligatorios.')
     return
   }
-  const permissions = dynamicPermissions.value
-    .filter(p => p.subject && p.actions)
+  // Usar el array de permisos que realmente se muestra/agrega en el modal
+  const perms = permissions.value
+    .filter(p => p.subject && p.actions && p.actions.length > 0)
     .map(p => ({
       subject: p.subject,
       actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
@@ -464,7 +482,7 @@ const createRole = async () => {
         ? { fields: p.fields.join(',') }
         : {})
     }));
-  if (permissions.length === 0) {
+  if (perms.length === 0) {
     alert('Debes agregar al menos un permiso válido.')
     return
   }
@@ -472,12 +490,13 @@ const createRole = async () => {
     const payload = {
       name: newRoleName.value,
       description: newRoleDescription.value,
-      permissions,
+      permissions: perms,
     };
     await createRoleApi(payload)
     newRoleName.value = ''
     newRoleDescription.value = ''
-    dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+    permissions.value = []
+    // dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }] // ya no es necesario
     await fetchAllRoles() // Recargar roles
     alert('Rol creado con éxito.')
   } catch (error) {
@@ -499,7 +518,7 @@ const assignPermissions = async () => {
     alert('Permisos asignados con éxito.')
   } catch (error) {
     console.error('Error assigning permissions:', error)
-    alert('Error al asignar permisos.')
+    alert('Error al asignar permisos')
   }
 }
 
@@ -655,7 +674,7 @@ const roleColumns = [
 function resetRoleForm() {
   newRoleName.value = ''
   newRoleDescription.value = ''
-  dynamicPermissions.value = [{ subject: '', actions: '', fields: '' }]
+  permissions.value = []
 }
 
 const showNewRoleModal = ref(false)
@@ -755,5 +774,27 @@ function getRowClass(row: RoleFromApi) {
   font-size: 0.7rem !important;
   font-weight: bold !important;
   /* Puedes ajustar el tamaño aquí */
+}
+
+.permission-block {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+}
+
+.permission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.permission-name,
+.permission-actions,
+.permission-fields {
+  font-size: 14px;
+  color: #333;
+  word-break: break-word; /* Permite que los textos largos se dividan en varias líneas */
 }
 </style>
