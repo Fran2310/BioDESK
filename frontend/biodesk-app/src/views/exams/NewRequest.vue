@@ -1,3 +1,141 @@
+<template>
+  <div class="p-4 md:p-6">
+    <VaCard class="max-w-6xl mx-auto shadow-md">
+      <VaCardContent>
+        <div class="grid grid-cols-1 md:grid-cols-3">
+          <!-- Bloque de datos del paciente -->
+          <Transition name="slide-left" mode="out-in">
+            <div
+              v-if="selectedPatient"
+              class="md:col-span-1 bg-primary p-5 text-white rounded shadow-inner"
+            >
+              <h3 class="text-lg font-semibold text-center">
+                Datos del paciente
+              </h3>
+
+              <div class="capitalize text-sm flex flex-col h-full gap-2">
+                <h4 class="font-semibold text-lg mt-4">Datos personales</h4>
+                <div>
+                  <strong>CI:</strong> {{ formatCi(selectedPatient.ci) }}
+                </div>
+                <div>
+                  <strong>Nombres:</strong> {{ selectedPatient.name }}
+                  {{ selectedPatient.secondName }}
+                </div>
+                <div>
+                  <strong>Apellidos:</strong> {{ selectedPatient.lastName }}
+                  {{ selectedPatient.secondLastName }}
+                </div>
+                <div>
+                  <strong>Género:</strong>
+                  {{ formatGender(selectedPatient.gender) }}
+                </div>
+                <div>
+                  <strong>F. Nacimiento:</strong>
+                  {{ selectedPatient.birthDate?.slice(0, 10) }}
+                </div>
+                <div class="font-semibold text-lg mt-4">Datos de contacto</div>
+                <div class="lowercase">
+                  <strong class="capitalize">Correo:</strong>
+                  {{ selectedPatient.email }}
+                </div>
+                <div>
+                  <strong>N° de Teléfonos:</strong>
+                  {{ formatPhoneList(selectedPatient.phoneNums) }}
+                </div>
+
+                <div><strong>Dirección:</strong> {{ selectedPatient.dir }}</div>
+              </div>
+            </div>
+          </Transition>
+
+          <!-- Bloque de solicitud -->
+          <div class="md:col-span-2 space-y-6 p-5">
+            <!-- Campos de solicitud -->
+            <div class="space-y-4">
+              <VaSelect
+                v-model="form.medicTestCatalogId"
+                label="Examen a realizar"
+                class="w-full"
+                name="medicTestCatalogId"
+                :options="medicTestsCatalog"
+                :loading="medicTestsCatalogLoading"
+                :disabled="medicTestsCatalogLoading"
+                text-by="name"
+                value-by="id"
+              >
+                <template #prependInner>
+                  <VaIcon name="science" color="secondary" />
+                </template>
+              </VaSelect>
+
+              <VaSelect
+                v-model="form.medicHistoryId"
+                label="Buscar paciente"
+                class="w-full"
+                :options="patients"
+                text-by="display"
+                value-by="medicHistory.id"
+                searchable
+                clearable
+                :filter="filterPatients"
+                :loading="patientsLoading"
+                :disabled="patientsLoading"
+              >
+                <template #prependInner>
+                  <VaIcon name="assignment" color="secondary" />
+                </template>
+              </VaSelect>
+
+              <VaSelect
+                v-model="form.priority"
+                label="Prioridad"
+                class="w-full"
+                name="priority"
+                :options="priorities"
+                text-by="name"
+                value-by="priority"
+              >
+                <template #content>
+                  <VaChip class="mr-2" size="small">
+                    {{ form.priority }}
+                  </VaChip>
+                </template>
+                <template #prependInner>
+                  <VaIcon name="priority_high" color="secondary" />
+                </template>
+              </VaSelect>
+
+              <VaTextarea
+                label="Observaciones"
+                v-model="form.observation"
+                auto-grow
+                :rows="3"
+                counter
+                max-length="500"
+                class="w-full"
+              />
+            </div>
+
+            <!-- Botón -->
+            <div class="flex justify-end mt-6">
+              <VaButton
+                color="primary"
+                :loading="isLoading"
+                @click="submitForm"
+              >
+                Crear Solicitud
+              </VaButton>
+            </div>
+
+            <div v-if="error" class="text-danger text-center">{{ error }}</div>
+          </div>
+        </div>
+      </VaCardContent>
+    </VaCard>
+  </div>
+</template>
+
 <script setup lang="ts">
   import { ref, onMounted } from 'vue';
   import { medicTestRequestApi } from '@/services/api';
@@ -10,8 +148,8 @@
   import { watch } from 'vue';
   import { formatCi } from '@/services/utils';
 
-  import { Priority } from "@/services/types/global.type";
-  
+  import { Priority } from '@/services/types/global.type';
+
   const form = ref({
     priority: 'MEDIUM' as Priority,
     medicHistoryId: null,
@@ -70,7 +208,7 @@
   const formatGender = (gender: string) =>
     gender === 'MALE' ? 'Masculino' : gender === 'FEMALE' ? 'Femenino' : 'Otro';
 
-  async function fetchRoles() {
+  async function fetchCatalog() {
     const queries: GetExtendQuerys = {
       offset: 0,
       limit: 10,
@@ -114,7 +252,7 @@
 
   onMounted(() => {
     fetchPatients();
-    fetchRoles();
+    fetchCatalog();
   });
 
   const filterPatients = (option, query) => {
@@ -133,184 +271,20 @@
   ];
 </script>
 
-<template>
-  <div class="p-4 md:p-6">
-    <VaCard class="max-w-3xl mx-auto shadow-md">
-      <VaCardContent>
-        <!-- Form Container -->
-        <div class="space-y-6">
-          <Transition name="fade-slide" mode="out-in">
-            <!-- Paciente Info -->
-            <VaAlert
-              v-if="selectedPatient"
-              class="mt-2"
-              color="primary"
-              icon="person"
-              dense
-              border-color="info"
-              outline
-            >
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 capitalize">
-                <div>
-                  <strong>CI:</strong> {{ formatCi(selectedPatient.ci) }}
-                </div>
-                <div>
-                  <strong>Nombre:</strong> {{ selectedPatient.name }}
-                  {{ selectedPatient.lastName }}
-                </div>
-                <div class="lowercase">
-                  <strong class="capitalize">Correo:</strong>
-                  {{ selectedPatient.email }}
-                </div>
-                <div>
-                  <strong>Teléfonos:</strong>
-                  {{ formatPhoneList(selectedPatient.phoneNums) }}
-                </div>
-                <div>
-                  <strong>Género:</strong>
-                  {{ formatGender(selectedPatient.gender) }}
-                </div>
-                <div><strong>Dirección:</strong> {{ selectedPatient.dir }}</div>
-                <div>
-                  <strong>F. Nacimiento:</strong>
-                  {{ selectedPatient.birthDate?.slice(0, 10) }}
-                </div>
-              </div>
-            </VaAlert>
-          </Transition>
-          <!-- First Row: Priority, Medic History ID, Medic Test Catalog ID -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <VaSelect
-              v-model="form.priority"
-              label="Prioridad"
-              class="w-full"
-              name="priority"
-              :options="priorities"
-              text-by="name"
-              value-by="priority"
-            >
-              <template #prependInner>
-                <VaIcon name="priority_high" />
-              </template>
-            </VaSelect>
-
-            <VaSelect
-              v-model="form.medicHistoryId"
-              label="Buscar paciente"
-              :options="patients"
-              text-by="display"
-              value-by="medicHistory.id"
-              searchable
-              clearable
-              :filter="filterPatients"
-              :loading="patientsLoading"
-              :disabled="patientsLoading"
-            >
-              <template #prependInner>
-                <VaIcon name="assignment" />
-              </template>
-            </VaSelect>
-
-            <VaSelect
-              v-model="form.medicTestCatalogId"
-              label="Catálogo"
-              class="w-full"
-              name="medicTestCatalogId"
-              :options="medicTestsCatalog"
-              :loading="medicTestsCatalogLoading"
-              :disabled="medicTestsCatalogLoading"
-              text-by="name"
-              value-by="id"
-            >
-              <template #prependInner>
-                <VaIcon name="science" />
-              </template>
-            </VaSelect>
-          </div>
-
-          <!-- Notes -->
-          <VaTextarea
-            label="Observaciones"
-            v-model="form.observation"
-            auto-grow
-            :rows="2"
-            counter
-            max-length="500"
-            class="w-full"
-          />
-
-          <!-- Esto no va acá, Miguel
-          <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-medium mb-4">Result Properties</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <VaInput label="Glucose" v-model="form.resultProperties.glucose" placeholder="e.g. 90 mg/dL">
-                <template #prependInner>
-                  <VaIcon name="bloodtype" />
-                </template>
-              </VaInput>
-
-              <VaInput label="Hemoglobin" v-model="form.resultProperties.hemoglobin" placeholder="e.g. 12.3 g/dL">
-                <template #prependInner>
-                  <VaIcon name="bloodtype" />
-                </template>
-              </VaInput>
-            </div>
-
-            <div>
-              <VaTextarea
-                label="Observation"
-                v-model="form.observation"
-                auto-grow
-                :rows="3"
-                counter
-                max-length="500"
-              />
-            </div>
-          </div>
-          -->
-
-          <!-- Submit Button -->
-          <div class="flex justify-end mt-6">
-            <VaButton
-              color="primary"
-              :loading="isLoading"
-              @click="submitForm"
-              class="ml-2"
-            >
-              Crear Petición
-            </VaButton>
-          </div>
-
-          <!-- Error Message -->
-          <div v-if="error" class="text-danger text-center">{{ error }}</div>
-        </div>
-      </VaCardContent>
-    </VaCard>
-  </div>
-</template>
-
 <style scoped>
-  ::v-deep(.va-alert) {
-    border-width: 0.25rem !important;
+  ::v-deep(.va-card__content) {
+    padding: 0;
   }
-  ::v-deep(.va-alert .va-icon.material-icons) {
-    font-size: 32px !important;
-    color: #427383;
-  }
-
-  .fade-slide-enter-active,
-  .fade-slide-leave-active {
+  .slide-left-enter-active,
+  .slide-left-leave-active {
     transition: all 0.3s ease;
   }
-
-  .fade-slide-enter-from {
+  .slide-left-enter-from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-20px);
   }
-
-  .fade-slide-leave-to {
+  .slide-left-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-20px);
   }
 </style>
