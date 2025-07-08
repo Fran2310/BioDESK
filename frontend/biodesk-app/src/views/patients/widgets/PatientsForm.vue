@@ -9,6 +9,10 @@
   import { loginApiDPT } from '@/services/apiDPT';
   import { onMounted } from 'vue';
 
+  function isDate(val: unknown): val is Date {
+    return val instanceof Date;
+  }
+
   const props = defineProps({
     patient: {
       type: Object as PropType<Patient | null>,
@@ -84,22 +88,20 @@
         return;
       }
 
-      // Omit medicHistory, notes, and active if present in props.patient
-      const { medicHistory, notes, active, ...rest } = props.patient || {};
       newUser.value = {
         ...defaultNewPatient,
-        ...rest,
-        phoneNums: rest?.phoneNums?.length ? [...rest.phoneNums] : [''],
+        ...props.patient,
+        phoneNums: props.patient?.phoneNums?.length ? [...props.patient.phoneNums] : [''],
       } as Patient;
       // Parse CI into letter and number if possible
-      if (rest.ci && typeof rest.ci === 'string') {
-        const match = rest.ci.match(/^([VEve])[- ]?(\d+)$/);
+      if (props.patient?.ci && typeof props.patient.ci === 'string') {
+        const match = props.patient.ci.match(/^([VEve])[- ]?(\d+)$/);
         if (match) {
           ciLetter.value = match[1].toUpperCase();
           ciNumber.value = match[2];
         } else {
           ciLetter.value = 'V';
-          ciNumber.value = rest.ci.replace(/[^0-9]/g, '');
+          ciNumber.value = props.patient.ci.replace(/[^0-9]/g, '');
         }
       } else {
         ciLetter.value = 'V';
@@ -134,11 +136,12 @@
       newUser.value.dir = formatDir(dirInput);
       // Ensure birthDate is in ISO 8601 UTC format
       if (newUser.value.birthDate) {
+        const birthDate = newUser.value.birthDate;
         let iso = '';
-        if (newUser.value.birthDate instanceof Date) {
-          iso = newUser.value.birthDate.toISOString();
-        } else if (typeof newUser.value.birthDate === 'string') {
-          const d = new Date(newUser.value.birthDate);
+        if (isDate(birthDate)) {
+          iso = birthDate.toISOString();
+        } else if (typeof birthDate === 'string') {
+          const d = new Date(birthDate);
           if (!isNaN(d.getTime())) {
             iso = d.toISOString();
           }
