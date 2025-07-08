@@ -1,6 +1,7 @@
 export interface INavigationRoute {
   name: string;
   displayName: string;
+  subtitle: string;
   meta: { icon: string };
   children?: INavigationRoute[];
 }
@@ -21,6 +22,7 @@ export default {
     {
       name: 'Dashboard',
       displayName: 'Dashboard',
+      subtitle: 'Ver las estadísticas recientes del laboratorio',
       meta: {
         icon: 'dashboard',
       },
@@ -28,6 +30,7 @@ export default {
     {
       name: 'Sistema',
       displayName: 'Sistema',
+      subtitle: 'Administrar el personal asignado y los perfiles del usuario y laboratorio',
       meta: {
         icon: 'group',
       },
@@ -53,6 +56,7 @@ export default {
     {
       name: 'Patients',
       displayName: 'Pacientes',
+      subtitle: 'Añadir, buscar, editar o eliminar pacientes',
       meta: {
         icon: 'healing',
       },
@@ -60,6 +64,7 @@ export default {
     {
       name: '',
       displayName: 'Exámenes',
+      subtitle: 'Administrar los análisis pendientes y completados',
       meta: {
         icon: 'troubleshoot',
       },
