@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  // Importaciones de Vue y librerías
   import type { PropType } from 'vue';
   import { computed, ref, watch } from 'vue';
   import { useForm } from 'vuestic-ui';
@@ -9,10 +10,12 @@
   import { loginApiDPT } from '@/services/apiDPT';
   import { onMounted } from 'vue';
 
+  // Función para validar si un valor es una instancia de Date
   function isDate(val: unknown): val is Date {
     return val instanceof Date;
   }
 
+  // Definición de las props que recibe el formulario
   const props = defineProps({
     patient: {
       type: Object as PropType<Patient | null>,
@@ -24,9 +27,9 @@
     },
   });
 
-  // New default user with patient fields
+  // Objeto base para un nuevo paciente
   const defaultNewPatient = {
-    id: 0, // will be filled later
+    id: 0, // Se asigna luego
     ci: '',
     name: '',
     lastName: '',
@@ -39,9 +42,10 @@
     birthDate: null,
   };
 
+  // Estado reactivo del paciente en edición/creación
   const newUser = ref<Patient>({ ...defaultNewPatient } as Patient);
 
-  // Dirección DPT
+  // Hooks y datos para la dirección DPT (dependiente de selecciones)
   const {
     dirInput,
     entityOptions,
@@ -51,18 +55,21 @@
     loadEntities,
   } = useCascadingDPT();
 
+  // Estado de carga para los selects de dirección
   const isDptLoading = ref(true);
 
+  // Al montar el componente, inicia sesión en la API DPT y carga las entidades
   onMounted(async () => {
     await loginApiDPT();
     await loadEntities();
     isDptLoading.value = false;
   });
 
-  // CI letter select (V or E)
+  // Estado para la cédula (letra y número)
   const ciLetter = ref('V');
   const ciNumber = ref('');
 
+  // Computado para detectar cambios no guardados en el formulario
   const isFormHasUnsavedChanges = computed(() => {
     return (
       newUser.value.name !== (props.patient?.name || '') ||
@@ -72,6 +79,7 @@
     );
   });
 
+  // Expone funciones y estados al padre (por ejemplo, para resetear el formulario)
   defineExpose({
     isFormHasUnsavedChanges,
     resetForm: () => {
@@ -79,6 +87,7 @@
     },
   });
 
+  // Observa cambios en la prop patient para inicializar el formulario en modo edición
   watch(
     [() => props.patient],
     () => {
@@ -96,7 +105,7 @@
         ...props.patient,
         phoneNums: props.patient?.phoneNums?.length ? [...props.patient.phoneNums] : [''],
       } as Patient;
-      // Parse CI into letter and number if possible
+      // Parseo de la cédula para separar letra y número
       if (props.patient?.ci && typeof props.patient.ci === 'string') {
         const match = props.patient.ci.match(/^([VEve])[- ]?(\d+)$/);
         if (match) {
@@ -115,10 +124,13 @@
     { immediate: true }
   );
 
+  // Hook de formulario de Vuestic UI
   const form = useForm('add-patient-form');
 
+  // Definición de los eventos emitidos por el formulario
   const emit = defineEmits(['close', 'save']);
 
+  // Formatea la dirección a partir de los selects y el textarea
   function formatDir(input) {
     const parts = [
       input.entity?.label,
@@ -130,14 +142,17 @@
     return parts.join(', ');
   }
 
+  /**
+   * Maneja el guardado del formulario, emitiendo el paciente con los datos formateados.
+   */
   const onSave = () => {
     console.log('onSave called, newUser.value:', newUser.value);
     if (form.validate()) {
-      // Concatenate CI letter and number before saving
+      // Concatena la cédula antes de guardar
       newUser.value.ci = ciLetter.value + ciNumber.value;
-      // Concatenate DPT dirección
+      // Formatea la dirección
       newUser.value.dir = formatDir(dirInput);
-      // Ensure birthDate is in ISO 8601 UTC format
+      // Formatea la fecha de nacimiento a ISO 8601
       if (newUser.value.birthDate) {
         const birthDate = newUser.value.birthDate;
         let iso = '';
@@ -149,7 +164,7 @@
             iso = d.toISOString();
           }
         }
-        // Remove milliseconds: 2025-06-15T14:30:00.000Z -> 2025-06-15T14:30:00Z
+        // Quita los milisegundos del string ISO
         if (iso) {
           newUser.value.birthDate = iso.replace(/\.\d{3}Z$/, 'Z');
         }
@@ -158,6 +173,8 @@
     }
   };
 
+  // Añade un nuevo campo de teléfono
+  const lastPhoneInputRef = ref(null);
   const addPhone = () => {
     newUser.value.phoneNums.push('');
   };
@@ -176,8 +193,9 @@
       ref="add-patient-form"
       class="flex-col justify-start items-start gap-4 inline-flex w-full"
     >
-     
+      <!-- Formulario de datos personales del paciente -->
       <div class="self-stretch flex-col justify-start items-start gap-4 flex">
+        <!-- Nombre y Apellido -->
         <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
           <div class="flex flex-col w-full sm:w-1/2">
             <VaInput
@@ -199,6 +217,7 @@
           </div>
         </div>
 
+        <!-- Segundo nombre y segundo apellido -->
         <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
           <div class="flex flex-col w-full sm:w-1/2">
             <VaInput
@@ -218,6 +237,7 @@
           </div>
         </div>
 
+        <!-- Email y cédula -->
         <div class="flex gap-4 flex-col sm:flex-row w-full items-centera ver, ">
           <div class="flex flex-col w-full sm:w-1/2">
             <VaInput
@@ -234,11 +254,9 @@
               v-model="ciLetter"
               :options="['V', 'E']"
               class="w-16"
-             
               name="ciLetter"
             />
             <div style="height: 20px;"></div>
-
             <VaInput
               v-model="ciNumber"
               label="CI"
@@ -250,6 +268,7 @@
           </div>
         </div>
 
+        <!-- Fecha de nacimiento y género -->
         <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
           <VaDateInput
             v-model="newUser.birthDate"
@@ -268,9 +287,10 @@
           />
         </div>
 
+        <!-- Dirección DPT (selección dependiente) -->
         <div class="flex gap-4 flex-col sm:flex-row w-full">
           <div class="flex flex-col w-full sm:w-1/2">
-            <!-- Dirección DPT -->
+            <!-- Selects de dirección dependientes -->
             <div class="flex flex-col gap-2 w-full">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             <VaSelect
@@ -319,6 +339,7 @@
             </div>
             <div style="min-height: 70px;"></div>
           </div>
+          <!-- Teléfonos -->
           <div class="w-full sm:w-1/2 pr-10">
             <label class="block mb-1 font-semibold">Números de Teléfono</label>
             <div
@@ -326,16 +347,15 @@
               :key="index"
               class="flex items-center gap-2 mb-2"
             >
-              
-                <VaInput
-                  v-model="newUser.phoneNums[index]"
-                  label="Teléfono"
-                  :rules="[validator.required,validator.onlyNumbers, validator.phoneVenezuela]"
-                  :name="`phone-${index}`"
-                  class="self-start"
-                />
-                <div style="height: 70px;"></div>
-              
+              <VaInput
+                v-model="newUser.phoneNums[index]"
+                label="Teléfono"
+                :rules="[validator.required,validator.onlyNumbers, validator.phoneVenezuela]"
+                :name="`phone-${index}`"
+                class="self-start"
+                :ref="index === newUser.phoneNums.length - 1 ? lastPhoneInputRef : null"
+              />
+              <div style="height: 70px;"></div>
               <VaButton
                 icon="delete"
                 color="danger"
@@ -344,14 +364,12 @@
                 @click="removePhone(index)"
                 v-if="newUser.phoneNums.length > 1"
               />
-          
             </div>
             <VaButton size="small" @click="addPhone">Añadir teléfono</VaButton>
           </div>
         </div>
 
-        
-
+        <!-- Botones de acción del formulario -->
         <div
           class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center"
         >
