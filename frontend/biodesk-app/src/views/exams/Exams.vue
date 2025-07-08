@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <div class="relative">
+        <div class="relative overflow-x-hidden">
           <VaDataTable
             :columns="[
               { label: 'CI', key: 'ci' },
@@ -76,6 +76,8 @@
                   message="Descargar Resultados"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -92,6 +94,8 @@
                   message="Completar Examen"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -108,6 +112,8 @@
                   message="Subir Resultados"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -124,6 +130,8 @@
                   message="Empezar Examen"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -140,6 +148,8 @@
                   message="Colocar Examen en Pendiente"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -155,6 +165,8 @@
                   message="Modificar Prioridad"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -170,6 +182,8 @@
                   message="Cancelar Examen"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
@@ -186,6 +200,8 @@
                   message="Eliminar Examen"
                   class="flex items-center justify-center"
                   hover-out-timeout=0
+                  placement="top-end"
+                  :auto-placement="true"
                 >
                   <VaButton
                     preset="primary"
