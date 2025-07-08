@@ -176,25 +176,7 @@
       ref="add-patient-form"
       class="flex-col justify-start items-start gap-4 inline-flex w-full"
     >
-      <!-- <VaFileUpload
-        v-model="avatar"
-        type="single"
-        hide-file-list
-        class="self-stretch justify-start items-center gap-4 inline-flex"
-      >
-        <UserAvatar :user="newUser" size="large" />
-        <VaButton preset="primary" size="small">Add image</VaButton>
-        <VaButton
-          v-if="avatar"
-          preset="primary"
-          color="danger"
-          size="small"
-          icon="delete"
-          class="z-10"
-          @click.stop="avatar = undefined"
-        />
-      </VaFileUpload>
- -->
+     
       <div class="self-stretch flex-col justify-start items-start gap-4 flex">
         <div class="flex gap-4 flex-col sm:flex-row w-full items-start">
           <div class="flex flex-col w-full sm:w-1/2">
@@ -348,7 +330,7 @@
                 <VaInput
                   v-model="newUser.phoneNums[index]"
                   label="Teléfono"
-                  :rules="[validator.required, validator.onlyNumbers]"
+                  :rules="[validator.required,validator.onlyNumbers, validator.phoneVenezuela]"
                   :name="`phone-${index}`"
                   class="self-start"
                 />
@@ -368,7 +350,7 @@
           </div>
         </div>
 
-        <!-- Removed Active checkbox and Notes textarea -->
+        
 
         <div
           class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center"
