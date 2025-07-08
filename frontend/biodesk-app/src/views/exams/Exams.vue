@@ -2,7 +2,6 @@
   <div>
     <VaCard>
       <VaCardContent>
-        <!-- Search -->
         <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
           <div
             class="flex flex-col md:flex-row gap-2 justify-start items-center"
@@ -38,7 +37,6 @@
           </div>
         </div>
 
-        <!-- Table -->
         <div class="relative">
           <VaDataTable
             :columns="[
@@ -70,83 +68,138 @@
                 {{ priorityLabels[rowData.priority] ?? rowData.priority }}
               </va-chip>
             </template>
+            
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-start">
-                <VaButton
+                <VaPopover
                   v-if="rowData.state === 'COMPLETED'"
-                  preset="primary"
-                  size="medium"
-                  icon="download"
-                  color="info"
-                  aria-label="Acceder a examen"
-                  @click.stop="downloadResults(rowData.id)"
-                />
-                <VaButton
+                  message="Descargar Resultados"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="download"
+                    color="info"
+                    aria-label="Acceder a examen"
+                    @click.stop="downloadResults(rowData.id)"
+                  />
+                </VaPopover>
+
+                <VaPopover
                   v-if="rowData.state === 'TO_VERIFY'"
-                  preset="primary"
-                  size="medium"
-                  icon="check"
-                  color="success"
-                  aria-label="Completar examen"
-                  @click.stop="onCompleteExam(rowData)"
-                />
-                <VaButton
+                  message="Completar Examen"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="check"
+                    color="success"
+                    aria-label="Completar examen"
+                    @click.stop="onCompleteExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
                   v-if="rowData.state === 'IN_PROCESS'"
-                  preset="primary"
-                  size="medium"
-                  icon="cloud_upload"
-                  color="success"
-                  aria-label="Subir resultados"
-                  @click.stop="goToUploadResults(rowData.id)"
-                />
-                <VaButton
+                  message="Subir Resultados"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="cloud_upload"
+                    color="success"
+                    aria-label="Subir resultados"
+                    @click.stop="goToUploadResults(rowData.id)"
+                  />
+                </VaPopover>
+
+                <VaPopover
                   v-if="rowData.state === 'PENDING'"
-                  preset="primary"
-                  size="medium"
-                  icon="arrow_forward"
-                  color="info"
-                  aria-label="Empezar examen"
-                  @click.stop="onProcessExam(rowData)"
-                />
-                <VaButton
+                  message="Empezar Examen"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="arrow_forward"
+                    color="info"
+                    aria-label="Empezar examen"
+                    @click.stop="onProcessExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
                   v-if="rowData.state === 'CANCELED'"
-                  preset="primary"
-                  size="medium"
-                  icon="arrow_forward"
-                  color="info"
-                  aria-label="Colocar examen en pendiente"
-                  @click.stop="onPendExam(rowData)"
-                />
-                <VaButton
-                  preset="primary"
-                  size="medium"
-                  icon="priority_high"
-                  aria-label="Modificar examen"
-                  @click.stop="openChangePriorityModal(rowData.id)"
-                />
-                <VaButton
+                  message="Colocar Examen en Pendiente"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="arrow_forward"
+                    color="info"
+                    aria-label="Colocar examen en pendiente"
+                    @click.stop="onPendExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
+                  message="Modificar Prioridad"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="priority_high"
+                    aria-label="Modificar examen"
+                    @click.stop="openChangePriorityModal(rowData.id)"
+                  />
+                </VaPopover>
+
+                <VaPopover
                   v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
-                  preset="primary"
-                  size="medium"
-                  icon="cancel"
-                  color="danger"
-                  aria-label="Cancelar examen"
-                  @click.stop="onCancelExam(rowData)"
-                />
-                <VaButton
+                  message="Cancelar Examen"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="cancel"
+                    color="danger"
+                    aria-label="Cancelar examen"
+                    @click.stop="onCancelExam(rowData)"
+                  />
+                </VaPopover>
+
+                <VaPopover
                   v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
-                  preset="primary"
-                  size="medium"
-                  icon="delete"
-                  color="danger"
-                  aria-label="Eliminar examen"
-                  @click.stop="onDeleteExam(rowData)"
-                />
+                  message="Eliminar Examen"
+                  class="flex items-center justify-center"
+                  hoverOutTimeout=0
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="delete"
+                    color="danger"
+                    aria-label="Eliminar examen"
+                    @click.stop="onDeleteExam(rowData)"
+                  />
+                </VaPopover>
               </div>
             </template>
           </VaDataTable>
 
-          <!-- Loading overlay -->
           <div
             v-if="isLoading"
             class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10"
@@ -155,14 +208,12 @@
           </div>
         </div>
 
-        <!-- Exam Details Modal -->
         <VaModal v-model="showModal" hide-default-actions>
           <DetailsExam
           :selectedExam="selectedExam">
           </DetailsExam>
         </VaModal>
 
-        <!-- Change Priority Modal -->
         <VaModal v-model="showStateModal" hide-default-actions>
           <ChangePriorityModal
             :changePriorityRequestId="changePriorityRequestId"
@@ -171,7 +222,6 @@
           />
         </VaModal>
 
-        <!-- Poner en pendiente examen Modal -->
         <VaModal v-model="showToPendModal" hide-default-actions>
           <ToPendExam
           :examToPend="examToPend"
@@ -181,7 +231,6 @@
           </ToPendExam>
         </VaModal>
 
-        <!-- Empezar examen Modal -->
         <VaModal v-model="showToProcessModal" hide-default-actions>
           <ToProcessExam
           :examToProcess="examToProcess"
@@ -191,7 +240,6 @@
           </ToProcessExam>
         </VaModal>
 
-        <!-- Cancelar examen Modal -->
         <VaModal v-model="showCancelModal" hide-default-actions>
           <CancelExam
           :examToCancel="examToCancel"
@@ -201,7 +249,6 @@
           </CancelExam>
         </VaModal>
 
-        <!-- Completar examen Modal -->
         <VaModal v-model="showCompleteModal" hide-default-actions>
           <CompleteExam 
           :examToComplete="examToComplete"
@@ -211,7 +258,6 @@
           </CompleteExam>
         </VaModal>
 
-        <!-- Delete Confirmation Modal -->
         <VaModal v-model="showDeleteModal" hide-default-actions>
           <DeleteExam 
           :examToDelete="examToDelete"
@@ -220,7 +266,7 @@
           >
           </DeleteExam>
         </VaModal>
-        <!-- Pagination -->
+        
         <div
           class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
         >
