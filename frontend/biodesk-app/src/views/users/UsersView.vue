@@ -6,14 +6,14 @@
 
   import Table from './widgets/Table.vue';
 
-  const doShowEditUserModal = ref(false);
+  const doShowAddUserModal = ref(false);
   const doShowAddExistingModal = ref(false);
 
   const userToEdit = ref<CreateUserWithRoleIdData | null>(null);
 
   const showAddNewUserModal = () => {
     userToEdit.value = null;
-    doShowEditUserModal.value = true;
+    doShowAddUserModal.value = true;
   };
 
   const showAddExistingModal = (user: CreateUserWithRoleIdData) => {
@@ -23,7 +23,12 @@
 
   const usersTableRef = ref(Table);
 
-  function onAddExistingModal() {
+  function onAddUser() {
+    doShowAddUserModal.value = true;
+    usersTableRef.value?.refreshUsers();
+  }
+
+  function onAddExistingUser() {
     doShowAddExistingModal.value = false;
     usersTableRef.value?.refreshUsers();
   }
@@ -57,8 +62,7 @@
   </VaCard>
 
   <VaModal
-    v-slot="{ cancel, ok }"
-    v-model="doShowEditUserModal"
+    v-model="doShowAddUserModal"
     size="small"
     mobile-fullscreen
     close-button
@@ -71,7 +75,7 @@
       ref="editFormRef"
       :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
-      @close="cancel"
+      @close="onAddUser()"
       @save="usersTableRef.value?.refresh()"
     />
   </VaModal>
@@ -91,7 +95,7 @@
       :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
       @close="doShowAddExistingModal = false"
-      @save="onAddExistingModal()"
+      @save="onAddExistingUser()"
     />
   </VaModal>
 </template>

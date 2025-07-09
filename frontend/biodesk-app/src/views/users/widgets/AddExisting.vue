@@ -4,8 +4,6 @@ import { useForm } from 'vuestic-ui'
 import { validator } from '../../../services/utils'
 import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
 import { userApi } from '@/services/api'
-import { useLabStore } from '@/stores/labStore';
-import type { LabData } from '@/services/interfaces/lab'
 import { roleApi } from '@/services/api'
 import type { GetExtendQuerys } from '@/services/interfaces/global';
 
