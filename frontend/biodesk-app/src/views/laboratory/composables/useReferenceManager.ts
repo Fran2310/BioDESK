@@ -1,6 +1,7 @@
-//modal for managing references and variations
+// Composable para gestionar el modal de referencias y variaciones
 import { useReferenceModal } from './useReferenceModal';
 
+// Desestructura los estados y helpers del modal de referencia
 const {
     showModal,
     showVariationModal,
@@ -9,26 +10,27 @@ const {
     isEditingReference,
     selectedReferenceIndex,
     selectedVariation,
-    selectedVariationIndex,
     isEditingVariation
 } = useReferenceModal();
 
 
+// Guarda una referencia (nueva o editada) en el arreglo de referencias
 export function saveReference() {
     let newIndex: number | null = null;
     if (isEditingReference.value) {
+        // Si está en modo edición, actualiza la referencia existente
         if (selectedReferenceIndex.value !== null) {
             referenceData.value[selectedReferenceIndex.value] = { ...selectedReference.value, variations: [...selectedReference.value.variations] }
         }
         showModal.value = false
-        // Limpiar selectedReference para evitar referencias compartidas y refrescar el formulario
+        // Limpia selectedReference para evitar referencias compartidas y refrescar el formulario
         selectedReference.value = { name: '', unit: '', variations: [] }
     } else {
-        // Push la nueva referencia
+        // Si es una nueva referencia, la agrega al arreglo
         referenceData.value.push({ ...selectedReference.value, variations: [] })
         newIndex = referenceData.value.length - 1
         showModal.value = false
-        // Abrir automáticamente el modal de variación para la nueva referencia
+        // Abre automáticamente el modal de variación para la nueva referencia
         selectedReferenceIndex.value = referenceData.value.length - 1
         selectedVariation.value = { ageGroup: '', gender: '', range: '' }
         isEditingVariation.value = false
@@ -38,6 +40,7 @@ export function saveReference() {
     return newIndex
 }
 
+// Prepara el modal para editar una referencia existente
 export function editReference(index:number) {
     selectedReferenceIndex.value = index;
     selectedReference.value = { ...referenceData.value[index] };
@@ -45,6 +48,7 @@ export function editReference(index:number) {
     showModal.value = true;
 }
 
+// Elimina una referencia del arreglo por índice
 export function removeReference(index:number) {
     referenceData.value.splice(index, 1);
 }
