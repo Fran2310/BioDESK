@@ -260,7 +260,6 @@
     v-model="isDetailsModalOpen"
     hide-default-actions
     size="large"
-    blur
     close-button
   >
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>

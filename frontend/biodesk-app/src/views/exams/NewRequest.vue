@@ -165,7 +165,6 @@
 <script setup lang="ts">
   import { ref, onMounted, watch } from 'vue';
   import { useBreakpoint, useToast } from 'vuestic-ui';
-  import { useRoute } from 'vue-router';
 
   import {
     medicTestRequestApi,
@@ -181,7 +180,6 @@
   const props = defineProps<{ patientId?: string }>();
 
   const breakpoints = useBreakpoint();
-  const route = useRoute();
   const { init: notify } = useToast();
 
   const form = ref({

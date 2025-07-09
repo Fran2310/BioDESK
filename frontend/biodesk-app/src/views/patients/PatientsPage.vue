@@ -51,7 +51,6 @@
     <VaModal
       v-model="doShowEditPatientModal"
       size="medium"
-      blur
       mobile-fullscreen
       close-button
       hide-default-actions
