@@ -43,7 +43,22 @@ export function useRoleModals() {
   }
 
   function addEditRoleModalPermission() {
-    editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
+    // Only add if newPermission has a subject and actions
+    const perm = editRoleModalData.value.newPermission
+    if (!perm || !perm.subject || !perm.actions || (Array.isArray(perm.actions) && perm.actions.length === 0)) return
+    // Clone and normalize actions/fields to string for consistency
+    const newPerm = {
+      subject: perm.subject,
+      actions: Array.isArray(perm.actions) ? perm.actions.join(',') : perm.actions,
+      fields: Array.isArray(perm.fields) ? perm.fields.join(',') : (perm.fields || '')
+    }
+    // Replace array to trigger reactivity
+    editRoleModalData.value.permissions = [
+      ...editRoleModalData.value.permissions,
+      newPerm
+    ]
+    // Reset newPermission
+    editRoleModalData.value.newPermission = { subject: '', actions: [], fields: [] }
   }
 
   function removeEditRoleModalPermission(idx: number) {

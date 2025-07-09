@@ -30,7 +30,7 @@
             class="shadow rounded min-h-[200px]"
             :virtual-scroller="false"
             @row:click="onRowClick"
-            :row-class="getRowClass"
+            
           >
             <template #cell(role)="{ rowData }">
               <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
@@ -120,11 +120,11 @@
         :get-fields-options="getFieldsOptions"
         :loading="false"
         :can-save="canSaveEditRole"
-        @update:roleName="v => editRoleModalData.name = v"
-        @update:roleDescription="v => editRoleModalData.description = v"
-        @update:newPermission="v => editRoleModalData.newPermission = v"
-        @add-permission="addEditRoleModalPermission"
-        @remove-permission="removeEditRoleModalPermission"
+        @update:roleName="v => { editRoleModalData.name = v; forceUpdateEditModal() }"
+        @update:roleDescription="v => { editRoleModalData.description = v; forceUpdateEditModal() }"
+        @update:newPermission="v => { editRoleModalData.newPermission = v; forceUpdateEditModal() }"
+        @add-permission="() => { addEditRoleModalPermission(); forceUpdateEditModal() }"
+        @remove-permission="perm => { removeEditRoleModalPermission(perm); forceUpdateEditModal() }"
         @submit="saveEditRoleModal(selectedRoleId)"
         @cancel="closeEditRoleModal"
       />
@@ -269,9 +269,16 @@ import { useRoleActions } from './composables/useRoleActions'
 import { useRoleModals } from './composables/useRoleModals'
 import RoleFormWidget from './RoleFormWidget.vue'
 
+
 // Estado de loading global y modal
 const loading = ref(false)
 const modalLoading = ref(false)
+
+// Forzar actualización del modal de edición para que Vue reactive los cambios y el botón de guardar
+const editModalForceUpdate = ref(0)
+function forceUpdateEditModal() {
+  editModalForceUpdate.value++
+}
 
 
 const api = useRoleApi()
