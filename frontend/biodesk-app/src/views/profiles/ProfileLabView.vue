@@ -120,6 +120,14 @@
         <VaButton icon="upload" color="info" @click="onOpenUpload">
           Subir logo
         </VaButton>
+        <VaButton
+          icon="download"
+          color="info"
+          @click="fetchBackDB"
+          :loading="isBackupLoading"
+        >
+          Respaldo de DB
+        </VaButton>
       </VaCardActions>
     </VaCard>
 
@@ -359,6 +367,7 @@
   const editFormRef = ref();
   const showPhonesMenu = ref(false);
   const logoKey = ref(Date.now());
+  const isBackupLoading = ref(false);
 
   const editableForm = reactive({
     name: '',
@@ -445,6 +454,26 @@
       : [];
     isEditModalOpen.value = true;
   };
+
+  async function fetchBackDB() {
+    isBackupLoading.value = true;
+    try {
+      const response = await labApi.getBackDB();
+      const data = response.data;
+
+      if (data?.url) {
+        window.open(data.url);
+      } else {
+        initToast('Alerta', 'No se encontró la URL', 'danger');
+        console.warn('No se encontró la URL en la respuesta.');
+      }
+    } catch (e: any) {
+      initToast('Alerta', 'No se encontró la URL', 'danger');
+      console.error('Error al obtener la URL:', e);
+    } finally {
+      isBackupLoading.value = false;
+    }
+  }
 
   async function submitEdit() {
     loading.value = true;
