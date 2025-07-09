@@ -21,7 +21,7 @@ import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 import { UpdateLabDto } from '../dto/update-lab.dto';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
-import { StorageService } from 'src/storage/storage.service';
+import { StorageService } from 'src/storage/services/storage.service';
 
 @Injectable()
 export class LabService {
