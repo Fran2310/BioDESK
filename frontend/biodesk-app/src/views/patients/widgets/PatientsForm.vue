@@ -374,7 +374,7 @@
           class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center"
         >
           <VaButton preset="secondary" color="secondary" @click="$emit('close')"
-            >Cancel</VaButton
+            >Cancelar</VaButton
           >
           <VaButton :disabled="!isValid" @click="onSave">{{
             saveButtonLabel

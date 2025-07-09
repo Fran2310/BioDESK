@@ -121,9 +121,9 @@
   const onPatientDelete = async (patient: Patient) => {
     const agreed = await confirm({
       title: 'Delete user',
-      message: `Are you sure you want to delete ${patient.name} ${patient.lastName}?`,
-      okText: 'Delete',
-      cancelText: 'Cancel',
+      message: `¿Estás seguro de que quieres eliminar al paciente ${patient.name} ${patient.lastName}?`,
+      okText: 'Eliminar',
+      cancelText: 'Cancelar',
       size: 'small',
       maxWidth: '380px',
     });
@@ -235,17 +235,17 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-end">
+      <div class="flex gap-2 justify-start">
         <VaButton
           preset="primary"
-          size="small"
+          size="medium"
           icon="edit"
           aria-label="Edit patient"
           @click.stop="$emit('edit-patient', rowData as Patient)"
         />
         <VaButton
           preset="primary"
-          size="small"
+          size="medium"
           icon="va-delete"
           color="danger"
           aria-label="Delete patient"
