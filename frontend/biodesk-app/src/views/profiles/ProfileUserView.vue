@@ -192,9 +192,10 @@
         'search-fields': ['email'],
         'search-term': data.email,
         offset: 0,
-        limit: 100,
+        limit: 1,
         includePermissions: false,
       };
+
       const response = await userApi.getUsersMix(query);
       userData.value = response.data.data[0] || null;
       console.log(userData.value);
