@@ -31,11 +31,11 @@
           :items="filteredExams"
           :loading="loading"
           class="shadow rounded min-h-[200px]"
+          @row:click="onExamRowClick"
         >
           <template #cell(supplies)="{ value }">
             <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
           </template>
-
           <template #cell(actions)="{ row }">
             <div class="flex gap-2 justify-start">
               <VaPopover
@@ -77,6 +77,86 @@
         </va-data-table>
       </va-card-content>
     </va-card>
+
+    <!-- Modal de detalles del examen -->
+    <VaModal v-model="showExamDetailsModal" hide-default-actions size="large">
+      <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
+      <div v-if="selectedExam">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <strong>Nombre:</strong>
+            <span>{{ selectedExam.name }}</span>
+          </div>
+          <div>
+            <strong>Precio:</strong>
+            <span>${{ selectedExam.price }}</span>
+          </div>
+          <div class="md:col-span-2">
+            <strong>Descripción:</strong>
+            <span>{{ selectedExam.description || '-' }}</span>
+          </div>
+        </div>
+        <div class="mb-2 font-semibold text-base text-primary">Insumos:</div>
+        <div class="mb-4">
+          <span v-if="selectedExam.supplies && selectedExam.supplies.length">
+            <VaChip
+              v-for="(supply, idx) in selectedExam.supplies"
+              :key="idx"
+              size="small"
+              color="info"
+              class="mr-1 mb-1"
+            >
+              {{ supply }}
+            </VaChip>
+          </span>
+          <span v-else>-</span>
+        </div>
+        <div class="mb-2 font-semibold text-base text-primary">Propiedades:</div>
+        <div class="overflow-auto">
+          <table class="w-full text-left border-collapse border rounded">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border-b pb-1 px-2 py-1">Nombre</th>
+                <th class="border-b pb-1 px-2 py-1">Unidad</th>
+                <th class="border-b pb-1 px-2 py-1">Variaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(prop, idx) in selectedExam.properties" :key="idx">
+                <td class="pr-4 border-b px-2 py-1 font-semibold">{{ prop.name }}</td>
+                <td class="pr-4 border-b px-2 py-1">{{ prop.unit }}</td>
+                <td class="pr-4 border-b px-2 py-1">
+                  <div class="flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(variation, vIdx) in (prop.variations || prop.valueReferences || [])"
+                      :key="vIdx"
+                      outline
+                      size="small"
+                      class="flex items-center gap-2 px-2"
+                    >
+                      <span
+                        :class="[
+                          'inline-block w-3 h-3 rounded-full mr-2',
+                          variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
+                          variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
+                          variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
+                          'bg-purple-300'
+                        ]"
+                      ></span>
+                      {{ variation.gender }}/{{ variation.ageGroup }}: {{ variation.range }}
+                    </VaChip>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div v-else>No se ha seleccionado un examen válido.</div>
+      <template #footer>
+        <VaButton color="primary" @click="showExamDetailsModal = false">Cerrar</VaButton>
+      </template>
+    </VaModal>
 
     <!-- Modal para agregar/editar examen -->
     <va-modal v-model="examForm.showAddModal" hide-default-actions>
@@ -286,13 +366,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   VaInput, VaDataTable, VaButton, VaModal, VaCard,
   VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
 } from 'vuestic-ui'
 
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
@@ -414,7 +494,13 @@ onMounted(() => {
   fetchExams()
 })
 
+const showExamDetailsModal = ref(false)
+const selectedExam = ref<any>(null)
 
+function onExamRowClick(event: { item: any }) {
+  selectedExam.value = event.item
+  showExamDetailsModal.value = true
+}
 
 </script>
 
