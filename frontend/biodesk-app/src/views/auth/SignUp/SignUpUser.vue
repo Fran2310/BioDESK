@@ -356,7 +356,7 @@
     try {
       // Formatear los datos para el backend
       const data: RegisterData = {
-        ci: formData.ci,
+        ci: `${formData.ciType.toLowerCase()}${formData.ci}`,
         name: formData.name,
         lastName: formData.lastname,
         email: formData.email,
