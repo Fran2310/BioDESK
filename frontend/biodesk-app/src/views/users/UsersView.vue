@@ -71,7 +71,7 @@
     </h1>
     <AddNewUser
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
-      @close="doShowAddExistingModal = false"
+      @close="doShowAddUserModal = false"
       @save="onAddUser()"
     />
   </VaModal>
