@@ -346,7 +346,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-import { VaButton, VaProgressCircle } from 'vuestic-ui'
+import { VaButton, VaProgressCircle, useModal } from 'vuestic-ui'
 
 import { useRolePermissions } from './composables/useRolePermissions'
 import { useRoleApi } from './composables/useRoleApi'
@@ -420,8 +420,36 @@ const handleCreateRole = async () => {
   }
 }
 
-// Eliminar rol
+const editFormRef = ref()
+const { confirm } = useModal()
+
+const beforeEditFormModalClose = async (hide: () => unknown) => {
+  if (editFormRef.value?.isFormHasUnsavedChanges) {
+    const agreed = await confirm({
+      maxWidth: '380px',
+      message: 'El formulario tiene cambios sin guardar. ¿Seguro que lo quiere cerrar?',
+      size: 'small',
+    });
+    if (agreed) {
+      hide();
+    }
+  } else {
+    hide();
+  }
+}
+
+// Eliminar rol con confirmación
 const deleteRole = async (roleId: string) => {
+  // Elimina cualquier confirm nativo, solo usa el modal de Vuestic UI
+  const agreed = await confirm({
+    title: 'Eliminar rol',
+    message: '¿Seguro que quieres eliminar este rol?',
+    okText: 'Eliminar',
+    cancelText: 'Cancelar',
+    size: 'small',
+    maxWidth: '380px',
+  })
+  if (!agreed) return
   loading.value = true
   try {
     await api.deleteRole(roleId)

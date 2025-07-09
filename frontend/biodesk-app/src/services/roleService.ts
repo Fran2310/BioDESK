@@ -56,8 +56,7 @@ export async function assignPermissionsApi(
   roleId: string,
   permissions: { subject: string; actions: string }[]
 ): Promise<any> {
-  // No hay endpoint directo en roleApi, deberías implementarlo en backend si lo necesitas
-  // Por ahora, puedes usar updateRoleApi para actualizar los permisos
+  //updateRoleApi para actualizar los permisos
   return updateRoleApi(roleId, { permissions })
 }
 

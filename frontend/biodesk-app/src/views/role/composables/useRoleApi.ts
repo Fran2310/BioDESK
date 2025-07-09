@@ -10,18 +10,18 @@ import {
 } from '../../../services/roleService'
 import type { RoleFromApi, ApiRolePermission, CreateRolePayload } from '../../../services/roleService'
 
+
+
 export function useRoleApi() {
   const roles = ref<RoleFromApi[]>([])
   const permissionGroups = ref<Record<string, any[]>>({})
-  const loadingRoles = ref(false)
+  const loadingRoles = ref(true)
 
   const fetchAllRoles = async () => {
     loadingRoles.value = true
     try {
       const res = await getRoles();
       roles.value = res || [];
-    } catch (error) {
-      alert('Error al cargar roles.');
     } finally {
       loadingRoles.value = false
     }
@@ -32,8 +32,6 @@ export function useRoleApi() {
     try {
       permissionGroups.value = await getPermissions();
       roles.value = await getRoles();
-    } catch (error) {
-      alert('Error al cargar permisos.');
     } finally {
       loadingRoles.value = false
     }
@@ -50,10 +48,8 @@ export function useRoleApi() {
   }
 
   const deleteRole = async (roleId: string) => {
-    if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
-      await deleteRoleApi(roleId);
-      await fetchAllRoles();
-    }
+    await deleteRoleApi(roleId);
+    await fetchAllRoles();
   }
 
   return {
@@ -67,3 +63,4 @@ export function useRoleApi() {
     deleteRole
   }
 }
+ 
