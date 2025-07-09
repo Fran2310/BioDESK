@@ -326,10 +326,13 @@
                 <strong>Nombre:</strong>
                 <span>{{ selectedRole.role }}</span>
               </div>
+              <!-- Quitar el bloque de ID -->
+              <!--
               <div>
                 <strong>ID:</strong>
                 <span>{{ selectedRole.id }}</span>
               </div>
+              -->
               <div class="md:col-span-2">
                 <strong>Descripción:</strong>
                 <span>{{ selectedRole.description }}</span>
