@@ -163,7 +163,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, watch } from 'vue';
+  import { ref, onMounted, watch, watchEffect } from 'vue';
   import { useBreakpoint, useToast } from 'vuestic-ui';
 
   import {
@@ -175,6 +175,13 @@
   import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
   import { formatCi, validator } from '@/services/utils';
   import type { Priority } from '@/services/types/global.type';
+  import { PatientWithHistoryId } from '@/services/types/patientType';
+
+  const props = defineProps<{ 
+    patient?: PatientWithHistoryId 
+  }>(); 
+
+  console.log(props.patient);
 
   const breakpoints = useBreakpoint();
 
@@ -308,6 +315,14 @@
     fetchPatients();
     fetchCatalog();
   });
+
+  watchEffect(() => {
+  if (props.patient) {
+      selectedPatient.value = props.patient;
+      form.value.medicHistoryId = props.patient.medicHistoryId ?? null;
+    }
+  });
+
 
   /**
    * Helpers de formato
