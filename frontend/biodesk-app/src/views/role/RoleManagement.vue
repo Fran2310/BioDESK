@@ -40,24 +40,40 @@
             </template>
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-start">
-                <VaButton
-                  preset="primary"
-                  size="medium"
-                  icon="edit"
-                  color="info"
-                  aria-label="Editar rol"
-                  class="no-hover-effect flex items-center justify-center"
-                  @click.stop="openEditRoleModal(rowData)"
-                />
-                <VaButton
-                  preset="primary"
-                  size="medium"
-                  icon="delete"
-                  color="danger"
-                  aria-label="Eliminar rol"
-                  class="no-hover-effect flex items-center justify-center"
-                  @click.stop="deleteRole(rowData.id)"
-                />
+                <VaPopover
+                  message="Editar rol"
+                  class="flex items-center justify-center"
+                  hover-out-timeout="0"
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="edit"
+                    color="info"
+                    aria-label="Editar rol"
+                    class="no-hover-effect flex items-center justify-center"
+                    @click.stop="openEditRoleModal(rowData)"
+                  />
+                </VaPopover>
+                <VaPopover
+                  message="Eliminar rol"
+                  class="flex items-center justify-center"
+                  hover-out-timeout="0"
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="delete"
+                    color="danger"
+                    aria-label="Eliminar rol"
+                    class="no-hover-effect flex items-center justify-center"
+                    @click.stop="deleteRole(rowData.id)"
+                  />
+                </VaPopover>
               </div>
             </template>
           </va-data-table>
@@ -301,56 +317,70 @@
     <va-modal v-model="showRoleDetailsModal" hide-default-actions size="700px">
       <va-card>
         <va-card-title>
-          <span class="text-lg font-bold">Detalles del Rol</span>
+          <span class="text-lg font-bold text-primary">Detalles del rol</span>
         </va-card-title>
         <va-card-content>
           <div v-if="selectedRole">
-            <div class="mb-2"><b>Nombre:</b> {{ selectedRole.role }}</div>
-            <div class="mb-2"><b>Descripción:</b> {{ selectedRole.description }}</div>
-            <div class="mb-2"><b>ID:</b> {{ selectedRole.id }}</div>
-            <div class="mb-2"><b>Permisos:</b></div>
-            <table class="w-full border mt-2">
-              <thead>
-                <tr>
-                  <th class="border px-2 py-1 text-left">Área</th>
-                  <th class="border px-2 py-1 text-left">Acciones</th>
-                  <th class="border px-2 py-1 text-left">Campos</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
-                  <td class="border px-2 py-1 mr-1">{{ perm.subject }}</td>
-                  <td class="border px-2 py-1 mr-1">
-                    <div class="flex flex-wrap gap-1">
-                      <VaChip
-                        v-for="(action, aIdx) in (Array.isArray(perm.actions) ? perm.actions : String(perm.actions).split(',').filter(a => a.trim() !== ''))"
-                        :key="aIdx"
-                        size="small"
-                        color="primary"
-                        class="mr-1 mb-1"
-                      >
-                        {{ action }}
-                      </VaChip>
-                    </div>
-                  </td>
-                  <td class="border px-2 py-1 mr-1">
-                    <div class="flex flex-wrap gap-1">
-                      <VaChip
-                        v-for="(field, fIdx) in (('fields' in perm && perm.fields) ? (Array.isArray(perm.fields) ? perm.fields : String(perm.fields).split(',').filter(f => f.trim() !== '')) : [])"
-                        :key="fIdx"
-                        size="small"
-                        color="info"
-                        class="mr-1 mb-1"
-                      >
-                        {{ field }}
-                      </VaChip>
-                      <span v-if="!('fields' in perm) || !perm.fields || (Array.isArray(perm.fields) && perm.fields.length === 0)">-</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <strong>Nombre:</strong>
+                <span>{{ selectedRole.role }}</span>
+              </div>
+              <div>
+                <strong>ID:</strong>
+                <span>{{ selectedRole.id }}</span>
+              </div>
+              <div class="md:col-span-2">
+                <strong>Descripción:</strong>
+                <span>{{ selectedRole.description }}</span>
+              </div>
+            </div>
+            <div class="mb-2 font-semibold text-base text-primary">Permisos:</div>
+            <div class="overflow-auto">
+              <table class="w-full text-left border-collapse border rounded">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="border-b pb-1 px-2 py-1">Área</th>
+                    <th class="border-b pb-1 px-2 py-1">Acciones</th>
+                    <th class="border-b pb-1 px-2 py-1">Campos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
+                    <td class="pr-4 border-b px-2 py-1 font-semibold">{{ perm.subject }}</td>
+                    <td class="pr-4 border-b px-2 py-1">
+                      <div class="flex flex-wrap gap-1">
+                        <VaChip
+                          v-for="(action, aIdx) in (Array.isArray(perm.actions) ? perm.actions : String(perm.actions).split(',').filter(a => a.trim() !== ''))"
+                          :key="aIdx"
+                          size="small"
+                          color="primary"
+                          class="mr-1 mb-1"
+                        >
+                          {{ action }}
+                        </VaChip>
+                      </div>
+                    </td>
+                    <td class="pr-4 border-b px-2 py-1">
+                      <div class="flex flex-wrap gap-1">
+                        <VaChip
+                          v-for="(field, fIdx) in (('fields' in perm && perm.fields) ? (Array.isArray(perm.fields) ? perm.fields : String(perm.fields).split(',').filter(f => f.trim() !== '')) : [])"
+                          :key="fIdx"
+                          size="small"
+                          color="info"
+                          class="mr-1 mb-1"
+                        >
+                          {{ field }}
+                        </VaChip>
+                        <span v-if="!('fields' in perm) || !perm.fields || (Array.isArray(perm.fields) && perm.fields.length === 0)">-</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
+          <div v-else>No se ha seleccionado un rol válido.</div>
         </va-card-content>
         <template #footer>
           <va-button color="primary" @click="showRoleDetailsModal = false">Cerrar</va-button>
@@ -649,5 +679,19 @@ onMounted(async () => {
   justify-content: center;
   z-index: 20;
   pointer-events: all;
+}
+
+.va-card-content table {
+  min-width: 600px;
+  font-size: 13px;
+}
+.va-card-content th,
+.va-card-content td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+.va-card-content th {
+  background: #f3f4f6;
+  font-weight: bold;
 }
 </style>
