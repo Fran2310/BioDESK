@@ -21,6 +21,7 @@ import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 import { UpdateLabDto } from '../dto/update-lab.dto';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
+import { StorageService } from 'src/storage/storage.service';
 
 @Injectable()
 export class LabService {
@@ -32,6 +33,7 @@ export class LabService {
     private readonly sharedCacheService: SharedCacheService,
     private readonly labDbManageService: LabDbManageService,
     private readonly auditService: AuditService,
+    private readonly storageService: StorageService,
   ) {}
 
   /**
@@ -302,6 +304,18 @@ export class LabService {
         error,
       );
       throw new BadRequestException('Failed to rollback lab creation');
+    }
+  }
+
+  async getDatabaseSQL(labId) {
+    try {
+      const bucket = 'db-dumps'
+      const dbName = await this.systemPrisma.getLabDbName(labId);
+      const fullPath = `${bucket}/${dbName}.sql`;
+      return this.storageService.getFileUrl(fullPath);
+    } catch (error) {
+      this.logger.error(`Error al obtener el SQL`);
+      throw new NotFoundException(`${error.message}`);
     }
   }
 }
