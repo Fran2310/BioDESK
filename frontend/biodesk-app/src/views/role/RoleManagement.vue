@@ -22,32 +22,33 @@
     </va-card>
           
     <va-card class="max-w-full w-full">
-      <va-card-content>
-        <div v-if="loadingRoles" class="flex justify-center items-center py-8">
-          <va-progress-circle indeterminate size="large" color="primary" />
+      <va-card-content style="position: relative; min-height: 220px;">
+        <div style="position: relative;">
+          <va-data-table
+            :columns="roleColumns"
+            :items="filteredRoles"
+            class="shadow rounded min-h-[200px]"
+            :virtual-scroller="false"
+            @row:click="onRowClick"
+            :row-class="getRowClass"
+          >
+            <template #cell(role)="{ rowData }">
+              <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
+            </template>
+            <template #cell(description)="{ rowData }">
+              <span class="text-left w-full block">{{ rowData.description }}</span>
+            </template>
+            <template #cell(actions)="{ rowData }">
+              <div class="flex gap-2 justify-start">
+                <VaButton preset="primary" icon="edit" size="small" @click.stop="openEditRoleModal(rowData)"/>
+                <VaButton preset="primary" icon="va-delete" color="danger" size="small" @click.stop="deleteRole(rowData.id)"/>
+              </div>
+            </template>
+          </va-data-table>
+          <div v-if="loading" class="table-spinner-overlay-fix">
+            <va-progress-circle indeterminate size="large" color="primary" />
+          </div>
         </div>
-        <va-data-table
-          v-else
-          :columns="roleColumns"
-          :items="filteredRoles"
-          class="shadow rounded min-h-[200px]"
-          :virtual-scroller="false"
-          @row:click="onRowClick"
-          :row-class="getRowClass"
-        >
-          <template #cell(role)="{ rowData }">
-            <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
-          </template>
-          <template #cell(description)="{ rowData }">
-            <span class="text-left w-full block">{{ rowData.description }}</span>
-          </template>
-          <template #cell(actions)="{ rowData }">
-            <div class="flex gap-2 justify-start">
-              <VaButton preset="primary" icon="edit" size="small" @click.stop="openEditRoleModal(rowData)"/>
-              <VaButton preset="primary" icon="va-delete" color="danger" size="small" @click.stop="deleteRole(rowData.id)"/>
-            </div>
-          </template>
-        </va-data-table>
       </va-card-content>
     </va-card>
 
@@ -58,7 +59,7 @@
           <span class="text-lg font-bold">Agregar nuevo rol</span>
         </va-card-title>
         <va-card-content>
-          <form @submit.prevent="createRole">
+          <form @submit.prevent="handleCreateRole">
             <div class="mb-4">
               <label class="block mb-1 font-semibold text-m">Nombre</label>
               <va-input
@@ -163,8 +164,17 @@
               <VaButton
                 color="primary"
                 type="submit"
-                :disabled="!canSaveNewRole"
-              >Guardar</VaButton>
+                :disabled="!canSaveNewRole || modalLoading"
+              >
+                <span v-if="modalLoading">
+                  <svg class="animate-spin h-5 w-5 text-white inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  Guardando...
+                </span>
+                <span v-else>Guardar</span>
+              </VaButton>
             </div>
           </form>
         </va-card-content>
@@ -337,17 +347,19 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { VaButton, VaProgressCircle } from 'vuestic-ui'
-import { useRoleModals } from './composables/useRoleModals'
+
 import { useRolePermissions } from './composables/useRolePermissions'
 import { useRoleApi } from './composables/useRoleApi'
-
-// Composables
 import { useRoleForm } from './composables/useRoleForm'
-// Declarar primero los composables de API para obtener las funciones necesarias
+import { useRoleActions } from './composables/useRoleActions'
+import { useRoleModals } from './composables/useRoleModals'
 
-// useRoleApi solo una vez, antes de los demás composables
+// Estado de loading global y modal
+const loading = ref(false)
+const modalLoading = ref(false)
+
+
 const api = useRoleApi()
-// Ya no redeclarar variables, solo usar api.roles, api.loadingRoles, etc. en el resto del archivo
 
 const {
   showNewRoleModal,
@@ -386,12 +398,7 @@ const {
 
 const { getFieldsOptions } = useRolePermissions()
 
-// Eliminado: ya se usa api.<prop> directamente
-
-
-// Acciones y helpers de roles (guardar, botón guardar)
-import { useRoleActions } from './composables/useRoleActions'
-const { createRole, canSaveNewRole } = useRoleActions({
+const { createRole: createRoleApi, canSaveNewRole } = useRoleActions({
   newRoleName,
   newRoleDescription,
   permissions,
@@ -400,11 +407,30 @@ const { createRole, canSaveNewRole } = useRoleActions({
   showNewRoleModal
 })
 
+// Función para crear rol con loading modal
+const handleCreateRole = async () => {
+  modalLoading.value = true
+  try {
+    await createRoleApi()
+    closeNewRoleModal(resetRoleForm)
+  } catch (e) {
+    // Puedes mostrar un toast de error aquí si lo deseas
+  } finally {
+    modalLoading.value = false
+  }
+}
+
 // Eliminar rol
 const deleteRole = async (roleId: string) => {
-  await api.deleteRole(roleId)
-  if (selectedRoleId.value === roleId) {
-    selectedRoleId.value = null
+  loading.value = true
+  try {
+    await api.deleteRole(roleId)
+    if (selectedRoleId.value === roleId) {
+      selectedRoleId.value = null
+    }
+    await api.fetchAllRoles()
+  } finally {
+    loading.value = false
   }
 }
 
@@ -468,7 +494,6 @@ function getRowClass(row: any) {
 }
 
 // Guardar botones
-// canSaveNewRole viene de useRoleActions
 const canSaveEditRole = computed(() => {
   if (!editRoleModalData.value.name.trim() || !editRoleModalData.value.description.trim()) return false
   if (!editRoleModalData.value.permissions.length) return false
@@ -477,9 +502,6 @@ const canSaveEditRole = computed(() => {
   }
   return true
 })
-
-// Reset form
-// resetRoleForm viene de useRoleForm
 
 // Watchers y lifecycle
 watch(selectedRoleId, (roleId) => {
@@ -498,7 +520,13 @@ watch(selectedRoleId, (roleId) => {
 }, { immediate: true })
 
 onMounted(async () => {
-  await api.fetchAllPermissions()
+  loading.value = true
+  try {
+    await api.fetchAllPermissions()
+    await api.fetchAllRoles()
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -554,5 +582,19 @@ onMounted(async () => {
   font-size: 14px;
   color: #333;
   word-break: break-word; /* Permite que los textos largos se dividan en varias líneas */
+}
+/* Spinner overlay para la tabla de roles */
+.table-spinner-overlay-fix {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: all;
 }
 </style>
