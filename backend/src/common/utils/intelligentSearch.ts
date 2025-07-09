@@ -40,7 +40,7 @@ export async function intelligentSearch<T>(
     if (!searchTerm?.trim() || !searchFields?.length) {
       const [total, results] = await Promise.all([
         model.count({ where }),
-        model.findMany({ where, skip, take, ...restOptions }),
+        model.findMany({ where, ...restOptions }),
       ]);
       return { results, total };
     }

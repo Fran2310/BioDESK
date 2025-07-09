@@ -169,7 +169,7 @@ export class UserService {
     const filteredTotal = enrichedData.length;
 
     return {
-      total: labUsersTotal,
+      total: filteredTotal,
       offset,
       limit,
       data: enrichedData, // Ahora devolvemos los datos combinados
