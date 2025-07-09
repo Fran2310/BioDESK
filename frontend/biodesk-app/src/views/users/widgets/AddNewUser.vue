@@ -1,95 +1,95 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
-import { useForm } from 'vuestic-ui'
-import { validator } from '../../../services/utils'
-import type { CreateUserWithRoleIdData } from '@/services/interfaces/user'
-import { userApi, roleApi } from '@/services/api'
-import type { GetExtendQuerys } from '@/services/interfaces/global'
-import { useToast } from 'vuestic-ui'
+  import { ref, computed, onMounted, reactive } from 'vue';
+  import { useForm } from 'vuestic-ui';
+  import { validator } from '../../../services/utils';
+  import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
+  import { userApi, roleApi } from '@/services/api';
+  import type { GetExtendQuerys } from '@/services/interfaces/global';
+  import { useToast } from 'vuestic-ui';
 
-const emit = defineEmits(['close', 'save'])
+  const emit = defineEmits(['close', 'save']);
 
-const { init: notify } = useToast()
+  const { init: notify } = useToast();
 
-// === Modelo principal del formulario (reactivo) ===
-const formData = reactive({
-  email: '',
-  password: '',
-  name: '',
-  lastName: '',
-  ci: '',
-  ciType: 'V', // V = Venezolano, E = Extranjero, etc.
-  roleId: null,
-})
+  // === Modelo principal del formulario (reactivo) ===
+  const formData = reactive({
+    email: '',
+    password: '',
+    name: '',
+    lastName: '',
+    ci: '',
+    ciType: 'V', // V = Venezolano, E = Extranjero, etc.
+    roleId: null,
+  });
 
-// === Control de formulario y estado ===
-const form = useForm('add-user-form')
-const isSavingUser = ref(false)
+  // === Control de formulario y estado ===
+  const form = useForm('add-user-form');
+  const isSavingUser = ref(false);
 
-// === Roles dinámicos desde el backend ===
-const roles = ref<
-  { id: number; role: string; description: string; permissions: object }[]
->([])
-const rolesLoading = ref(true)
+  // === Roles dinámicos desde el backend ===
+  const roles = ref<
+    { id: number; role: string; description: string; permissions: object }[]
+  >([]);
+  const rolesLoading = ref(true);
 
-onMounted(() => {
-  fetchRoles()
-})
+  onMounted(() => {
+    fetchRoles();
+  });
 
-// === Computado para detectar cambios en el formulario ===
-const isFormHasUnsavedChanges = computed(() => {
-  return Object.keys(formData).some((key) => {
-    return formData[key as keyof CreateUserWithRoleIdData] 
-  })
-})
+  // === Computado para detectar cambios en el formulario ===
+  const isFormHasUnsavedChanges = computed(() => {
+    return Object.keys(formData).some((key) => {
+      return formData[key as keyof CreateUserWithRoleIdData];
+    });
+  });
 
-// Expone al componente padre si hay cambios sin guardar
-defineExpose({
-  isFormHasUnsavedChanges,
-})
+  // Expone al componente padre si hay cambios sin guardar
+  defineExpose({
+    isFormHasUnsavedChanges,
+  });
 
-// === Carga de roles desde la API ===
-async function fetchRoles() {
-  const queries: GetExtendQuerys = {
-    offset: 0,
-    limit: 10,
-    includeData: true,
+  // === Carga de roles desde la API ===
+  async function fetchRoles() {
+    const queries: GetExtendQuerys = {
+      offset: 0,
+      limit: 10,
+      includeData: true,
+    };
+
+    const response = await roleApi.getRoles(queries);
+    roles.value = Array.isArray(response.data.data) ? response.data.data : [];
+    rolesLoading.value = false;
+
+    // Si no hay roleId asignado, asignar el primero
+    if (!formData.roleId && roles.value.length > 0) {
+      formData.roleId = roles.value[0].id;
+    }
   }
 
-  const response = await roleApi.getRoles(queries)
-  roles.value = Array.isArray(response.data.data) ? response.data.data : []
-  rolesLoading.value = false
-
-  // Si no hay roleId asignado, asignar el primero
-  if (!formData.roleId && roles.value.length > 0) {
-    formData.roleId = roles.value[0].id
-  }
-}
-
-// === Guardado del usuario usando la API ===
-const onSave = async () => {
-  if (form.validate()) {
-    // Formatear los datos para el backend
-    const data = {
+  // === Guardado del usuario usando la API ===
+  const onSave = async () => {
+    if (form.validate()) {
+      // Formatear los datos para el backend
+      const data = {
         ci: `${formData.ciType}${formData.ci}`,
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        roleId: formData.roleId
+        roleId: formData.roleId,
       };
-    isSavingUser.value = true
-    try {
-      await userApi.createUserWithRoleId({ ...data }) // se pasa como objeto plano
-      emit('save', { ...data })
-      notify({ message: 'Usuario creado con éxito', color: 'success' })
-    } catch (error: any) {
-      notify({ message: error.message, color: 'danger' })
-    } finally {
-      isSavingUser.value = false
+      isSavingUser.value = true;
+      try {
+        await userApi.createUserWithRoleId({ ...data }); // se pasa como objeto plano
+        emit('save', { ...data });
+        notify({ message: 'Usuario creado con éxito', color: 'success' });
+      } catch (error: any) {
+        notify({ message: error.message, color: 'danger' });
+      } finally {
+        isSavingUser.value = false;
+      }
     }
-  }
-}
+  };
 </script>
 
 <template>
@@ -99,10 +99,7 @@ const onSave = async () => {
     class="flex-col justify-start items-start gap-4 inline-flex w-full"
   >
     <div class="self-stretch flex-col justify-start items-start gap-4 flex">
-
-      <div
-        class="gap-2 flex flex-wrap items-start valuesCenter"
-      >
+      <div class="gap-2 flex w-full flex-wrap items-start valuesCenter">
         <VaSelect
           label="Cédula"
           required-mark
@@ -190,9 +187,7 @@ const onSave = async () => {
             <template #appendInner>
               <VaIcon
                 :name="
-                  isPasswordVisible.value
-                    ? 'visibility_off'
-                    : 'visibility'
+                  isPasswordVisible.value ? 'visibility_off' : 'visibility'
                 "
                 class="cursor-pointer"
                 color="secondary"
@@ -204,28 +199,24 @@ const onSave = async () => {
 
       <!-- Selector de rol -->
       <VaSelect
-          v-model="formData.roleId"
-          required-mark
-          label="Rol"
-          class="w-full sm:w-1/2"
-          name="roleId"
-          :options="roles"
-          :rules="[validator.required]"
-          :loading="rolesLoading"
-          :disabled="rolesLoading"
-          text-by="role"
-          value-by="id"
-        />
+        v-model="formData.roleId"
+        required-mark
+        label="Rol"
+        class="w-full sm:w-1/2"
+        name="roleId"
+        :options="roles"
+        :rules="[validator.required]"
+        :loading="rolesLoading"
+        :disabled="rolesLoading"
+        text-by="role"
+        value-by="id"
+      />
 
       <!-- Botones de acción -->
       <div
         class="flex gap-2 flex-col-reverse items-stretch justify-end w-full sm:flex-row sm:items-center"
       >
-        <VaButton
-          preset="secondary"
-          color="secondary"
-          @click="$emit('close')"
-        >
+        <VaButton preset="secondary" color="secondary" @click="$emit('close')">
           Cancelar
         </VaButton>
 
@@ -240,3 +231,12 @@ const onSave = async () => {
     </div>
   </VaForm>
 </template>
+
+<style scoped>
+  .valuesCenter ::v-deep(.va-select-content) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 0.75rem;
+  }
+</style>
