@@ -40,8 +40,24 @@
             </template>
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-start">
-                <VaButton preset="primary" icon="edit" size="small" @click.stop="openEditRoleModal(rowData)"/>
-                <VaButton preset="primary" icon="va-delete" color="danger" size="small" @click.stop="deleteRole(rowData.id)"/>
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="edit"
+                  color="info"
+                  aria-label="Editar rol"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="openEditRoleModal(rowData)"
+                />
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="delete"
+                  color="danger"
+                  aria-label="Eliminar rol"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="deleteRole(rowData.id)"
+                />
               </div>
             </template>
           </va-data-table>
@@ -611,6 +627,15 @@ onMounted(async () => {
   color: #333;
   word-break: break-word; /* Permite que los textos largos se dividan en varias líneas */
 }
+
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
+
 /* Spinner overlay para la tabla de roles */
 .table-spinner-overlay-fix {
   position: absolute;
