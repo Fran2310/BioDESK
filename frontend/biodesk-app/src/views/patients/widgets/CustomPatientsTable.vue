@@ -167,8 +167,8 @@
    */
   function onAddExam(patient) {
     // Implementar navegación o modal según necesidad
-     router.push({ name: 'NewRequest', params: { paciente: patient } })
-     console.log('Add Exam for patient:', patient);
+    router.push({ name: 'NewRequest', params: { patientId: patient.id } })
+    console.log('Add Exam for patient:', patient);
   }
 </script>
 
