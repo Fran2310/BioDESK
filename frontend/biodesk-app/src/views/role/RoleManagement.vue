@@ -120,12 +120,13 @@
         :get-fields-options="getFieldsOptions"
         :loading="false"
         :can-save="canSaveEditRole"
-        @update:roleName="v => { editRoleModalData.name = v; forceUpdateEditModal() }"
-        @update:roleDescription="v => { editRoleModalData.description = v; forceUpdateEditModal() }"
-        @update:newPermission="v => { editRoleModalData.newPermission = v; forceUpdateEditModal() }"
-        @add-permission="() => { addEditRoleModalPermission(); forceUpdateEditModal() }"
-        @remove-permission="perm => { removeEditRoleModalPermission(perm); forceUpdateEditModal() }"
-        @submit="saveEditRoleModal(selectedRoleId)"
+        @update:roleName="v => { editRoleModalData.name = v }"
+        @update:roleDescription="v => { editRoleModalData.description = v }"
+        @update:newPermission="v => { editRoleModalData.newPermission = v }"
+        @update:permissions="v => { editRoleModalData.permissions = v }"
+        @add-permission="addEditRoleModalPermission"
+        @remove-permission="removeEditRoleModalPermission"
+        @submit="saveEditRoleModal(editRoleIdForModal)"
         @cancel="closeEditRoleModal"
       />
     </va-modal>
@@ -293,7 +294,8 @@ const {
   closeEditRoleModal,
   closeNewRoleModal,
   addEditRoleModalPermission,
-  removeEditRoleModalPermission
+  removeEditRoleModalPermission,
+  editRoleIdForModal // <-- Añade esta línea para exponer editRoleIdForModal
 } = useRoleModals()
 
 const {

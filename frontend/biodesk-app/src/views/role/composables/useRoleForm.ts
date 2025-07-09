@@ -32,9 +32,13 @@ export function useRoleForm({
   }
 
   async function saveEditRoleModal(editRoleIdForModal: any) {
-    if (!editRoleIdForModal.value) return;
+    // Corrige para aceptar tanto ref como string
+    const roleId = editRoleIdForModal?.value ?? editRoleIdForModal;
+    if (!roleId) return;
     const { name, description, permissions } = editRoleModalData.value;
     if (!name || !description) return;
+
+    // Solo toma los permisos del formulario (no mezclar con los originales)
     const cleanPermissions = permissions
       .filter((p: any) => p.subject && p.actions)
       .map((p: any) => ({
@@ -42,9 +46,13 @@ export function useRoleForm({
         actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
         ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
           ? { fields: p.fields.join(',') }
-          : {})
+          : (typeof p.fields === 'string' && p.fields.trim() !== ''
+            ? { fields: p.fields }
+            : {})
+        )
       }));
-    await updateRoleApi(editRoleIdForModal.value, {
+
+    await updateRoleApi(roleId, {
       name,
       description,
       permissions: cleanPermissions
