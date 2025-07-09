@@ -18,7 +18,7 @@
           <VaIcon name="badge" color="primary" />
           <span class="text-sm text-gray-600">CI:</span>
           <span class="font-medium">{{
-            userData.systemUser.ci.toUpperCase()
+            formatCi(userData.systemUser.ci)
           }}</span>
         </div>
 
@@ -118,6 +118,7 @@
   import type { GetWithPermissionsQuerys } from '@/services/interfaces/global';
   import { UpdateSystemUserData } from '@/services/interfaces/user';
   import { initToast } from '@/services/toast';
+  import { formatCi } from '@/services/utils';
 
   dayjs.locale('es');
 
@@ -199,7 +200,7 @@
       userData.value = response.data.data[0] || null;
       console.log(userData.value);
 
-      userData.value.systemUser.lastAccess = Date.now() - 2 * 60 * 60 * 1000; // Restar 2 horas
+      userData.value.systemUser.lastAccess = Date.now() - 2 * 60 * 60 * 1000;
     } catch (error) {
       console.error('Error al cargar datos de perfil', error);
     } finally {
