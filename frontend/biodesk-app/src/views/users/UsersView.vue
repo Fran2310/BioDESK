@@ -16,7 +16,7 @@
     doShowAddUserModal.value = true;
   };
 
-  const showAddExistingModal = (user: CreateUserWithRoleIdData) => {
+  const showAddExistingModal = () => {
     userToEdit.value = null;
     doShowAddExistingModal.value = true;
   };
@@ -24,7 +24,7 @@
   const usersTableRef = ref(Table);
 
   function onAddUser() {
-    doShowAddUserModal.value = true;
+    doShowAddUserModal.value = false;
     usersTableRef.value?.refreshUsers();
   }
 
@@ -32,8 +32,6 @@
     doShowAddExistingModal.value = false;
     usersTableRef.value?.refreshUsers();
   }
-
-  const editFormRef = ref();
 
 </script>
 
@@ -72,11 +70,9 @@
       {{ userToEdit ? 'Editar usuario' : 'Añadir usuario' }}
     </h1>
     <AddNewUser
-      ref="editFormRef"
-      :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
-      @close="onAddUser()"
-      @save="usersTableRef.value?.refresh()"
+      @close="doShowAddUserModal = false"
+      @save="onAddUser()"
     />
   </VaModal>
 
@@ -91,8 +87,6 @@
       {{ userToEdit ? 'Editar usuario Existente' : 'Añadir usuario Existente' }}
     </h1>
     <AddExisting
-      ref="editFormRef"
-      :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
       @close="doShowAddExistingModal = false"
       @save="onAddExistingUser()"
