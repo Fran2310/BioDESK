@@ -133,7 +133,7 @@
 
     <!-- Modal para ver detalles del rol -->
     <va-modal v-model="showRoleDetailsModal" hide-default-actions size="700px">
-      <va-card>
+      <va-card class="role-details-modal">
         <va-card-title>
           <span class="text-lg font-bold text-primary">Detalles del rol</span>
         </va-card-title>
@@ -158,7 +158,7 @@
             </div>
             <div class="mb-2 font-semibold text-base text-primary">Permisos:</div>
             <div class="overflow-auto">
-              <table class="w-full text-left border-collapse border rounded">
+              <table class="w-full text-left border-collapse border rounded role-details-table">
                 <thead>
                   <tr class="bg-gray-100">
                     <th class="border-b pb-1 px-2 py-1">Área</th>
@@ -561,5 +561,74 @@ onMounted(async () => {
 .va-card-content th {
   background: #f3f4f6;
   font-weight: bold;
+}
+
+/* --- MODAL DETALLES DE ROL (similar a exam details modal) --- */
+.role-details-modal {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  min-width: 600px;
+  max-width: 98vw;
+}
+
+.role-details-modal .va-card-title {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.role-details-table {
+  min-width: 600px;
+  font-size: 13px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+}
+
+.role-details-table th,
+.role-details-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+
+.role-details-table th {
+  background: #f3f4f6;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.role-details-table tr:last-child td {
+  border-bottom: none;
+}
+
+.role-details-modal strong {
+  color: #22223b;
+}
+
+.role-details-modal .va-chip {
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.role-details-modal .va-card-content {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Responsive for modal */
+@media (max-width: 700px) {
+  .role-details-modal {
+    padding: 1rem 0.5rem;
+    min-width: unset;
+  }
+  .role-details-table {
+    min-width: 320px;
+    font-size: 12px;
+  }
 }
 </style>
