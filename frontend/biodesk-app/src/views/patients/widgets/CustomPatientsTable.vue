@@ -167,8 +167,8 @@
    */
   function onAddExam(patient) {
     // Implementar navegación o modal según necesidad
-    // router.push({ name: 'NewExam', query: { patientId: patient.id } })
-    console.log('Add Exam for patient:', patient);
+     router.push({ name: 'NewRequest', params: { paciente: patient } })
+     console.log('Add Exam for patient:', patient);
   }
 </script>
 
@@ -321,11 +321,11 @@
 
     <template #footer>
       <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
-      <!-- 
+      
       <VaButton color="primary" class="ml-2" @click="onAddExam(selectedPatient)"
       >Añadir Examen</VaButton
       >
-        -->
+       
       <VaButton
       color="primary"
       class="ml-2"
