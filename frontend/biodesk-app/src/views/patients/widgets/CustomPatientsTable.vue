@@ -167,7 +167,7 @@
    */
   function onAddExam(patient) {
     // Implementar navegación o modal según necesidad
-    router.push({ name: 'NewRequest', params: { patientId: patient.id } })
+    router.push({ name: 'NewRequest', params: { patientId: patient.id } });
     console.log('Add Exam for patient:', patient);
   }
 </script>
@@ -256,7 +256,13 @@
   </VaDataTable>
 
   <!-- Modal de detalles del paciente -->
-  <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large" blur>
+  <VaModal
+    v-model="isDetailsModalOpen"
+    hide-default-actions
+    size="large"
+    blur
+    close-button
+  >
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>
 
     <div class="p-4 space-y-4">
@@ -321,16 +327,16 @@
 
     <template #footer>
       <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
-      
+
       <VaButton color="primary" class="ml-2" @click="onAddExam(selectedPatient)"
-      >Añadir Examen</VaButton
+        >Añadir Examen</VaButton
       >
-       
+
       <VaButton
-      color="primary"
-      class="ml-2"
-      @click="onViewExams(selectedPatient)"
-      >Ver Examenes</VaButton
+        color="primary"
+        class="ml-2"
+        @click="onViewExams(selectedPatient)"
+        >Ver Examenes</VaButton
       >
     </template>
   </VaModal>
@@ -381,7 +387,7 @@
   .va-data-table .va-data-table__table-tr {
     border-bottom: 1px solid var(--va-background-border);
   }
-.ellipsis {
+  .ellipsis {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

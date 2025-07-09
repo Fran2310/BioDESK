@@ -22,7 +22,10 @@
 
     <va-card>
       <va-card-content>
-        <div v-if="tableState.loading" class="flex justify-center items-center py-8">
+        <div
+          v-if="tableState.loading"
+          class="flex justify-center items-center py-8"
+        >
           <va-progress-circle indeterminate size="large" color="primary" />
         </div>
         <va-data-table
@@ -30,12 +33,11 @@
           :columns="columnsWithoutId"
           :items="filteredExams"
           :loading="loading"
-                    class="shadow rounded min-h-[200px]"
+          class="shadow rounded min-h-[200px]"
         >
-
-        <template #cell(supplies)="{ value }">
-          <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
-        </template>
+          <template #cell(supplies)="{ value }">
+            <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
+          </template>
 
           <template #cell(actions)="{ row }">
             <div class="flex gap-2 justify-end">
@@ -61,13 +63,19 @@
     </va-card>
 
     <!-- Modal para agregar/editar examen -->
-    <va-modal v-model="examForm.showAddModal" hide-default-actions>
+    <va-modal v-model="examForm.showAddModal" hide-default-actions close-button>
       <va-card class="w-full">
         <va-card-title>
           {{ isEditing ? 'Editar examen' : 'Agregar nuevo examen' }}
         </va-card-title>
         <va-card-content class="flex">
-          <form @submit.prevent="isEditing ? updateExam(fetchExams,showError) : addExam(fetchExams,showError)">
+          <form
+            @submit.prevent="
+              isEditing
+                ? updateExam(fetchExams, showError)
+                : addExam(fetchExams, showError)
+            "
+          >
             <va-input
               v-model="newExam.name"
               label="Nombre"
@@ -79,41 +87,43 @@
               label="Descripción"
               class="w-full mb-3"
             />
-            
-            <div class="flex gap-2 flex-wrap items-end mb-3"> <!-- <div class="flex flex-col sm:flex-row gap-2"> -->
+
+            <div class="flex gap-2 flex-wrap items-end mb-3">
+              <!-- <div class="flex flex-col sm:flex-row gap-2"> -->
               <div class="w-full sm:w-1/2">
-                <va-input 
-                v-model="examForm.newSupply" 
-                label="Agregar Insumo"
-                placeholder="Escribe un insumo y presiona agregar"
-                class="w-5/6"
-              />
+                <va-input
+                  v-model="examForm.newSupply"
+                  label="Agregar Insumo"
+                  placeholder="Escribe un insumo y presiona agregar"
+                  class="w-5/6"
+                />
               </div>
 
               <div class="flex items-end mt">
-                <va-button 
-                color="primary"
-                size="small"
-                @click="addSupplies"
-                class="p-1">
-                  Agregar 
+                <va-button
+                  color="primary"
+                  size="small"
+                  @click="addSupplies"
+                  class="p-1"
+                >
+                  Agregar
                 </va-button>
               </div>
-            </div>  
-              <!-- Lista de insumos -->
-              <ul>
-                <li v-for="(supply, index) in examForm.supplies" :key="index">
-                  {{ supply }}
-                  <va-button 
-                    icon="close" 
-                    color="danger" 
-                    size="small" 
-                    @click="removeSupply(index)"
-                    type="button"
-                  />
-                </li>
-              </ul>
-            
+            </div>
+            <!-- Lista de insumos -->
+            <ul>
+              <li v-for="(supply, index) in examForm.supplies" :key="index">
+                {{ supply }}
+                <va-button
+                  icon="close"
+                  color="danger"
+                  size="small"
+                  @click="removeSupply(index)"
+                  type="button"
+                />
+              </li>
+            </ul>
+
             <va-input
               v-model.number="newExam.price"
               label="Precio"
@@ -123,7 +133,6 @@
             />
 
             <!-- Propiedades-->
-
 
             <div class="flex flex-col">
               <label class="block mb-3 especial">PROPIEDADES</label>
@@ -201,7 +210,9 @@
                 class="property-block mt-4"
               >
                 <!-- Encabezado: nombre y unidad en una fila -->
-                <div class="property-header grid grid-cols-3 gap-2 items-center mb-2 w-full">
+                <div
+                  class="property-header grid grid-cols-3 gap-2 items-center mb-2 w-full"
+                >
                   <div class="col-span-2 font-semibold property-name truncate">
                     {{ reference.name }}
                   </div>
@@ -211,7 +222,9 @@
                 </div>
 
                 <!-- Variaciones como chips en una fila separada, con wrap -->
-                <div class="property-variations flex flex-wrap gap-2 w-full mb-2">
+                <div
+                  class="property-variations flex flex-wrap gap-2 w-full mb-2"
+                >
                   <VaChip
                     v-for="(variation, vIdx) in reference.variations"
                     :key="vIdx"
@@ -222,10 +235,13 @@
                     <span
                       :class="[
                         'inline-block w-3 h-3 rounded-full mr-2',
-                        variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
-                        variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
-                        variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
-                        'bg-purple-300'
+                        variation.gender?.toLowerCase() === 'male'
+                          ? 'bg-blue-300'
+                          : variation.gender?.toLowerCase() === 'female'
+                          ? 'bg-pink-300'
+                          : variation.gender?.toLowerCase() === 'child'
+                          ? 'bg-yellow-300'
+                          : 'bg-purple-300',
                       ]"
                     ></span>
                     {{ variation.gender }}/{{ variation.ageGroup }}
@@ -250,16 +266,15 @@
               <va-button color="secondary" @click="closeModal" type="button">
                 Cancelar
               </va-button>
-              <va-button 
-                color="primary" 
-                type="submit" 
+              <va-button
+                color="primary"
+                type="submit"
                 @click="closeModal"
                 :disabled="!canSubmitExam"
               >
                 Guardar
               </va-button>
             </div>
-            
           </form>
         </va-card-content>
       </va-card>
@@ -268,298 +283,295 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import {
-  VaInput, VaDataTable, VaButton, VaModal, VaCard,
-  VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
-} from 'vuestic-ui'
+  import { onMounted } from 'vue';
+  import {
+    VaInput,
+    VaDataTable,
+    VaButton,
+    VaModal,
+    VaCard,
+    VaCardTitle,
+    VaCardContent,
+    VaSpacer,
+    VaTextarea,
+    VaSelect,
+  } from 'vuestic-ui';
 
-import { computed, ref, watch } from 'vue'
+  import { computed, ref, watch } from 'vue';
 
-import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
+  import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog';
 
-const {
-  columns,
-  filteredExams,
-  tableState,
-  // Modal y formulario de examen
-  examForm,
-  addExam,
-  editExam,
-  updateExam,
-  deleteExam,
-  closeModal,
-  // Insumos
-  addSupplies,
-  removeSupply,
-  // Propiedades
-  addProperty,
-  removeProperty,
-  // Referencias y variaciones
-  referenceModal,
-  removeVariation,
-  saveVariation,
-  openModalForNewReference,
-  openModalForNewVariation,
-  saveReference,
-  removeReference,
-  editVariation,
-  // Otros
-  viewDetails,
-  showError,
-  fetchExams,
-} = useLaboratoryCatalog()
+  const {
+    columns,
+    filteredExams,
+    tableState,
+    // Modal y formulario de examen
+    examForm,
+    addExam,
+    editExam,
+    updateExam,
+    deleteExam,
+    closeModal,
+    // Insumos
+    addSupplies,
+    removeSupply,
+    // Propiedades
+    addProperty,
+    removeProperty,
+    // Referencias y variaciones
+    referenceModal,
+    removeVariation,
+    saveVariation,
+    openModalForNewReference,
+    openModalForNewVariation,
+    saveReference,
+    removeReference,
+    editVariation,
+    // Otros
+    viewDetails,
+    showError,
+    fetchExams,
+  } = useLaboratoryCatalog();
 
+  // Mapear los estados internos a los usados en el template
+  const search = ref(tableState.search);
 
+  watch(search, (val) => {
+    tableState.search = val;
+  });
+  const loadingCatalog = ref(false);
+  const loading = tableState.loading;
+  const supplies = examForm.supplies;
+  const newSupply = examForm.newSupply;
+  const isEditing = examForm.isEditing;
 
+  const newExam = computed({
+    get: () => examForm.newExam,
+    set: (v) => (examForm.newExam = v),
+  });
 
-// Mapear los estados internos a los usados en el template
-const search = ref(tableState.search)
+  // Referencias para modales y propiedades
+  const referenceData = referenceModal.referenceData;
+  const showModal = referenceModal.showModal;
+  const showVariationModal = referenceModal.showVariationModal;
+  const selectedReference = referenceModal.selectedReference;
+  const isEditingReference = referenceModal.isEditingReference;
+  const selectedReferenceIndex = referenceModal.selectedReferenceIndex;
+  const selectedVariation = referenceModal.selectedVariation;
+  const selectedVariationIndex = referenceModal.selectedVariationIndex;
+  const isEditingVariation = referenceModal.isEditingVariation;
+  const ageGroups = ['CHILD', 'ADULT', 'ANY'];
+  const genderOptions = ['MALE', 'FEMALE', 'ANY'];
 
-watch(search, (val) => {
-  tableState.search = val
-})
-const loadingCatalog = ref(false)
-const loading = tableState.loading
-const supplies = examForm.supplies
-const newSupply = examForm.newSupply
-const isEditing = examForm.isEditing
+  const newProperty = ref({
+    name: '',
+    unit: '',
+    variations: [],
+  });
 
-const newExam = computed({
-  get: () => examForm.newExam,
-  set: v => examForm.newExam = v
-})
-
-// Referencias para modales y propiedades
-const referenceData = referenceModal.referenceData
-const showModal = referenceModal.showModal
-const showVariationModal = referenceModal.showVariationModal
-const selectedReference = referenceModal.selectedReference
-const isEditingReference = referenceModal.isEditingReference
-const selectedReferenceIndex = referenceModal.selectedReferenceIndex
-const selectedVariation = referenceModal.selectedVariation
-const selectedVariationIndex = referenceModal.selectedVariationIndex
-const isEditingVariation = referenceModal.isEditingVariation
-const ageGroups = ['CHILD', 'ADULT', 'ANY']
-const genderOptions = ['MALE', 'FEMALE', 'ANY']
-
-const newProperty = ref({
-  name: '',
-  unit: '',
-  variations: []
-})
-
-function addVariation() {
-  newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' })
-}
-
-function removeLocalVariation(index) {
-  newProperty.value.variations.splice(index, 1)
-}
-
-function addPropertyDirect() {
-  if (
-    newProperty.value.name &&
-    newProperty.value.unit &&
-    newProperty.value.variations.length > 0
-  ) {
-    referenceData.value.push({
-      name: newProperty.value.name,
-      unit: newProperty.value.unit,
-      variations: [...newProperty.value.variations]
-    })
-    newProperty.value = { name: '', unit: '', variations: [] }
+  function addVariation() {
+    newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' });
   }
-}
 
-function handleSaveReference() {
-  const idx = saveReference()
-  if (typeof idx === 'number') {
-    // Espera a que el modal de referencia se cierre antes de abrir el de variación
-    setTimeout(() => {
-      openModalForNewVariation(idx)
-    }, 0)
+  function removeLocalVariation(index) {
+    newProperty.value.variations.splice(index, 1);
   }
-}
 
-const canSubmitExam = computed(() => {
-  // Validar campos requeridos
-  if (!String(newExam.value.name).trim()) return false
-  // Puedes agregar más validaciones aquí si lo necesitas
-  return true
-})
+  function addPropertyDirect() {
+    if (
+      newProperty.value.name &&
+      newProperty.value.unit &&
+      newProperty.value.variations.length > 0
+    ) {
+      referenceData.value.push({
+        name: newProperty.value.name,
+        unit: newProperty.value.unit,
+        variations: [...newProperty.value.variations],
+      });
+      newProperty.value = { name: '', unit: '', variations: [] };
+    }
+  }
 
-// Filtrar la columna 'id' para no mostrarla en la tabla
-const columnsWithoutId = computed(() => columns.filter(col => col.key !== 'id'))
+  function handleSaveReference() {
+    const idx = saveReference();
+    if (typeof idx === 'number') {
+      // Espera a que el modal de referencia se cierre antes de abrir el de variación
+      setTimeout(() => {
+        openModalForNewVariation(idx);
+      }, 0);
+    }
+  }
 
-onMounted(() => {
-  fetchExams()
-})
+  const canSubmitExam = computed(() => {
+    // Validar campos requeridos
+    if (!String(newExam.value.name).trim()) return false;
+    // Puedes agregar más validaciones aquí si lo necesitas
+    return true;
+  });
 
+  // Filtrar la columna 'id' para no mostrarla en la tabla
+  const columnsWithoutId = computed(() =>
+    columns.filter((col) => col.key !== 'id')
+  );
 
-
+  onMounted(() => {
+    fetchExams();
+  });
 </script>
 
-
 <style scoped>
-
-.custom-button { /*va-button style*/ 
-  margin-top: 10px; 
-  margin-bottom: 10px; 
-  padding: 5px;
-}
-
-
-ul {
-  display: flex;  /* Hace que los elementos estén en línea */
-  gap: 12px;      /* Espaciado entre los elementos */
-  flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
-  list-style: none; /* Elimina los estilos de la lista */
-  padding: 0; /* Ajusta el espaciado */
-}
-li {
-  display: flex;
-  margin-bottom: 12px;
-  margin-top: 12px;
-  align-items: center; /* Alinea los elementos verticalmente */
-  gap: 6px; /* Espaciado entre el texto y el botón */
-  background: #f9f9f9; /* Opcional: fondo para los ítems */
-  padding: 8px 12px;
-  border-radius: 6px;
-}
-
-.especial {
-  font-size: 9px;
-  line-height: 14px; 
-  letter-spacing: 0.4px; 
-  min-height: 14px;
-  --va-font-family: 'Inter', sans-serif;
-  font-weight: bold;
-  color: var(--va-primary);
-}
-
-.mb-3 {
-  margin-bottom: 16px;
-}
-
-.espcial-2{
-  display: flex;
-  flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
-  gap: 12px; /* Espaciado entre elementos */
-
-}
-
-.card {
-  min-width: 180px;
-  padding: 10px;
-  cursor: pointer; /* Hace que la tarjeta parezca interactiva */
-}
-
-.reference-block {
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  background-color: #f9f9f9;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.reference-name {
-  font-size: 16px;
-  color: #333;
-}
-
-.reference-unit {
-  font-size: 14px;
-  color: #666;
-}
-
-.variations {
-  margin-top: 8px;
-  border-top: 1px solid #ddd;
-  padding-top: 8px;
-}
-
-.variation-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-}
-
-.variation-detail {
-  font-size: 14px;
-  color: #555;
-}
-
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  margin-bottom: 16px;
-}
-
-.table-responsive table {
-  min-width: 600px;
-  font-size: 13px;
-}
-
-
-.va-card-content {
-  overflow-x: auto;
-}
-
-.property-block {
-  display: flex;
-  flex-direction: column; /* Cambia a columna para evitar sobreposición */
-  align-items: stretch;
-  padding: 8px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  background-color: #f9f9f9;
-  min-width: 0;
-  word-break: break-word;
-}
-
-.property-header {
-  min-width: 0;
-}
-
-.property-name,
-.property-unit {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.property-variations {
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 4px;
-  min-width: 0;
-  word-break: break-word;
-}
-
-@media (max-width: 600px) {
-  .property-header {
-    grid-template-columns: 1fr;
-    gap: 4px;
+  .custom-button {
+    /*va-button style*/
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
   }
+
+  ul {
+    display: flex; /* Hace que los elementos estén en línea */
+    gap: 12px; /* Espaciado entre los elementos */
+    flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
+    list-style: none; /* Elimina los estilos de la lista */
+    padding: 0; /* Ajusta el espaciado */
+  }
+  li {
+    display: flex;
+    margin-bottom: 12px;
+    margin-top: 12px;
+    align-items: center; /* Alinea los elementos verticalmente */
+    gap: 6px; /* Espaciado entre el texto y el botón */
+    background: #f9f9f9; /* Opcional: fondo para los ítems */
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+  .especial {
+    font-size: 9px;
+    line-height: 14px;
+    letter-spacing: 0.4px;
+    min-height: 14px;
+    --va-font-family: 'Inter', sans-serif;
+    font-weight: bold;
+    color: var(--va-primary);
+  }
+
+  .mb-3 {
+    margin-bottom: 16px;
+  }
+
+  .espcial-2 {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
+    gap: 12px; /* Espaciado entre elementos */
+  }
+
+  .card {
+    min-width: 180px;
+    padding: 10px;
+    cursor: pointer; /* Hace que la tarjeta parezca interactiva */
+  }
+
+  .reference-block {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    background-color: #f9f9f9;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .reference-name {
+    font-size: 16px;
+    color: #333;
+  }
+
+  .reference-unit {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .variations {
+    margin-top: 8px;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+  }
+
+  .variation-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+  }
+
+  .variation-detail {
+    font-size: 14px;
+    color: #555;
+  }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+
+  .table-responsive table {
+    min-width: 600px;
+    font-size: 13px;
+  }
+
+  .va-card-content {
+    overflow-x: auto;
+  }
+
+  .property-block {
+    display: flex;
+    flex-direction: column; /* Cambia a columna para evitar sobreposición */
+    align-items: stretch;
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-color: #f9f9f9;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .property-header {
+    min-width: 0;
+  }
+
   .property-name,
   .property-unit {
-    white-space: normal;
-    text-align: left;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-}
 
+  .property-variations {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  @media (max-width: 600px) {
+    .property-header {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .property-name,
+    .property-unit {
+      white-space: normal;
+      text-align: left;
+    }
+  }
 </style>
-
-

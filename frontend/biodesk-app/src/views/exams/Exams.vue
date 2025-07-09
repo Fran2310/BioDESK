@@ -231,11 +231,11 @@
           </div>
         </div>
 
-        <VaModal v-model="showModal" hide-default-actions>
+        <VaModal v-model="showModal" hide-default-actions close-button>
           <DetailsExam :selectedExam="selectedExam"> </DetailsExam>
         </VaModal>
 
-        <VaModal v-model="showStateModal" hide-default-actions>
+        <VaModal v-model="showStateModal" hide-default-actions close-button>
           <ChangePriorityModal
             :changePriorityRequestId="changePriorityRequestId"
             @close="showStateModal = false"
@@ -243,7 +243,7 @@
           />
         </VaModal>
 
-        <VaModal v-model="showToPendModal" hide-default-actions>
+        <VaModal v-model="showToPendModal" hide-default-actions close-button>
           <ToPendExam
             :examToPend="examToPend"
             @close="showToPendModal = false"
@@ -252,7 +252,7 @@
           </ToPendExam>
         </VaModal>
 
-        <VaModal v-model="showToProcessModal" hide-default-actions>
+        <VaModal v-model="showToProcessModal" hide-default-actions close-button>
           <ToProcessExam
             :examToProcess="examToProcess"
             @close="showToProcessModal = false"
@@ -261,7 +261,7 @@
           </ToProcessExam>
         </VaModal>
 
-        <VaModal v-model="showCancelModal" hide-default-actions>
+        <VaModal v-model="showCancelModal" hide-default-actions close-button>
           <CancelExam
             :examToCancel="examToCancel"
             @close="showCancelModal = false"
@@ -270,7 +270,7 @@
           </CancelExam>
         </VaModal>
 
-        <VaModal v-model="showCompleteModal" hide-default-actions>
+        <VaModal v-model="showCompleteModal" hide-default-actions close-button>
           <CompleteExam
             :examToComplete="examToComplete"
             @close="showCompleteModal = false"
@@ -279,7 +279,7 @@
           </CompleteExam>
         </VaModal>
 
-        <VaModal v-model="showDeleteModal" hide-default-actions>
+        <VaModal v-model="showDeleteModal" hide-default-actions close-button>
           <DeleteExam
             :examToDelete="examToDelete"
             @close="showDeleteModal = false"
