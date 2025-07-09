@@ -112,9 +112,10 @@ const router = createRouter({
           props: true,
         },
         {
-          path: 'newrequest',
+          path: 'newrequest/:patientId?',
           name: 'NewRequest',
           component: () => import('@/views/exams/NewRequest.vue'),
+          props: true,
         },
         {
           path: '/lab/request-medic-test/:id/upload',

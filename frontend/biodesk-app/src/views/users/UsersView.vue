@@ -2,67 +2,37 @@
   import { ref } from 'vue';
   import AddNewUser from './widgets/AddNewUser.vue';
   import AddExisting from './widgets/AddExisting.vue';
-  import { useModal, useToast } from 'vuestic-ui';
   import type { CreateUserWithRoleIdData } from '@/services/interfaces/user';
 
   import Table from './widgets/Table.vue';
 
-  const doShowEditUserModal = ref(false);
+  const doShowAddUserModal = ref(false);
   const doShowAddExistingModal = ref(false);
 
   const userToEdit = ref<CreateUserWithRoleIdData | null>(null);
 
   const showAddNewUserModal = () => {
     userToEdit.value = null;
-    doShowEditUserModal.value = true;
+    doShowAddUserModal.value = true;
   };
 
-  const showAddExistingModal = (user: CreateUserWithRoleIdData) => {
+  const showAddExistingModal = () => {
     userToEdit.value = null;
     doShowAddExistingModal.value = true;
   };
 
-  const { init: notify } = useToast();
+  const usersTableRef = ref(Table);
 
-  const usersTableRef = ref();
+  function onAddUser() {
+    doShowAddUserModal.value = false;
+    usersTableRef.value?.refreshUsers();
+  }
 
-  const onUserSaved = async (user: CreateUserWithRoleIdData) => {
-    if (user) {
-      console.log('user: ', user);
-    } else {
-      console.log('Añadir usuario');
-    }
-    usersTableRef.value?.refresh();
-  };
+  function onAddExistingUser() {
+    doShowAddExistingModal.value = false;
+    usersTableRef.value?.refreshUsers();
+  }
 
-  const onUserDelete = async (user: CreateUserWithRoleIdData) => {
-    console.log('Delete user');
-    notify({
-      message: `${user.name} ${user.lastName} ha sido eliminado`,
-      color: 'success',
-    });
-    usersTableRef.value?.refresh();
-  };
-
-  const editFormRef = ref();
-
-  const { confirm } = useModal();
-
-  const beforeEditFormModalClose = async (hide: () => unknown) => {
-    if (editFormRef.value.isFormHasUnsavedChanges) {
-      const agreed = await confirm({
-        maxWidth: '380px',
-        message:
-          'El formulario tiene cambios sin guardar. ¿Seguro que lo quiere cerrar?',
-        size: 'small',
-      });
-      if (agreed) {
-        hide();
-      }
-    } else {
-      hide();
-    }
-  };
 </script>
 
 <template>
@@ -90,46 +60,36 @@
   </VaCard>
 
   <VaModal
-    v-slot="{ cancel, ok }"
-    v-model="doShowEditUserModal"
+    v-model="doShowAddUserModal"
     size="small"
     mobile-fullscreen
     close-button
     hide-default-actions
-    :before-cancel="beforeEditFormModalClose"
   >
     <h1 class="va-h5">
       {{ userToEdit ? 'Editar usuario' : 'Añadir usuario' }}
     </h1>
     <AddNewUser
-      ref="editFormRef"
-      :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
-      @close="cancel"
-      @save="usersTableRef.value?.refresh()"
+      @close="doShowAddUserModal = false"
+      @save="onAddUser()"
     />
   </VaModal>
 
   <VaModal
-    v-slot="{ cancel, ok }"
     v-model="doShowAddExistingModal"
     size="small"
     mobile-fullscreen
     close-button
     hide-default-actions
-    :before-cancel="beforeEditFormModalClose"
   >
     <h1 class="va-h5">
       {{ userToEdit ? 'Editar usuario Existente' : 'Añadir usuario Existente' }}
     </h1>
     <AddExisting
-      ref="editFormRef"
-      :user="userToEdit"
       :save-button-label="userToEdit ? 'Guardar' : 'Añadir'"
-      @close="cancel"
-      @save="
-        usersTableRef.value?.refresh() // TODO no funciona lo de recargar tras un cambio
-      "
+      @close="doShowAddExistingModal = false"
+      @save="onAddExistingUser()"
     />
   </VaModal>
 </template>

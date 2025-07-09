@@ -169,6 +169,14 @@ export const labApi = {
   },
 
   /**
+   * Obtiene la url del backUp de la base de datos del laboratorio
+   * @returns url de descarga para el ultimo archivo sql del respaldo de la db
+   */
+  getBackDB() {
+    return api.get('/labs/this/database/sql', headerLabId());
+  },
+
+  /**
    * Crea un nuevo laboratorio.
    * @param data Objeto con los datos del laboratorio a registrar.
    * @returns Promesa de la respuesta del backend.

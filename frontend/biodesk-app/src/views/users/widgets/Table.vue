@@ -6,6 +6,8 @@
     v-model:page="pagination.page"
     :loading="usersLoading"
     :total-items="pagination.total"
+    class="va-table--hoverable"
+    @row:click="handleRowClick"
   >
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis capitalize">
@@ -38,11 +40,11 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-center">
+      <div v-if="rowData.role !== 'admin'" class="flex gap-2 justify-center">
         <VaButton
           preset="primary"
-          size="small"
-          icon="va-close"
+          size="medium"
+          icon="delete"
           color="danger"
           aria-label="Delete patient"
           @click="onUserDelete(rowData)"
@@ -99,6 +101,53 @@
       />
     </div>
   </div>
+
+  <!-- Modal de detalles del usuario -->
+  <VaModal v-model="isUserModalOpen" hide-default-actions size="medium">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <div class="text-2xl font-bold capitalize">
+          {{ fullName }}
+        </div>
+      </div>
+    </template>
+
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+        <VaIcon name="badge" color="primary" />
+        <span class="text-sm text-gray-600">CI:</span>
+        <span class="font-medium">
+          {{ formatCi(userData.systemUser.ci) }}
+        </span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+        <VaIcon name="mail" color="primary" />
+        <span class="text-sm text-gray-600">Correo:</span>
+        <span class="font-medium">{{ userData.systemUser.email }}</span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+        <VaIcon name="verified_user" color="primary" />
+        <span class="text-sm text-gray-600">Rol:</span>
+        <VaChip color="info" class="capitalize">
+          {{ userData.labUser.role.role }}
+        </VaChip>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+        <VaIcon name="schedule" color="primary" />
+        <span class="text-sm text-gray-600">Último acceso:</span>
+        <span class="font-medium">{{ lastAccessDisplay }}</span>
+      </div>
+    </div>
+
+    <template #footer>
+      <VaButton color="primary" @click="isUserModalOpen = false">
+        Cerrar
+      </VaButton>
+    </template>
+  </VaModal>
 </template>
 
 <script setup lang="ts">
@@ -106,8 +155,11 @@
   import { userApi } from '@/services/api';
   import { formatCi } from '@/services/utils';
   import { useModal, useToast } from 'vuestic-ui';
+  import dayjs from 'dayjs';
 
   const { init: notify } = useToast();
+
+  const emit = defineEmits(['delete-user']);
 
   const users = ref<any[]>([]);
   const usersLoading = ref(true);
@@ -117,6 +169,8 @@
     perPage: 10,
     total: 0,
   });
+  const isUserModalOpen = ref(false);
+  const userData = ref<any>(null);
 
   const totalPages = computed(() => {
     return Math.max(
@@ -128,6 +182,15 @@
   const shouldShowPagination = computed(() => {
     return pagination.value.total > pagination.value.perPage;
   });
+
+  const refreshUsers = async () => {
+    await fetchUsers();
+  };
+
+  function handleRowClick(event: any) {
+    userData.value = event.item;
+    isUserModalOpen.value = true;
+  }
 
   async function fetchUsers() {
     usersLoading.value = true;
@@ -151,6 +214,22 @@
       usersLoading.value = false;
     }
   }
+
+  // Computed: nombre completo
+  const fullName = computed(() => {
+    if (!userData.value) return '';
+    return `${userData.value.systemUser.name} ${userData.value.systemUser.lastName}`;
+  });
+
+  // Computed: último acceso formateado
+  const lastAccessDisplay = computed(() => {
+    const today = new Date(); // Obtiene la fecha y hora actual
+    const twoDaysAgo = new Date(today.setDate(today.getDate() - 2));
+
+    userData.value.systemUser.lastAccess = twoDaysAgo;
+    const lastAccess = userData.value?.systemUser?.lastAccess;
+    return lastAccess ? dayjs(lastAccess).format('DD MMM YYYY HH:mm') : 'Nunca';
+  });
 
   const handlePerPageChange = (newPerPage: number) => {
     pagination.value.perPage = newPerPage;
@@ -191,10 +270,6 @@
     }))
   );
 
-  function editUser(user: any) {
-    console.log('Edit user:', user);
-  }
-
   const { confirm } = useModal();
 
   const onUserDelete = async (user: any) => {
@@ -208,7 +283,8 @@
     });
 
     if (agreed) {
-      //emit('delete-user', user)
+      usersLoading.value = true;
+      emit('delete-user', user);
       try {
         await userApi.deleteSoftUser(user.systemUser.uuid);
       } catch (error) {}
@@ -216,15 +292,13 @@
         message: 'Usuario removido exitosamente', // TODO Refactorizar eso
         color: 'success',
       });
+      refreshUsers();
     }
   };
 
   // Al final del <script setup>
-  function refresh() {
-    fetchUsers(); // o tu función que recarga la tabla
-  }
-
-  defineExpose({ refresh });
+  // Exponer función para actualizar los usuarios
+  defineExpose({ refreshUsers });
 </script>
 
 <style scoped>

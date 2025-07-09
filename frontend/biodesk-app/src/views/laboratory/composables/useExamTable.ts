@@ -1,20 +1,25 @@
+// Importa funciones de Vue para reactividad y propiedades computadas
 import { computed, reactive } from 'vue';
+// Tipo de datos para el catálogo de exámenes
 import type { MedicTestCatalog } from '../types';
-import { medicTestCatalogApi } from '../../../services/api'; // <-- Usa la API centralizada
+// API centralizada para operaciones con exámenes
+import { medicTestCatalogApi } from '../../../services/api';
 
-// Estado reactivo para la tabla de exámenes
+// Define el estado reactivo para la tabla de exámenes
 type ExamTableState = {
-  search: string;
-  exams: MedicTestCatalog[];
-  loading: boolean;
+  search: string; // Texto de búsqueda
+  exams: MedicTestCatalog[]; // Lista de exámenes
+  loading: boolean; // Estado de carga
 };
 
+// Estado global de la tabla de exámenes
 export const tableState = reactive<ExamTableState>({
   search: '',
   exams: [],
   loading: false,
 });
 
+// Definición de las columnas de la tabla
 export const columns = [
   { key: 'id', label: 'ID', sortable: true },
   { key: 'name', label: 'Nombre', sortable: true },
@@ -23,6 +28,7 @@ export const columns = [
   { key: 'actions', label: 'Acciones' },
 ];
 
+// Computed para filtrar exámenes según el texto de búsqueda
 export const filteredExams = computed(() => {
   if (!tableState.search) return tableState.exams;
   return tableState.exams.filter(
@@ -33,10 +39,12 @@ export const filteredExams = computed(() => {
   );
 });
 
+// Cambia el estado de carga de la tabla
 export function setTableLoading(value: boolean) {
   tableState.loading = value;
 }
 
+// Obtiene los exámenes desde la API y actualiza el estado de la tabla
 export async function fetchExams(showError?: (msg: string) => void) {
   setTableLoading(true);
   try {
@@ -47,9 +55,10 @@ export async function fetchExams(showError?: (msg: string) => void) {
       includeData: true,
     });
 
+    // Muestra en consola los exámenes cargados
     console.log('📦 Exámenes cargados:', response.data);
 
-    // ✅ Asegúrate de que esto es un array
+    // Asigna los exámenes al estado global
     tableState.exams = response.data?.data ?? [];
   } catch (error) {
     if (showError) showError('Ocurrió un error al obtener los exámenes.');

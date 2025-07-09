@@ -54,6 +54,7 @@
             "
             :loading="isLoading"
             @row:click="handleRowClick"
+            class="va-table--hoverable"
           >
             <template #cell(requestedAt)="{ rowData }">
               {{ formatDate(rowData.requestedAt) }}
@@ -68,14 +69,14 @@
                 {{ priorityLabels[rowData.priority] ?? rowData.priority }}
               </va-chip>
             </template>
-            
+
             <template #cell(actions)="{ rowData }">
               <div class="flex gap-2 justify-start">
                 <VaPopover
                   v-if="rowData.state === 'COMPLETED'"
                   message="Descargar Resultados"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -93,7 +94,7 @@
                   v-if="rowData.state === 'TO_VERIFY'"
                   message="Completar Examen"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -111,7 +112,7 @@
                   v-if="rowData.state === 'IN_PROCESS'"
                   message="Subir Resultados"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -129,7 +130,7 @@
                   v-if="rowData.state === 'PENDING'"
                   message="Empezar Examen"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -147,7 +148,7 @@
                   v-if="rowData.state === 'CANCELED'"
                   message="Colocar Examen en Pendiente"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -164,7 +165,7 @@
                 <VaPopover
                   message="Modificar Prioridad"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -178,10 +179,13 @@
                 </VaPopover>
 
                 <VaPopover
-                  v-if="rowData.state !== 'COMPLETED' && rowData.state !== 'CANCELED'"
+                  v-if="
+                    rowData.state !== 'COMPLETED' &&
+                    rowData.state !== 'CANCELED'
+                  "
                   message="Cancelar Examen"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -196,10 +200,13 @@
                 </VaPopover>
 
                 <VaPopover
-                  v-if="rowData.state === 'COMPLETED' || rowData.state === 'CANCELED'"
+                  v-if="
+                    rowData.state === 'COMPLETED' ||
+                    rowData.state === 'CANCELED'
+                  "
                   message="Eliminar Examen"
                   class="flex items-center justify-center"
-                  hover-out-timeout=0
+                  hover-out-timeout="0"
                   placement="top-end"
                   :auto-placement="true"
                 >
@@ -224,13 +231,11 @@
           </div>
         </div>
 
-        <VaModal v-model="showModal" hide-default-actions>
-          <DetailsExam
-          :selectedExam="selectedExam">
-          </DetailsExam>
+        <VaModal v-model="showModal" hide-default-actions close-button>
+          <DetailsExam :selectedExam="selectedExam"> </DetailsExam>
         </VaModal>
 
-        <VaModal v-model="showStateModal" hide-default-actions>
+        <VaModal v-model="showStateModal" hide-default-actions close-button>
           <ChangePriorityModal
             :changePriorityRequestId="changePriorityRequestId"
             @close="showStateModal = false"
@@ -238,51 +243,51 @@
           />
         </VaModal>
 
-        <VaModal v-model="showToPendModal" hide-default-actions>
+        <VaModal v-model="showToPendModal" hide-default-actions close-button>
           <ToPendExam
-          :examToPend="examToPend"
-          @close="showToPendModal = false"
-          @processed="PendedExam()"
+            :examToPend="examToPend"
+            @close="showToPendModal = false"
+            @processed="PendedExam()"
           >
           </ToPendExam>
         </VaModal>
 
-        <VaModal v-model="showToProcessModal" hide-default-actions>
+        <VaModal v-model="showToProcessModal" hide-default-actions close-button>
           <ToProcessExam
-          :examToProcess="examToProcess"
-          @close="showToProcessModal = false"
-          @processed="ProcessedExam()"
+            :examToProcess="examToProcess"
+            @close="showToProcessModal = false"
+            @processed="ProcessedExam()"
           >
           </ToProcessExam>
         </VaModal>
 
-        <VaModal v-model="showCancelModal" hide-default-actions>
+        <VaModal v-model="showCancelModal" hide-default-actions close-button>
           <CancelExam
-          :examToCancel="examToCancel"
-          @close="showCancelModal = false"
-          @canceled="CanceledExam()"
+            :examToCancel="examToCancel"
+            @close="showCancelModal = false"
+            @canceled="CanceledExam()"
           >
           </CancelExam>
         </VaModal>
 
-        <VaModal v-model="showCompleteModal" hide-default-actions>
-          <CompleteExam 
-          :examToComplete="examToComplete"
-          @close="showCompleteModal = false"
-          @completed="CompletedExam()"
+        <VaModal v-model="showCompleteModal" hide-default-actions close-button>
+          <CompleteExam
+            :examToComplete="examToComplete"
+            @close="showCompleteModal = false"
+            @completed="CompletedExam()"
           >
           </CompleteExam>
         </VaModal>
 
-        <VaModal v-model="showDeleteModal" hide-default-actions>
-          <DeleteExam 
-          :examToDelete="examToDelete"
-          @close="showDeleteModal = false"
-          @deleted="DeletedExam()"
+        <VaModal v-model="showDeleteModal" hide-default-actions close-button>
+          <DeleteExam
+            :examToDelete="examToDelete"
+            @close="showDeleteModal = false"
+            @deleted="DeletedExam()"
           >
           </DeleteExam>
         </VaModal>
-        
+
         <div
           class="flex flex-col-reverse md:flex-row gap-2 justify-between items-center py-2"
         >
@@ -338,14 +343,20 @@
 
   import { formatCi, formatDate } from '@/services/utils';
 
-  import DeleteExam from './modals/DeleteExam.vue'
+  import DeleteExam from './modals/DeleteExam.vue';
   import CompleteExam from './modals/CompleteExam.vue';
   import CancelExam from './modals/CancelExam.vue';
   import DetailsExam from './modals/DetailsExam.vue';
 
-  import { ExamRow, priorityColor, priorityLabels, stateColor, stateLabels } from '@/services/interfaces/exam-row';
-import ToProcessExam from './modals/ToProcessExam.vue';
-import ToPendExam from './modals/ToPendExam.vue';
+  import {
+    ExamRow,
+    priorityColor,
+    priorityLabels,
+    stateColor,
+    stateLabels,
+  } from '@/services/interfaces/exam-row';
+  import ToProcessExam from './modals/ToProcessExam.vue';
+  import ToPendExam from './modals/ToPendExam.vue';
 
   const { init: notify } = useToast();
   const router = useRouter();
@@ -470,17 +481,16 @@ import ToPendExam from './modals/ToPendExam.vue';
     }
   };
 
-
   // If medicHistoryId is passed as a prop, use it to fill the search bar and trigger search
   onMounted(() => {
     if (props.medicHistoryId) {
-      console.log(props.medicHistoryId)
-      filters.value.medicHistoryId = props.medicHistoryId
-      searchExams()
+      console.log(props.medicHistoryId);
+      filters.value.medicHistoryId = props.medicHistoryId;
+      searchExams();
     } else {
-      fetchExams()
+      fetchExams();
     }
-  })
+  });
 
   watch(
     () => [pagination.value.page, pagination.value.perPage],
@@ -496,21 +506,21 @@ import ToPendExam from './modals/ToPendExam.vue';
 
   const downloadResults = async (id: number) => {
     try {
-      const response = await storageApi.getMedicResultsPdf(String(id))
-      const data = response.data
+      const response = await storageApi.getMedicResultsPdf(String(id));
+      const data = response.data;
 
       if (data?.url) {
         // Abrir en nueva pestaña
-        window.open(data.url, '_blank')
+        window.open(data.url, '_blank');
       } else {
         notify({ message: 'No se encontró la URL', color: 'danger' });
-        console.warn('No se encontró la URL en la respuesta.')
+        console.warn('No se encontró la URL en la respuesta.');
       }
     } catch (e: any) {
       notify({ message: 'No se encontró la URL', color: 'danger' });
-      console.error('Error al obtener la URL:', e)
+      console.error('Error al obtener la URL:', e);
     }
-  }
+  };
 
   function openChangePriorityModal(examId: number) {
     changePriorityRequestId.value = examId;
@@ -534,7 +544,7 @@ import ToPendExam from './modals/ToPendExam.vue';
   }
 
   function onPendExam(exam: ExamRow) {
-    examToPend.value = exam
+    examToPend.value = exam;
     showToPendModal.value = true;
   }
   function PendedExam() {
@@ -543,7 +553,7 @@ import ToPendExam from './modals/ToPendExam.vue';
   }
 
   function onProcessExam(exam: ExamRow) {
-    examToProcess.value = exam
+    examToProcess.value = exam;
     showToProcessModal.value = true;
   }
   function ProcessedExam() {
@@ -552,7 +562,7 @@ import ToPendExam from './modals/ToPendExam.vue';
   }
 
   function onCancelExam(exam: ExamRow) {
-    examToCancel.value = exam
+    examToCancel.value = exam;
     showCancelModal.value = true;
   }
   function CanceledExam() {
@@ -570,7 +580,7 @@ import ToPendExam from './modals/ToPendExam.vue';
   }
 
   function onDeleteExam(exam: ExamRow) {
-    examToDelete.value = exam
+    examToDelete.value = exam;
     showDeleteModal.value = true;
   }
   function DeletedExam() {
@@ -598,11 +608,11 @@ import ToPendExam from './modals/ToPendExam.vue';
 </script>
 
 <style scoped>
-/*
+  /*
   Esta clase eliminará el fondo que aparece al pasar
   el mouse sobre los botones con preset="primary".
 */
-.no-hover-effect:hover {
-  background: transparent !important;
-}
+  .no-hover-effect:hover {
+    background: transparent !important;
+  }
 </style>

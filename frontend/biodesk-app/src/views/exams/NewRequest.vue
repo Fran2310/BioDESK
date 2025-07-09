@@ -171,12 +171,16 @@
     medicTestCatalogApi,
     patientApi,
   } from '@/services/api';
+
   import type { GetExtendQuerys } from '@/services/interfaces/global';
   import type { CreateMedicTestRequestData } from '@/services/interfaces/medicTestRequest';
   import { formatCi, validator } from '@/services/utils';
   import type { Priority } from '@/services/types/global.type';
 
+  const props = defineProps<{ patientId?: string }>();
+
   const breakpoints = useBreakpoint();
+  const { init: notify } = useToast();
 
   const form = ref({
     priority: 'MEDIUM' as Priority,
@@ -184,10 +188,9 @@
     medicTestCatalogId: null,
     observation: '',
   });
-  const formRef = ref();
 
+  const formRef = ref();
   const isLoading = ref(false);
-  const error = ref<string | null>(null);
   const selectedPatient = ref<any>(null);
 
   const medicTestsCatalog = ref<any[]>([]);
@@ -196,129 +199,130 @@
   const patients = ref<any[]>([]);
   const patientsLoading = ref(true);
 
-  const { init: notify } = useToast();
-
   const priorities = [
     { name: 'Alta', priority: 'HIGH' },
     { name: 'Media', priority: 'MEDIUM' },
     { name: 'Baja', priority: 'LOW' },
   ];
 
-  /**
-   * Enviar la solicitud
-   */
+  /** Enviar la solicitud */
   const submitForm = async () => {
-    if (!form.value.medicTestCatalogId && !form.value.medicHistoryId) {
-      notify({
-        message: 'Por favor complete los campos obligatorios.',
-        color: 'danger',
-      });
+    if (!form.value.medicTestCatalogId || !form.value.medicHistoryId) {
+      notify({ message: 'Por favor complete los campos obligatorios.', color: 'danger' });
       return;
     }
     isLoading.value = true;
-    error.value = null;
     try {
       const payload: CreateMedicTestRequestData = {
         ...form.value,
         resultProperties: {},
       };
       await medicTestRequestApi.createMedicTestRequest(payload);
-
       notify({ message: 'Solicitud creada exitosamente.', color: 'success' });
-
       resetForm();
     } catch (e: any) {
+      console.error(e);
       notify({
-        message:
-          'Ha ocurrido un error inesperado, por favor intentelo mas tarde',
+        message: 'Ha ocurrido un error inesperado, por favor intentelo más tarde',
         color: 'danger',
       });
-      console.log(e);
     } finally {
       isLoading.value = false;
     }
   };
 
-  /**
-   * Resetear formulario al estado inicial
-   */
+  /** Resetear formulario */
   const resetForm = () => {
     form.value = {
-      priority: 'MEDIUM' as Priority,
+      priority: 'MEDIUM',
       medicHistoryId: null,
       medicTestCatalogId: null,
       observation: '',
     };
     selectedPatient.value = null;
-
     formRef.value?.resetValidation?.();
   };
 
-  /**
-   * Consultar catálogo de exámenes
-   */
+  /** Obtener catálogo */
   const fetchCatalog = async () => {
     medicTestsCatalogLoading.value = true;
-    const queries: GetExtendQuerys = {
-      offset: 0,
-      limit: 10,
-      includeData: false,
-    };
-    const response = await medicTestCatalogApi.getMedicTestCatalog(queries);
-    medicTestsCatalog.value = Array.isArray(response.data.data)
-      ? response.data.data
-      : [];
+    const queries: GetExtendQuerys = { offset: 0, limit: 10, includeData: false };
+    const res = await medicTestCatalogApi.getMedicTestCatalog(queries);
+    medicTestsCatalog.value = Array.isArray(res.data.data) ? res.data.data : [];
     medicTestsCatalogLoading.value = false;
   };
 
-  /**
-   * Consultar lista de pacientes
-   */
+  /** Obtener todos los pacientes */
   const fetchPatients = async () => {
     patientsLoading.value = true;
-    const queries: GetExtendQuerys = {
-      offset: 0,
-      limit: 10,
-      includeData: true,
-    };
-    const response = await patientApi.getPatients(queries);
-
-    if (Array.isArray(response.data.data)) {
-      patients.value = response.data.data.map((p) => ({
+    const queries: GetExtendQuerys = { offset: 0, limit: 10, includeData: true };
+    const res = await patientApi.getPatients(queries);
+    if (Array.isArray(res.data.data)) {
+      patients.value = res.data.data.map((p) => ({
         ...p,
-        display: `${capitalize(p.name)} ${capitalize(p.lastName)} ${formatCi(
-          p.ci
-        )}`,
+        display: `${capitalize(p.name)} ${capitalize(p.lastName)} ${formatCi(p.ci)}`,
       }));
     }
-
     patientsLoading.value = false;
   };
 
+  /** Obtener paciente específico por ID */
+  const fetchPatientById = async (id: string) => {
+  try {
+    const res = await patientApi.getPatientById(id);
+    const patient = res.data;
+
+    // Actualizar paciente seleccionado
+    selectedPatient.value = patient;
+
+    // Actualizar valor en el form
+    form.value.medicHistoryId = patient.medicHistory?.id ?? null;
+
+    // Verificar si el paciente ya está en la lista `patients`
+    const exists = patients.value.some(
+      (p) => p.medicHistory?.id === patient.medicHistory?.id
+    );
+
+    // Si no existe, agregarlo (con el formato para el select)
+    if (!exists) {
+      patients.value.push({
+        ...patient,
+        display: `${capitalize(patient.name)} ${capitalize(patient.lastName)} ${formatCi(patient.ci)}`,
+      });
+    }
+    patientsLoading.value = false;
+  } catch (e) {
+    console.error('No se pudo cargar el paciente:', e);
+    notify({ message: 'Error al obtener el paciente.', color: 'danger' });
+  }
+};
+
+
+  /** Reactivar paciente seleccionado si se cambia desde el select */
   watch(
     () => form.value.medicHistoryId,
     (newId) => {
-      selectedPatient.value = patients.value.find(
-        (p) => p.medicHistory?.id === newId
-      );
+      const found = patients.value.find(p => p.medicHistory?.id === newId);
+      if (found) selectedPatient.value = found;
     }
   );
 
+  /** Montaje inicial */
   onMounted(() => {
-    fetchPatients();
+    if (props.patientId) {
+      console.log(props.patientId)
+      fetchPatientById(props.patientId);
+    } else {
+      fetchPatients();
+    }
     fetchCatalog();
   });
 
-  /**
-   * Helpers de formato
-   */
+  /** Utilidades */
   const formatPhoneList = (phones: string[]) => phones.join(', ');
   const formatGender = (gender: string) =>
     gender === 'MALE' ? 'Masculino' : gender === 'FEMALE' ? 'Femenino' : 'Otro';
 
-  /**
-   * Filtro de pacientes
-   */
   const filterPatients = (option: any, query: string) => {
     const q = query.toLowerCase();
     return (
@@ -328,35 +332,23 @@
     );
   };
 
-  /**
-   * Color y etiqueta dinámica para la prioridad
-   */
   const getPriorityColor = (priority: Priority): string => {
     switch (priority) {
-      case 'HIGH':
-        return 'danger';
-      case 'MEDIUM':
-        return 'warning';
-      case 'LOW':
-        return 'success';
-      default:
-        return 'secondary';
+      case 'HIGH': return 'danger';
+      case 'MEDIUM': return 'warning';
+      case 'LOW': return 'success';
+      default: return 'secondary';
     }
   };
 
   const getPriorityLabel = (priority: Priority): string => {
-    const found = priorities.find((p) => p.priority === priority);
-    return found ? found.name : '';
+    return priorities.find((p) => p.priority === priority)?.name ?? '';
   };
 
-  /**
-   * Capitaliza la primera letra
-   */
-  const capitalize = (str?: string): string => {
-    if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
+  const capitalize = (str?: string): string =>
+    !str ? '' : str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 </script>
+
 
 <style scoped>
   ::v-deep(.va-card__content) {

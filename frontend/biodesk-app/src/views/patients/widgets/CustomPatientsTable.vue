@@ -49,14 +49,9 @@
 
   // Columnas de la tabla de pacientes, con sus llaves y opciones de ordenamiento
   const columns = defineVaDataTableColumns([
-    { label: 'Nombre', key: 'name', sortable: true },
-    { label: 'Apellido', key: 'lastName', sortable: true },
-    { label: 'Segundo Nombre', key: 'secondName', sortable: true },
-    {
-      label: 'Segundo Apellido',
-      key: 'secondLastName',
-      sortable: true,
-    },
+    { label: 'Nombres', key: 'name', sortable: true },
+    { label: 'Apellidos', key: 'lastName', sortable: true },
+
     { label: 'CI', key: 'ci', sortable: true },
     { label: 'Fecha de Nacimiento', key: 'birthDate', sortable: true },
     { label: 'Dirección', key: 'dir', sortable: true },
@@ -121,9 +116,9 @@
   const onPatientDelete = async (patient: Patient) => {
     const agreed = await confirm({
       title: 'Delete user',
-      message: `Are you sure you want to delete ${patient.name} ${patient.lastName}?`,
-      okText: 'Delete',
-      cancelText: 'Cancel',
+      message: `¿Estás seguro de que quieres eliminar al paciente ${patient.name} ${patient.lastName}?`,
+      okText: 'Eliminar',
+      cancelText: 'Cancelar',
       size: 'small',
       maxWidth: '380px',
     });
@@ -167,7 +162,7 @@
    */
   function onAddExam(patient) {
     // Implementar navegación o modal según necesidad
-    // router.push({ name: 'NewExam', query: { patientId: patient.id } })
+    router.push({ name: 'NewRequest', params: { patientId: patient.id } });
     console.log('Add Exam for patient:', patient);
   }
 </script>
@@ -188,25 +183,13 @@
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis capitalize">
         <!-- <UserAvatar :user="rowData as Patient" size="small" /> -->
-        {{ rowData.name }}
+        {{ rowData.name }} {{ rowData.secondName }}
       </div>
     </template>
 
     <template #cell(lastName)="{ rowData }">
       <div class="max-w-[120px] ellipsis capitalize">
-        {{ rowData.lastName }}
-      </div>
-    </template>
-
-    <template #cell(secondName)="{ rowData }">
-      <div class="ellipsis max-w-[230px] capitalize">
-        {{ rowData.secondName ? rowData.secondName : 'N/A' }}
-      </div>
-    </template>
-
-    <template #cell(secondLastName)="{ rowData }">
-      <div class="ellipsis max-w-[230px] capitalize">
-        {{ rowData.secondLastName ? rowData.secondLastName : 'N/A' }}
+        {{ rowData.lastName }} {{ rowData.secondLastName }}
       </div>
     </template>
 
@@ -235,18 +218,18 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-end">
+      <div class="flex gap-2 justify-start">
         <VaButton
           preset="primary"
-          size="small"
+          size="medium"
           icon="edit"
           aria-label="Edit patient"
           @click.stop="$emit('edit-patient', rowData as Patient)"
         />
         <VaButton
           preset="primary"
-          size="small"
-          icon="va-delete"
+          size="medium"
+          icon="delete"
           color="danger"
           aria-label="Delete patient"
           @click.stop="onPatientDelete(rowData as Patient)"
@@ -256,7 +239,12 @@
   </VaDataTable>
 
   <!-- Modal de detalles del paciente -->
-  <VaModal v-model="isDetailsModalOpen" hide-default-actions size="large" blur>
+  <VaModal
+    v-model="isDetailsModalOpen"
+    hide-default-actions
+    size="large"
+    close-button
+  >
     <h2 class="va-h3 text-primary">Detalles del paciente</h2>
 
     <div class="p-4 space-y-4">
@@ -321,16 +309,16 @@
 
     <template #footer>
       <VaButton @click="isDetailsModalOpen = false">Cerrar</VaButton>
-      <!-- 
+
       <VaButton color="primary" class="ml-2" @click="onAddExam(selectedPatient)"
-      >Añadir Examen</VaButton
+        >Añadir Examen</VaButton
       >
-        -->
+
       <VaButton
-      color="primary"
-      class="ml-2"
-      @click="onViewExams(selectedPatient)"
-      >Ver Examenes</VaButton
+        color="primary"
+        class="ml-2"
+        @click="onViewExams(selectedPatient)"
+        >Ver Examenes</VaButton
       >
     </template>
   </VaModal>
@@ -381,7 +369,7 @@
   .va-data-table .va-data-table__table-tr {
     border-bottom: 1px solid var(--va-background-border);
   }
-.ellipsis {
+  .ellipsis {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

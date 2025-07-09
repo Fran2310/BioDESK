@@ -6,16 +6,19 @@
         <strong>Fecha de solicitud:</strong>
         {{ formatDate(props.selectedExam.requestedAt) }}
       </div>
-      <div>
-        <strong>CI:</strong> {{ formatCi(props.selectedExam.medicHistory.patient.ci) }}
+      <!-- Nuevo campo para la fecha de completación -->
+      <div v-if="props.selectedExam.completedAt">
+        <strong>Fecha de completación:</strong>
+        {{ formatDate(props.selectedExam.completedAt) }}
+      </div>
+      <div v-if="!props.selectedExam.completedAt">
       </div>
       <div>
         <strong>Nombre:</strong>
-        {{ props.selectedExam.medicHistory.patient.name }}
+        {{ `${props.selectedExam.medicHistory.patient.name} ${props.selectedExam.medicHistory.patient.lastName}` }}
       </div>
       <div>
-        <strong>Apellido:</strong>
-        {{ props.selectedExam.medicHistory.patient.lastName }}
+        <strong>CI:</strong> {{ formatCi(props.selectedExam.medicHistory.patient.ci) }}
       </div>
       <div>
         <strong>Examen:</strong>

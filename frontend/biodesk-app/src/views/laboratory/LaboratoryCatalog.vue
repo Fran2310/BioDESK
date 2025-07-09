@@ -30,35 +30,133 @@
           :columns="columnsWithoutId"
           :items="filteredExams"
           :loading="loading"
-                    class="shadow rounded min-h-[200px]"
+          class="shadow rounded min-h-[200px]"
+          @row:click="onExamRowClick"
         >
-
-        <template #cell(supplies)="{ value }">
-          <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
-        </template>
-
+          <template #cell(supplies)="{ value }">
+            <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
+          </template>
           <template #cell(actions)="{ row }">
-            <div class="flex gap-2 justify-end">
-              <VaButton
-                preset="primary"
-                size="small"
-                icon="edit"
-                aria-label="Editar examen"
-                @click.stop="editExam(row)"
-              />
-              <VaButton
-                preset="primary"
-                size="small"
-                icon="va-delete"
-                color="danger"
-                aria-label="Eliminar examen"
-                @click.stop="deleteExam(row, fetchExams, showError)"
-              />
+            <div class="flex gap-2 justify-start">
+              <VaPopover
+                message="Editar examen"
+                class="flex items-center justify-center"
+                hover-out-timeout="0"
+                placement="top-end"
+                :auto-placement="true"
+              >
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="edit"
+                  color="info"
+                  aria-label="Editar examen"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="editExam(row)"
+                />
+              </VaPopover>
+              <VaPopover
+                message="Eliminar examen"
+                class="flex items-center justify-center"
+                hover-out-timeout="0"
+                placement="top-end"
+                :auto-placement="true"
+              >
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="delete"
+                  color="danger"
+                  aria-label="Eliminar examen"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="deleteExam(row, fetchExams, showError)"
+                />
+              </VaPopover>
             </div>
           </template>
         </va-data-table>
       </va-card-content>
     </va-card>
+
+    <!-- Modal de detalles del examen -->
+    <VaModal v-model="showExamDetailsModal" hide-default-actions size="large">
+      <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
+      <div v-if="selectedExam">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <strong>Nombre:</strong>
+            <span>{{ selectedExam.name }}</span>
+          </div>
+          <div>
+            <strong>Precio:</strong>
+            <span>${{ selectedExam.price }}</span>
+          </div>
+          <div class="md:col-span-2">
+            <strong>Descripción:</strong>
+            <span>{{ selectedExam.description || '-' }}</span>
+          </div>
+        </div>
+        <div class="mb-2 font-semibold text-base text-primary">Insumos:</div>
+        <div class="mb-4">
+          <span v-if="selectedExam.supplies && selectedExam.supplies.length">
+            <VaChip
+              v-for="(supply, idx) in selectedExam.supplies"
+              :key="idx"
+              size="small"
+              color="info"
+              class="mr-1 mb-1"
+            >
+              {{ supply }}
+            </VaChip>
+          </span>
+          <span v-else>-</span>
+        </div>
+        <div class="mb-2 font-semibold text-base text-primary">Propiedades:</div>
+        <div class="overflow-auto">
+          <table class="w-full text-left border-collapse border rounded">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border-b pb-1 px-2 py-1">Nombre</th>
+                <th class="border-b pb-1 px-2 py-1">Unidad</th>
+                <th class="border-b pb-1 px-2 py-1">Variaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(prop, idx) in selectedExam.properties" :key="idx">
+                <td class="pr-4 border-b px-2 py-1 font-semibold">{{ prop.name }}</td>
+                <td class="pr-4 border-b px-2 py-1">{{ prop.unit }}</td>
+                <td class="pr-4 border-b px-2 py-1">
+                  <div class="flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(variation, vIdx) in (prop.variations || prop.valueReferences || [])"
+                      :key="vIdx"
+                      outline
+                      size="small"
+                      class="flex items-center gap-2 px-2"
+                    >
+                      <span
+                        :class="[
+                          'inline-block w-3 h-3 rounded-full mr-2',
+                          variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
+                          variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
+                          variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
+                          'bg-purple-300'
+                        ]"
+                      ></span>
+                      {{ variation.gender }}/{{ variation.ageGroup }}: {{ variation.range }}
+                    </VaChip>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div v-else>No se ha seleccionado un examen válido.</div>
+      <template #footer>
+        <VaButton color="primary" @click="showExamDetailsModal = false">Cerrar</VaButton>
+      </template>
+    </VaModal>
 
     <!-- Modal para agregar/editar examen -->
     <va-modal v-model="examForm.showAddModal" hide-default-actions>
@@ -268,95 +366,74 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+// Importaciones principales de Vue y Vuestic UI
+import { onMounted, ref, computed, watch } from 'vue'
 import {
   VaInput, VaDataTable, VaButton, VaModal, VaCard,
-  VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
+  VaCardTitle, VaCardContent, VaSpacer, VaSelect
 } from 'vuestic-ui'
 
-import { computed, ref, watch } from 'vue'
-
+// Importa el composable principal para la lógica del catálogo
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
+// Desestructura helpers y estados del composable
 const {
   columns,
   filteredExams,
   tableState,
-  // Modal y formulario de examen
   examForm,
   addExam,
   editExam,
   updateExam,
   deleteExam,
   closeModal,
-  // Insumos
   addSupplies,
   removeSupply,
-  // Propiedades
-  addProperty,
-  removeProperty,
-  // Referencias y variaciones
   referenceModal,
-  removeVariation,
-  saveVariation,
-  openModalForNewReference,
-  openModalForNewVariation,
-  saveReference,
   removeReference,
-  editVariation,
-  // Otros
-  viewDetails,
   showError,
   fetchExams,
 } = useLaboratoryCatalog()
 
-
-
-
-// Mapear los estados internos a los usados en el template
+// Estado para el input de búsqueda
 const search = ref(tableState.search)
-
 watch(search, (val) => {
   tableState.search = val
 })
-const loadingCatalog = ref(false)
+
+// Estados de loading y edición
 const loading = tableState.loading
-const supplies = examForm.supplies
-const newSupply = examForm.newSupply
 const isEditing = examForm.isEditing
 
+// Computed para el examen en edición/creación
 const newExam = computed({
   get: () => examForm.newExam,
   set: v => examForm.newExam = v
 })
 
-// Referencias para modales y propiedades
+// Referencias para propiedades y variaciones
 const referenceData = referenceModal.referenceData
-const showModal = referenceModal.showModal
-const showVariationModal = referenceModal.showVariationModal
-const selectedReference = referenceModal.selectedReference
-const isEditingReference = referenceModal.isEditingReference
-const selectedReferenceIndex = referenceModal.selectedReferenceIndex
-const selectedVariation = referenceModal.selectedVariation
-const selectedVariationIndex = referenceModal.selectedVariationIndex
-const isEditingVariation = referenceModal.isEditingVariation
 const ageGroups = ['CHILD', 'ADULT', 'ANY']
 const genderOptions = ['MALE', 'FEMALE', 'ANY']
 
+// Estado local para nueva propiedad
 const newProperty = ref({
   name: '',
   unit: '',
   variations: []
 })
 
+// Agrega una variación a la propiedad local
 function addVariation() {
   newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' })
 }
 
+// Elimina una variación local
 function removeLocalVariation(index) {
   newProperty.value.variations.splice(index, 1)
 }
 
+// Agrega la propiedad local a la lista de referencias
 function addPropertyDirect() {
   if (
     newProperty.value.name &&
@@ -372,34 +449,31 @@ function addPropertyDirect() {
   }
 }
 
-function handleSaveReference() {
-  const idx = saveReference()
-  if (typeof idx === 'number') {
-    // Espera a que el modal de referencia se cierre antes de abrir el de variación
-    setTimeout(() => {
-      openModalForNewVariation(idx)
-    }, 0)
-  }
-}
-
+// Valida si se puede guardar el examen
 const canSubmitExam = computed(() => {
-  // Validar campos requeridos
   if (!String(newExam.value.name).trim()) return false
-  // Puedes agregar más validaciones aquí si lo necesitas
   return true
 })
 
-// Filtrar la columna 'id' para no mostrarla en la tabla
+// Oculta la columna 'id' en la tabla
 const columnsWithoutId = computed(() => columns.filter(col => col.key !== 'id'))
 
+// Modal de detalles del examen
+const showExamDetailsModal = ref(false)
+const selectedExam = ref<any>(null)
+
+// Abre el modal de detalles al hacer click en una fila
+function onExamRowClick(event: { item: any }) {
+  selectedExam.value = event.item
+  showExamDetailsModal.value = true
+}
+
+// Carga los exámenes al montar el componente
 onMounted(() => {
   fetchExams()
 })
 
-
-
 </script>
-
 
 <style scoped>
 
@@ -560,6 +634,34 @@ li {
   }
 }
 
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
+
+
+@media (max-width: 600px) {
+  .property-header {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .property-name,
+  .property-unit {
+    white-space: normal;
+    text-align: left;
+  }
+}
+
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
 </style>
 
 

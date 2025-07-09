@@ -21,313 +21,238 @@
         </va-card-content>
     </va-card>
           
-    <va-card class="max-w-full w-full">
-      <va-card-content>
-        <div v-if="loadingRoles" class="flex justify-center items-center py-8">
-          <va-progress-circle indeterminate size="large" color="primary" />
+    <va-card class="roles-table-card max-w-full w-full" style="margin:0;padding:0;box-shadow:none;">
+      <va-card-content class="roles-table-content" style="padding:0;margin:0;">
+        <div style="position: relative;">
+          <va-data-table
+            :columns="roleColumns"
+            :items="filteredRoles"
+            class="shadow-none rounded-none min-h-[200px] roles-data-table"
+            :virtual-scroller="false"
+            @row:click="onRowClick"
+            
+          >
+            <template #cell(role)="{ rowData }">
+              <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
+            </template>
+            <template #cell(description)="{ rowData }">
+              <span class="text-left w-full block">{{ rowData.description }}</span>
+            </template>
+            <template #cell(actions)="{ rowData }">
+              <div class="flex gap-2 justify-start">
+                <VaPopover
+                  message="Editar rol"
+                  class="flex items-center justify-center"
+                  hover-out-timeout="0"
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="edit"
+                    color="info"
+                    aria-label="Editar rol"
+                    class="no-hover-effect flex items-center justify-center"
+                    @click.stop="openEditRoleModal(rowData)"
+                  />
+                </VaPopover>
+                <VaPopover
+                  message="Eliminar rol"
+                  class="flex items-center justify-center"
+                  hover-out-timeout="0"
+                  placement="top-end"
+                  :auto-placement="true"
+                >
+                  <VaButton
+                    preset="primary"
+                    size="medium"
+                    icon="delete"
+                    color="danger"
+                    aria-label="Eliminar rol"
+                    class="no-hover-effect flex items-center justify-center"
+                    @click.stop="deleteRole(rowData.id)"
+                  />
+                </VaPopover>
+              </div>
+            </template>
+          </va-data-table>
+          <div v-if="loading" class="table-spinner-overlay-fix">
+            <va-progress-circle indeterminate size="large" color="primary" />
+          </div>
         </div>
-        <va-data-table
-          v-else
-          :columns="roleColumns"
-          :items="filteredRoles"
-          class="shadow rounded min-h-[200px]"
-          :virtual-scroller="false"
-          @row:click="onRowClick"
-          :row-class="getRowClass"
-        >
-          <template #cell(role)="{ rowData }">
-            <span class="font-bold text-left w-full block">{{ rowData.role }}</span>
-          </template>
-          <template #cell(description)="{ rowData }">
-            <span class="text-left w-full block">{{ rowData.description }}</span>
-          </template>
-          <template #cell(actions)="{ rowData }">
-            <div class="flex gap-2 justify-start">
-              <VaButton preset="primary" icon="edit" size="small" @click.stop="openEditRoleModal(rowData)"/>
-              <VaButton preset="primary" icon="va-delete" color="danger" size="small" @click.stop="deleteRole(rowData.id)"/>
-            </div>
-          </template>
-        </va-data-table>
       </va-card-content>
     </va-card>
 
     <!-- Modal para agregar nuevo rol -->
     <va-modal v-model="showNewRoleModal" hide-default-actions size="800px">
-      <va-card class="w-full">
-        <va-card-title>
-          <span class="text-lg font-bold">Agregar nuevo rol</span>
-        </va-card-title>
-        <va-card-content>
-          <form @submit.prevent="createRole">
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Nombre</label>
-              <va-input
-                v-model="newRoleName"
-                class="w-full"
-                placeholder="Ej: Administrador"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Descripción</label>
-              <va-input
-                v-model="newRoleDescription"
-                class="w-full"
-                placeholder="Descripción del rol"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Permisos</label>
-              <div class="grid grid-cols-4 gap-2 m-2">
-                <va-select
-                  v-model="newPermission.subject"
-                  :options="subjectOptions"
-                  placeholder="Área"
-                  size="small"
-                  class="col-span-1"
-                />
-                <va-select
-                  v-model="newPermission.actions"
-                  :options="actionsOptions"
-                  placeholder="Acciones"
-                  size="small"
-                  multiple
-                  class="col-span-1"
-                />
-                <va-select
-                  v-model="newPermission.fields"
-                  :options="getFieldsOptions(newPermission.subject)"
-                  placeholder="Campos"
-                  size="small"
-                  multiple
-                  class="col-span-1"
-                />
-                <va-button
-                  color="primary"
-                  size="small"
-                  @click="addPermission"
-                  class="col-span-1"
-                >
-                  Agregar permiso
-                </va-button>
-              </div>
-
-              <!-- Lista de permisos añadidos -->
-              <div
-                v-for="(permission, index) in permissions"
-                :key="index"
-                class="permission-block mt-4"
-              >
-                <div class="permission-header grid grid-cols-4 gap-2 items-center mb-2 w-full">
-                  <div class="col-span-1 font-semibold permission-name">
-                    {{ permission.subject }}
-                  </div>
-                  <div class="col-span-1 permission-actions flex flex-wrap gap-1">
-                    <VaChip
-                      v-for="(action, aIdx) in (Array.isArray(permission.actions) ? permission.actions : String(permission.actions).split(','))"
-                      :key="aIdx"
-                      size="small"
-                      color="primary"
-                      class="mr-1 mb-1"
-                    >
-                      {{ action }}
-                    </VaChip>
-                  </div>
-                  <div class="col-span-1 permission-fields flex flex-wrap gap-1">
-                    <VaChip
-                      v-for="(field, fIdx) in (Array.isArray(permission.fields) ? permission.fields : String(permission.fields || '').split(',').filter(f => f.trim() !== ''))"
-                      :key="fIdx"
-                      size="small"
-                      color="info"
-                      class="mr-1 mb-1"
-                    >
-                      {{ field }}
-                    </VaChip>
-                  </div>
-                  <div class="flex justify-end">
-                    <VaButton
-                      preset="primary" 
-                      icon="va-delete"
-                      color="danger"
-                      size="small"
-                      @click="removePermission(index)"
-                      class="ml-2 self-start"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex justify-end gap-2 mt-6">
-              <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
-              <VaButton
-                color="primary"
-                type="submit"
-                :disabled="!canSaveNewRole"
-              >Guardar</VaButton>
-            </div>
-          </form>
-        </va-card-content>
-      </va-card>
+      <RoleFormWidget
+        :is-edit="false"
+        :role-name="newRoleName"
+        :role-description="newRoleDescription"
+        :permissions="permissions"
+        :new-permission="newPermission"
+        :subject-options="subjectOptions"
+        :actions-options="actionsOptions"
+        :get-fields-options="getFieldsOptions"
+        :loading="modalLoading"
+        :can-save="canSaveNewRole"
+        @update:roleName="v => newRoleName = v"
+        @update:roleDescription="v => newRoleDescription = v"
+        @update:newPermission="v => newPermission = v"
+        @add-permission="addPermission"
+        @remove-permission="removePermission"
+        @submit="handleCreateRole"
+        @cancel="closeNewRoleModal(resetRoleForm)"
+      />
     </va-modal>
 
     <!-- Modal para editar rol -->
     <va-modal v-model="showEditRoleModal" hide-default-actions size="800px">
-      <va-card class="w-full">
-        <va-card-title>
-          <span class="text-lg font-bold">Editar rol</span>
-        </va-card-title>
-        <va-card-content>
-          <form @submit.prevent="saveEditRoleModal">
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Nombre</label>
-              <va-input
-                v-model="editRoleModalData.name"
-                class="w-full"
-                placeholder="Ej: Administrador"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Descripción</label>
-              <va-input
-                v-model="editRoleModalData.description"
-                class="w-full"
-                placeholder="Descripción del rol"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Permisos</label>
-              <div
-                v-for="(perm, idx) in editRoleModalData.permissions"
-                :key="idx"
-                class="flex flex-wrap gap-2 mb-2 items-center"
-              >
-                <va-select
-                  v-model="perm.subject"
-                  :options="subjectOptions"
-                  class="input-xs"
-                  placeholder="Subject"
-                  size="small"
-                  clearable
-                  style="min-width: 120px; max-width: 180px;"
-                />
-                <va-select
-                  v-model="perm.actions"
-                  :options="actionsOptions"
-                  class="input-xs"
-                  placeholder="Actions"
-                  size="small"
-                  multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  style="min-width: 120px; max-width: 180px;"
-                />
-                <va-select
-                  v-model="perm.fields"
-                  :options="getFieldsOptions(perm.subject)"
-                  class="input-xs"
-                  placeholder="Fields"
-                  size="small"
-                  multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
-                  style="min-width: 120px; max-width: 180px;"
-                />
-                <va-button
-                  color="danger"
-                  size="small"
-                  @click="removeEditRoleModalPermission(idx)"
-                  icon="delete"
-                  class="ml-1"
-                  aria-label="Eliminar permiso"
-                />
-              </div>
-              <VaButton
-                color="primary"
-                size="small"
-                class="mt-2"
-                @click="addEditRoleModalPermission"
-                icon="add"
-                type="button"
-              >
-                Agregar Permiso
-              </VaButton>
-            </div>
-            <div class="flex justify-end gap-2 mt-6">
-              <VaButton color="danger" type="reset" @click="closeEditRoleModal">Cancelar</VaButton>
-              <VaButton
-                color="primary"
-                type="submit"
-                :disabled="!canSaveEditRole"
-              >Guardar</VaButton>
-            </div>
-          </form>
-        </va-card-content>
-      </va-card>
+      <RoleFormWidget
+        :is-edit="true"
+        :role-name="editRoleModalData.name"
+        :role-description="editRoleModalData.description"
+        :permissions="editRoleModalData.permissions"
+        :new-permission="editRoleModalData.newPermission"
+        :subject-options="subjectOptions"
+        :actions-options="actionsOptions"
+        :get-fields-options="getFieldsOptions"
+        :loading="editModalLoading"
+        :can-save="canSaveEditRole"
+        @update:roleName="v => { editRoleModalData.name = v }"
+        @update:roleDescription="v => { editRoleModalData.description = v }"
+        @update:newPermission="v => { editRoleModalData.newPermission = v }"
+        @update:permissions="v => { editRoleModalData.permissions = v }"
+        @add-permission="addEditRoleModalPermission"
+        @remove-permission="removeEditRoleModalPermission"
+        @submit="handleSaveEditRole(editRoleIdForModal)"
+        @cancel="closeEditRoleModal"
+      />
     </va-modal>
 
     <!-- Modal para ver detalles del rol -->
     <va-modal v-model="showRoleDetailsModal" hide-default-actions size="700px">
-      <va-card>
+      <va-card class="role-details-modal">
         <va-card-title>
-          <span class="text-lg font-bold">Detalles del Rol</span>
+          <span class="text-lg font-bold text-primary">Detalles del rol</span>
         </va-card-title>
         <va-card-content>
           <div v-if="selectedRole">
-            <div class="mb-2"><b>Nombre:</b> {{ selectedRole.role }}</div>
-            <div class="mb-2"><b>Descripción:</b> {{ selectedRole.description }}</div>
-            <div class="mb-2"><b>ID:</b> {{ selectedRole.id }}</div>
-            <div class="mb-2"><b>Permisos:</b></div>
-            <table class="w-full border mt-2">
-              <thead>
-                <tr>
-                  <th class="border px-2 py-1 text-left">Área</th>
-                  <th class="border px-2 py-1 text-left">Acciones</th>
-                  <th class="border px-2 py-1 text-left">Campos</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
-                  <td class="border px-2 py-1 mr-1">{{ perm.subject }}</td>
-                  <td class="border px-2 py-1 mr-1">
-                    <div class="flex flex-wrap gap-1">
-                      <VaChip
-                        v-for="(action, aIdx) in (Array.isArray(perm.actions) ? perm.actions : String(perm.actions).split(',').filter(a => a.trim() !== ''))"
-                        :key="aIdx"
-                        size="small"
-                        color="primary"
-                        class="mr-1 mb-1"
-                      >
-                        {{ action }}
-                      </VaChip>
-                    </div>
-                  </td>
-                  <td class="border px-2 py-1 mr-1">
-                    <div class="flex flex-wrap gap-1">
-                      <VaChip
-                        v-for="(field, fIdx) in (('fields' in perm && perm.fields) ? (Array.isArray(perm.fields) ? perm.fields : String(perm.fields).split(',').filter(f => f.trim() !== '')) : [])"
-                        :key="fIdx"
-                        size="small"
-                        color="info"
-                        class="mr-1 mb-1"
-                      >
-                        {{ field }}
-                      </VaChip>
-                      <span v-if="!('fields' in perm) || !perm.fields || (Array.isArray(perm.fields) && perm.fields.length === 0)">-</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <strong>Nombre:</strong>
+                <span>{{ selectedRole.role }}</span>
+              </div>
+              <!-- Quitar el bloque de ID -->
+              <!--
+              <div>
+                <strong>ID:</strong>
+                <span>{{ selectedRole.id }}</span>
+              </div>
+              -->
+              <div class="md:col-span-2">
+                <strong>Descripción:</strong>
+                <span>{{ selectedRole.description }}</span>
+              </div>
+            </div>
+            <div class="mb-2 font-semibold text-base text-primary">Permisos:</div>
+            <div class="overflow-auto">
+              <table class="w-full text-left border-collapse border rounded role-details-table">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="border-b pb-1 px-2 py-1">Área</th>
+                    <th class="border-b pb-1 px-2 py-1">Acciones</th>
+                    <th class="border-b pb-1 px-2 py-1">Campos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(perm, idx) in selectedRole.permissions" :key="idx">
+                    <td class="pr-4 border-b px-2 py-1 font-semibold">{{ perm.subject }}</td>
+                    <td class="pr-4 border-b px-2 py-1">
+                      <div class="flex flex-wrap gap-1">
+                        <VaChip
+                          v-for="(action, aIdx) in (Array.isArray(perm.actions) ? perm.actions : String(perm.actions).split(',').filter(a => a.trim() !== ''))"
+                          :key="aIdx"
+                          size="small"
+                          color="primary"
+                          class="mr-1 mb-1"
+                        >
+                          {{ action }}
+                        </VaChip>
+                      </div>
+                    </td>
+                    <td class="pr-4 border-b px-2 py-1">
+                      <div class="flex flex-wrap gap-1">
+                        <VaChip
+                          v-for="(field, fIdx) in (('fields' in perm && perm.fields) ? (Array.isArray(perm.fields) ? perm.fields : String(perm.fields).split(',').filter(f => f.trim() !== '')) : [])"
+                          :key="fIdx"
+                          size="small"
+                          color="info"
+                          class="mr-1 mb-1"
+                        >
+                          {{ field }}
+                        </VaChip>
+                        <span v-if="!('fields' in perm) || !perm.fields || (Array.isArray(perm.fields) && perm.fields.length === 0)">-</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
+          <div v-else>No se ha seleccionado un rol válido.</div>
         </va-card-content>
         <template #footer>
           <va-button color="primary" @click="showRoleDetailsModal = false">Cerrar</va-button>
+        </template>
+      </va-card>
+    </va-modal>
+
+    <!-- Modal de advertencia por cambios no guardados -->
+    <va-modal v-model="showEditUnsavedModal" hide-default-actions size="400px">
+      <va-card>
+        <va-card-title>
+          <span class="text-lg font-bold">Advertencia</span>
+        </va-card-title>
+        <va-card-content>
+          <div class="py-4">
+            <p class="text-sm text-gray-700">
+              Tienes cambios sin guardar en el formulario de edición. Si cierras este modal, se perderán los cambios.
+            </p>
+          </div>
+        </va-card-content>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <VaButton
+              color="danger"
+              @click="showEditUnsavedModal = false; pendingEditFormHide?.(); pendingEditFormHide = null"
+            >
+              Cerrar sin guardar
+            </VaButton>
+            <VaButton
+              color="primary"
+              @click="showEditUnsavedModal = false"
+            >
+              Cancelar
+            </VaButton>
+          </div>
+        </template>
+      </va-card>
+    </va-modal>
+
+    <!-- Modal personalizado para advertir sobre cambios no guardados en edición -->
+    <va-modal v-model="showEditUnsavedModal" hide-default-actions size="380px">
+      <va-card>
+        <va-card-title>
+          <span class="text-lg font-bold text-danger">Cambios sin guardar</span>
+        </va-card-title>
+        <va-card-content>
+          <div>El formulario tiene cambios sin guardar. ¿Seguro que lo quiere cerrar?</div>
+        </va-card-content>
+        <template #footer>
+          <va-button color="danger" @click="() => { showEditUnsavedModal = false; if (pendingEditFormHide) { pendingEditFormHide(); pendingEditFormHide = null } }">Cerrar sin guardar</va-button>
+          <va-button color="primary" @click="() => { showEditUnsavedModal = false; pendingEditFormHide = null }">Seguir editando</va-button>
         </template>
       </va-card>
     </va-modal>
@@ -336,368 +261,134 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-// Importa las funciones del servicio y los tipos que acabamos de definir
-import {
-  getRoles,
-  createRoleApi,
-  assignPermissionsApi,
-  getPermissions,
-  updateRoleApi,
-  deleteRoleApi,
-} from '../../services/roleService' // Asegúrate de que la ruta sea correcta
+import { VaButton, VaProgressCircle, useModal } from 'vuestic-ui'
 
-import type {
-  RoleFromApi,
-  ApiRolePermission,
-  CreateRolePayload,
-  FlatPermissionsArray
-} from '../../services/roleService' 
+import { useRolePermissions } from './composables/useRolePermissions'
+import { useRoleApi } from './composables/useRoleApi'
+import { useRoleForm } from './composables/useRoleForm'
+import { useRoleActions } from './composables/useRoleActions'
+import { useRoleModals } from './composables/useRoleModals'
+import RoleFormWidget from './RoleFormWidget.vue'
 
-import { VaButton, VaProgressCircle } from 'vuestic-ui'
-// Importa los types para obtener los fields dinámicamente
-import * as PermissionTypes from '../../services/types/permission.type'
 
-// Helper para convertir un type union a array de strings
-function typeToArray<T>(): string[] {
-  // TypeScript types no existen en runtime, así que esto es solo para claridad.
-  // Debes definir manualmente los arrays si quieres tipado estricto.
-  return [];
+// Estado de loading global y modal
+const loading = ref(false)
+const modalLoading = ref(false)
+const editModalLoading = ref(false)
+
+// Forzar actualización del modal de edición para que Vue reactive los cambios y el botón de guardar
+const editModalForceUpdate = ref(0)
+function forceUpdateEditModal() {
+  editModalForceUpdate.value++
 }
 
-// Construye el mapa de fields usando arrays explícitos (garantiza string[])
-const fieldsOptionsMap: Record<string, string[]> = {
-  SystemUser: [
-    'uuid', 'ci', 'name', 'lastName', 'email', 'password', 'salt', 'isActive', 'lastAccess'
-  ],
-  LabUser: [
-    'systemUserUuid', 'roleId'
-  ],
-  Lab: [
-    'name', 'dbName', 'status', 'rif', 'dir', 'phoneNums', 'logoPath', 'createdAt'
-  ],
-  Role: [
-    'role', 'description', 'permissions'
-  ],
-  ActionHistory: [
-    'action', 'details', 'entity', 'recordEntityId', 'operationData', 'madeAt', 'labUserId'
-  ],
-  Patient: [
-    'ci', 'name', 'lastName', 'secondName', 'secondLastName', 'gender', 'email', 'phoneNums', 'dir', 'birthDate'
-  ],
-  MedicHistory: [
-    'allergies', 'pathologies', 'patientId'
-  ],
-  RequestMedicTest: [
-    'requestedAt', 'completedAt', 'state', 'priority', 'resultProperties', 'observation', 'medicHistoryId', 'medicTestCatalogId'
-  ],
-  MedicTestCatalog: [
-    'name', 'description', 'price', 'supplies'
-  ],
-  all: [],
-};
 
-// Helper para obtener las opciones de fields según el subject seleccionado
-function getFieldsOptions(subject: string): string[] {
-  if (!subject) return [];
-  const options = fieldsOptionsMap[subject];
-  return Array.isArray(options) ? options : [];
-}
+const api = useRoleApi()
 
-const newRoleName = ref('')
-const newRoleDescription = ref('')
-const selectedPermissions = ref<string[]>([]) // Esto sigue siendo string[] ('subject:action')
-const roles = ref<RoleFromApi[]>([]) // Ahora tipado correctamente
-const permissionGroups = ref<Record<string, any[]>>({}) // Tipado más específico
-const selectedRoleId = ref<string | null>(null)
+const {
+  showNewRoleModal,
+  showEditRoleModal,
+  showRoleDetailsModal,
+  selectedRole,
+  editRoleModalData,
+  openEditRoleModal,
+  closeEditRoleModal,
+  closeNewRoleModal,
+  addEditRoleModalPermission,
+  removeEditRoleModalPermission,
+  editRoleIdForModal // <-- Añade esta línea para exponer editRoleIdForModal
+} = useRoleModals()
 
-// Edición de roles
-const editingRoleId = ref<string | null>(null)
-const editRoleFields = ref<Record<string, { name: string; description: string }>>({});
-const permissionFields = ref<Record<string, string>>({}); // Nuevo: campos por permiso
+const {
+  newRoleName,
+  newRoleDescription,
+  selectedPermissions,
+  selectedRoleId,
+  permissions,
+  newPermission,
+  addPermission,
+  removePermission,
+  saveEditRoleModal,
+  resetRoleForm
+} = useRoleForm({
+  roles: api.roles,
+  fetchAllPermissions: api.fetchAllPermissions,
+  fetchAllRoles: api.fetchAllRoles,
+  editRoleModalData,
+  updateRoleApi: api.updateRole,
+  closeEditRoleModal,
+  showNewRoleModal
+})
 
-const permissions = ref([]);
-const newPermission = ref({ subject: '', actions: [], fields: [] });
+const { getFieldsOptions } = useRolePermissions()
 
-const loadingRoles = ref(false)
-const savingNewRole = ref(false)
-const savingEditRole = ref(false)
+const { createRole: createRoleApi, canSaveNewRole } = useRoleActions({
+  newRoleName,
+  newRoleDescription,
+  permissions,
+  createRoleApi: api.createRole,
+  fetchAllRoles: api.fetchAllRoles,
+  showNewRoleModal
+})
 
-const fetchAllRoles = async () => {
-  loadingRoles.value = true
+// Función para crear rol con loading modal
+const handleCreateRole = async () => {
+  modalLoading.value = true
   try {
-    const res = await getRoles();
-    console.log('Respuesta de getRoles:', res); // <-- ¿Es un array?
-    roles.value = res || [];
-  } catch (error) {
-    console.error('Error fetching roles:', error);
-    alert('Error al cargar roles.');
+    await createRoleApi()
+    closeNewRoleModal(resetRoleForm)
+  } catch (e) {
+    // Puedes mostrar un toast de error aquí si lo deseas
   } finally {
-    loadingRoles.value = false
+    modalLoading.value = false
   }
 }
 
-const fetchAllPermissions = async () => {
-  loadingRoles.value = true
+const handleSaveEditRole = async (roleId: string) => {
+  editModalLoading.value = true
   try {
-    // Usa el helper del servicio, que ya llama a getRoles y agrupa los permisos
-    permissionGroups.value = await getPermissions();
-    // Si quieres también refrescar la lista de roles:
-    roles.value = await getRoles();
-  } catch (error) {
-    console.error('Error fetching permissions:', error);
-    alert('Error al cargar permisos.');
+    await saveEditRoleModal(roleId)
+  } catch (e) {
+    // Handle error, maybe show a toast
   } finally {
-    loadingRoles.value = false
+    editModalLoading.value = false
   }
 }
 
-// Utilidad para agrupar permisos y convertirlos al formato correcto
-function groupPermissions(flatPermissions: string[]) {
-  const grouped: Record<string, Set<string>> = {};
-  flatPermissions.forEach((perm) => {
-    const [subject, action] = perm.split(':');
-    if (!grouped[subject]) grouped[subject] = new Set();
-    grouped[subject].add(action);
-  });
-  return Object.entries(grouped).map(([subject, actions]) => ({
-    subject,
-    actions: Array.from(actions).join(',') // string separado por comas
-    // fields: "*" // Si necesitas enviar fields, agrégalo aquí
-  }));
-}
+const editFormRef = ref()
+const showEditUnsavedModal = ref(false)
+let pendingEditFormHide: null | (() => unknown) = null
 
-function groupPermissionsWithFields(flatPermissions: string[]) {
-  const grouped: Record<string, Set<string>> = {};
-  flatPermissions.forEach((perm) => {
-    const [subject, action] = perm.split(':');
-    if (!grouped[subject]) grouped[subject] = new Set();
-    grouped[subject].add(action);
-  });
-  // Devuelve el formato esperado por la API, incluyendo fields
-  return Object.entries(grouped).map(([subject, actions]) => ({
-    subject,
-    actions: Array.from(actions).join(','), // string separado por comas
-    fields: Object.entries(permissionFields.value)
-      .filter(([key]) => key.startsWith(subject + ':'))
-      .map(([, fields]) => fields)
-      .filter(Boolean)[0] || undefined, // Toma el campo si existe
-  }));
-}
-
-function addPermission() {
-  if (newPermission.value.subject && newPermission.value.actions.length > 0) {
-    permissions.value.push({
-      subject: newPermission.value.subject,
-      actions: [...newPermission.value.actions],
-      fields: [...newPermission.value.fields],
-    });
-    newPermission.value = { subject: '', actions: [], fields: [] };
-  }
-}
-
-function removePermission(index) {
-  permissions.value.splice(index, 1);
-}
-
-const createRole = async () => {
-  if (!newRoleName.value || !newRoleDescription.value) return;
-
-  const perms = permissions.value
-    .filter(p => p.subject && p.actions && p.actions.length > 0)
-    .map(p => ({
-      subject: p.subject,
-      actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
-      ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
-        ? { fields: p.fields.join(',') }
-        : {})
-    }));
-
-  if (perms.length === 0) return;
-
-  const payload = {
-    name: newRoleName.value,
-    description: newRoleDescription.value,
-    permissions: perms,
-  };
-
-  await createRoleApi(payload);
-  newRoleName.value = '';
-  newRoleDescription.value = '';
-  permissions.value = [];
-  showNewRoleModal.value = false; // <-- Cierra el modal al guardar
-
-  await fetchAllRoles();
-}
-
-const assignPermissions = async () => {
-  if (!selectedRoleId.value) {
-    alert('Por favor, selecciona un rol primero.')
-    return
-  }
-  try {
-    const permissions = groupPermissions(selectedPermissions.value);
-    await assignPermissionsApi(selectedRoleId.value, permissions);
-    selectedPermissions.value = []
-    await fetchAllRoles() // Recargar roles para ver los cambios
-    alert('Permisos asignados con éxito.')
-  } catch (error) {
-    console.error('Error assigning permissions:', error)
-    alert('Error al asignar permisos')
-  }
-}
-
-// Edición de roles
-function startEditRole(role: RoleFromApi) {
-  editingRoleId.value = role.id;
-    editRoleFields.value[role.id] = {
-    name: role.role,
-    description: role.description,
-    };
-}
-
-const saveEditRole = async (role: RoleFromApi) => {
-  const fields = editRoleFields.value[role.id];
-  if (!fields.name || !fields.description) {
-    return;
-  }
-
-  const permissions = groupPermissions(selectedPermissions.value);
-  const payload = {
-    name: fields.name,
-    description: fields.description,
-    permissions, // [{ subject: 'RequestMedicTest', actions: 'read,update' }]
-  };
-
-  await updateRoleApi(role.id, payload);
-  editingRoleId.value = null;
-  delete editRoleFields.value[role.id];
-  await fetchAllRoles();
-}
-
-const cancelEditRole = () => {
-  editingRoleId.value = null
-  editRoleFields.value = {}
-}
-
-const deleteRole = async (roleId: string) => {
-  if (confirm(`¿Seguro que deseas eliminar este rol?`)) {
-    await deleteRoleApi(roleId);
-    await fetchAllRoles();
-    if (selectedRoleId.value === roleId) {
-      selectedRoleId.value = null; // Deseleccionar si el rol actual fue eliminado
-    }
-  }
-}
-
-watch(selectedRoleId, (roleId) => {
-  if (!roleId) {
-    selectedPermissions.value = []
-    return
-  }
-  const role = roles.value.find((r: RoleFromApi) => r.id === roleId)
-  if (role && Array.isArray(role.permissions)) {
-    // Aplanar los permisos del rol al formato 'subject:action' para los checkboxes
-    selectedPermissions.value = role.permissions.flatMap((p: ApiRolePermission) =>
-      p.actions.map((action: string) => `${p.subject}:${action}`)
-    )
+// Modal personalizado para advertir sobre cambios no guardados al cerrar el modal de edición
+const beforeEditFormModalClose = async (hide: () => unknown) => {
+  if (editFormRef.value?.isFormHasUnsavedChanges) {
+    showEditUnsavedModal.value = true
+    pendingEditFormHide = hide
   } else {
-    selectedPermissions.value = []
+    hide()
   }
-}, { immediate: true }) // Ejecutar inmediatamente si ya hay un selectedRoleId al inicio
-
-onMounted(async () => {
-  await fetchAllPermissions()
-})
-
-const showEditRoleModal = ref(false)
-const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string; fields?: string }[] }>({
-  name: '',
-  description: '',
-  permissions: [{ subject: '', actions: '', fields: '' }]
-})
-const editRoleIdForModal = ref<string | null>(null)
-
-function openEditRoleModal(role: RoleFromApi) {
-  showEditRoleModal.value = true
-  editRoleIdForModal.value = role.id
-  editRoleModalData.value.name = role.role
-  editRoleModalData.value.description = role.description
-  editRoleModalData.value.permissions = (role.permissions || []).map(p => ({
-    subject: p.subject,
-    actions: Array.isArray(p.actions) ? p.actions.join(',') : (p.actions ?? ''),
-    fields: (p as any).fields ?? ''
-  }))
 }
 
-function closeEditRoleModal() {
-  showEditRoleModal.value = false
-  editRoleIdForModal.value = null
-  editRoleModalData.value.name = ''
-  editRoleModalData.value.description = ''
-  editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
+// Eliminar
+const deleteRole = async (roleId: string) => {
+  loading.value = true
+  try {
+    await api.deleteRole(roleId)
+    if (selectedRoleId.value === roleId) {
+      selectedRoleId.value = null
+    }
+    await api.fetchAllRoles()
+  } finally {
+    loading.value = false
+  }
 }
 
-function closeNewRoleModal() {
-  showNewRoleModal.value = false
-  resetRoleForm()
-}
-
-function addEditRoleModalPermission() {
-  editRoleModalData.value.permissions.push({ subject: '', actions: '', fields: '' })
-}
-
-function removeEditRoleModalPermission(idx: number) {
-  editRoleModalData.value.permissions.splice(idx, 1)
-}
-
-const saveEditRoleModal = async () => {
-  if (!editRoleIdForModal.value) return;
-
-  const { name, description, permissions } = editRoleModalData.value;
-  if (!name || !description) return;
-
-  const cleanPermissions = permissions
-    .filter(p => p.subject && p.actions)
-    .map(p => ({
-      subject: p.subject,
-      actions: Array.isArray(p.actions) ? p.actions.join(',') : p.actions,
-      ...(p.fields && Array.isArray(p.fields) && p.fields.length > 0
-        ? { fields: p.fields.join(',') }
-        : {})
-    }));
-
-  await updateRoleApi(editRoleIdForModal.value, {
-    name,
-    description,
-    permissions: cleanPermissions
-  });
-
-  closeEditRoleModal();
-  await fetchAllRoles();
-}
-
-const roleColumns = [
-  { key: 'role', label: 'Nombre', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[220px]' },
-  { key: 'description', label: 'Descripción', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[320px]' },
-  // { key: 'permissions', label: 'Permisos', ... } // Eliminado
-  { key: 'actions', label: 'Acciones', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[180px]' },
-]
-
-function resetRoleForm() {
-  newRoleName.value = ''
-  newRoleDescription.value = ''
-  permissions.value = []
-  newPermission.value = { subject: '', actions: [], fields: [] }
-}
-
-const showNewRoleModal = ref(false)
-
+// Filtros y helpers
 const search = ref('')
-
 const filteredRoles = computed(() => {
-  if (!search.value) return roles.value
+  if (!search.value) return api.roles.value
   const term = search.value.toLowerCase()
-  return roles.value.filter(role =>
+  return api.roles.value.filter(role =>
     (role.role && String(role.role).toLowerCase().includes(term)) ||
     (role.description && String(role.description).toLowerCase().includes(term)) ||
     (Array.isArray(role.permissions) &&
@@ -725,8 +416,7 @@ const subjectOptions = [
   'RequestMedicTest',
   'MedicTestCatalog',
   'all'
-];
-
+]
 const actionsOptions = [
   'create',
   'read',
@@ -734,33 +424,25 @@ const actionsOptions = [
   'delete',
   'manage',
   'set_state'
-];
+]
 
-const showRoleDetailsModal = ref(false)
-const selectedRole = ref<RoleFromApi | null>(null)
+// Tabla
+const roleColumns = [
+  { key: 'role', label: 'Nombre', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[220px]' },
+  { key: 'description', label: 'Descripción', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[320px]' },
+  { key: 'actions', label: 'Acciones', thClass: 'text-center text-lg', tdClass: 'text-left text-base w-[180px]' },
+]
 
-function onRowClick(event: { item: RoleFromApi }) {
-  // Evita abrir el modal si el click fue en los botones de acción
-  // (esto ya se maneja con @click.stop en los botones)
+// Modal detalles
+function onRowClick(event: { item: any }) {
   selectedRole.value = event.item
   showRoleDetailsModal.value = true
 }
-
-// Opcional: resalta la fila seleccionada
-function getRowClass(row: RoleFromApi) {
+function getRowClass(row: any) {
   return selectedRole.value && selectedRole.value.id === row.id ? 'bg-gray-100' : ''
 }
 
-// Agrega los computeds para los botones de guardar
-const canSaveNewRole = computed(() => {
-  if (!newRoleName.value.trim() || !newRoleDescription.value.trim()) return false
-  if (!permissions.value.length) return false
-  for (const p of permissions.value) {
-    if (!p.subject || !p.actions || !Array.isArray(p.actions) || p.actions.length === 0) return false
-  }
-  return true
-})
-
+// Guardar botones
 const canSaveEditRole = computed(() => {
   if (!editRoleModalData.value.name.trim() || !editRoleModalData.value.description.trim()) return false
   if (!editRoleModalData.value.permissions.length) return false
@@ -768,6 +450,32 @@ const canSaveEditRole = computed(() => {
     if (!p.subject || !p.actions || (Array.isArray(p.actions) ? p.actions.length === 0 : !p.actions)) return false
   }
   return true
+})
+
+// Watchers y lifecycle
+watch(selectedRoleId, (roleId) => {
+  if (!roleId) {
+    selectedPermissions.value = []
+    return
+  }
+  const role = api.roles.value.find((r: any) => r.id === roleId)
+  if (role && Array.isArray(role.permissions)) {
+    selectedPermissions.value = role.permissions.flatMap((p: any) =>
+      p.actions.map((action: string) => `${p.subject}:${action}`)
+    )
+  } else {
+    selectedPermissions.value = []
+  }
+}, { immediate: true })
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    await api.fetchAllPermissions()
+    await api.fetchAllRoles()
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -823,5 +531,165 @@ const canSaveEditRole = computed(() => {
   font-size: 14px;
   color: #333;
   word-break: break-word; /* Permite que los textos largos se dividan en varias líneas */
+}
+
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
+
+/* Spinner overlay para la tabla de roles */
+.table-spinner-overlay-fix {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: all;
+}
+
+.va-card-content table {
+  min-width: 600px;
+  font-size: 13px;
+}
+.va-card-content th,
+.va-card-content td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+.va-card-content th {
+  background: #f3f4f6;
+  font-weight: bold;
+}
+
+/* --- MODAL DETALLES DE ROL (similar a exam details modal) --- */
+.role-details-modal {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  min-width: 600px;
+  max-width: 98vw;
+}
+
+.role-details-modal .va-card-title {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.role-details-table {
+  min-width: 600px;
+  font-size: 13px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+}
+
+.role-details-table th,
+.role-details-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+
+.role-details-table th {
+  background: #f3f4f6;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.role-details-table tr:last-child td {
+  border-bottom: none;
+}
+
+.role-details-modal strong {
+  color: #22223b;
+}
+
+.role-details-modal .va-chip {
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.role-details-modal .va-card-content {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Responsive for modal */
+@media (max-width: 700px) {
+  .role-details-modal {
+    padding: 1rem 0.5rem;
+    min-width: unset;
+  }
+  .role-details-table {
+    min-width: 320px;
+    font-size: 12px;
+  }
+}
+
+/* Tabla de roles ocupa todo el espacio, sin padding ni margen */
+.roles-table-card {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+}
+
+.roles-table-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.roles-data-table {
+  margin: 0 !important;
+  padding: 1rem !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+/* Ajusta la tabla interna para ocupar todo el ancho */
+.va-data-table__table {
+  width: 100% !important;
+  margin: 0 !important;
+  border-collapse: collapse !important;
+}
+
+.va-data-table__table th,
+.va-data-table__table td {
+  padding: 0.5rem 0.75rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.va-data-table__table th {
+  background: #f3f4f6 !important;
+  font-weight: bold !important;
+}
+
+.va-data-table__table tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Elimina bordes y padding de la tarjeta */
+.va-card,
+.va-card-content {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #fff !important;
 }
 </style>
