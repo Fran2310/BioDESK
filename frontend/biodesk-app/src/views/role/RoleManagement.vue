@@ -118,7 +118,7 @@
         :subject-options="subjectOptions"
         :actions-options="actionsOptions"
         :get-fields-options="getFieldsOptions"
-        :loading="false"
+        :loading="editModalLoading"
         :can-save="canSaveEditRole"
         @update:roleName="v => { editRoleModalData.name = v }"
         @update:roleDescription="v => { editRoleModalData.description = v }"
@@ -126,7 +126,7 @@
         @update:permissions="v => { editRoleModalData.permissions = v }"
         @add-permission="addEditRoleModalPermission"
         @remove-permission="removeEditRoleModalPermission"
-        @submit="saveEditRoleModal(editRoleIdForModal)"
+        @submit="handleSaveEditRole(editRoleIdForModal)"
         @cancel="closeEditRoleModal"
       />
     </va-modal>
@@ -274,6 +274,7 @@ import RoleFormWidget from './RoleFormWidget.vue'
 // Estado de loading global y modal
 const loading = ref(false)
 const modalLoading = ref(false)
+const editModalLoading = ref(false)
 
 // Forzar actualización del modal de edición para que Vue reactive los cambios y el botón de guardar
 const editModalForceUpdate = ref(0)
@@ -340,6 +341,17 @@ const handleCreateRole = async () => {
     // Puedes mostrar un toast de error aquí si lo deseas
   } finally {
     modalLoading.value = false
+  }
+}
+
+const handleSaveEditRole = async (roleId: string) => {
+  editModalLoading.value = true
+  try {
+    await saveEditRoleModal(roleId)
+  } catch (e) {
+    // Handle error, maybe show a toast
+  } finally {
+    editModalLoading.value = false
   }
 }
 
