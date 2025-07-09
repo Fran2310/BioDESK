@@ -30,30 +30,48 @@
           :columns="columnsWithoutId"
           :items="filteredExams"
           :loading="loading"
-                    class="shadow rounded min-h-[200px]"
+          class="shadow rounded min-h-[200px]"
         >
-
-        <template #cell(supplies)="{ value }">
-          <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
-        </template>
+          <template #cell(supplies)="{ value }">
+            <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
+          </template>
 
           <template #cell(actions)="{ row }">
-            <div class="flex gap-2 justify-end">
-              <VaButton
-                preset="primary"
-                size="small"
-                icon="edit"
-                aria-label="Editar examen"
-                @click.stop="editExam(row)"
-              />
-              <VaButton
-                preset="primary"
-                size="small"
-                icon="va-delete"
-                color="danger"
-                aria-label="Eliminar examen"
-                @click.stop="deleteExam(row, fetchExams, showError)"
-              />
+            <div class="flex gap-2 justify-start">
+              <VaPopover
+                message="Editar examen"
+                class="flex items-center justify-center"
+                hover-out-timeout="0"
+                placement="top-end"
+                :auto-placement="true"
+              >
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="edit"
+                  color="info"
+                  aria-label="Editar examen"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="editExam(row)"
+                />
+              </VaPopover>
+              <VaPopover
+                message="Eliminar examen"
+                class="flex items-center justify-center"
+                hover-out-timeout="0"
+                placement="top-end"
+                :auto-placement="true"
+              >
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="delete"
+                  color="danger"
+                  aria-label="Eliminar examen"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="deleteExam(row, fetchExams, showError)"
+                />
+              </VaPopover>
             </div>
           </template>
         </va-data-table>
@@ -560,6 +578,13 @@ li {
   }
 }
 
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
 </style>
 
 
