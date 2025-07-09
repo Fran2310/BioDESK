@@ -366,95 +366,74 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+// Importaciones principales de Vue y Vuestic UI
+import { onMounted, ref, computed, watch } from 'vue'
 import {
   VaInput, VaDataTable, VaButton, VaModal, VaCard,
-  VaCardTitle, VaCardContent, VaSpacer, VaTextarea, VaSelect
+  VaCardTitle, VaCardContent, VaSpacer, VaSelect
 } from 'vuestic-ui'
 
-import { computed, watch } from 'vue'
-
+// Importa el composable principal para la lógica del catálogo
 import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
+// Desestructura helpers y estados del composable
 const {
   columns,
   filteredExams,
   tableState,
-  // Modal y formulario de examen
   examForm,
   addExam,
   editExam,
   updateExam,
   deleteExam,
   closeModal,
-  // Insumos
   addSupplies,
   removeSupply,
-  // Propiedades
-  addProperty,
-  removeProperty,
-  // Referencias y variaciones
   referenceModal,
-  removeVariation,
-  saveVariation,
-  openModalForNewReference,
-  openModalForNewVariation,
-  saveReference,
   removeReference,
-  editVariation,
-  // Otros
-  viewDetails,
   showError,
   fetchExams,
 } = useLaboratoryCatalog()
 
-
-
-
-// Mapear los estados internos a los usados en el template
+// Estado para el input de búsqueda
 const search = ref(tableState.search)
-
 watch(search, (val) => {
   tableState.search = val
 })
-const loadingCatalog = ref(false)
+
+// Estados de loading y edición
 const loading = tableState.loading
-const supplies = examForm.supplies
-const newSupply = examForm.newSupply
 const isEditing = examForm.isEditing
 
+// Computed para el examen en edición/creación
 const newExam = computed({
   get: () => examForm.newExam,
   set: v => examForm.newExam = v
 })
 
-// Referencias para modales y propiedades
+// Referencias para propiedades y variaciones
 const referenceData = referenceModal.referenceData
-const showModal = referenceModal.showModal
-const showVariationModal = referenceModal.showVariationModal
-const selectedReference = referenceModal.selectedReference
-const isEditingReference = referenceModal.isEditingReference
-const selectedReferenceIndex = referenceModal.selectedReferenceIndex
-const selectedVariation = referenceModal.selectedVariation
-const selectedVariationIndex = referenceModal.selectedVariationIndex
-const isEditingVariation = referenceModal.isEditingVariation
 const ageGroups = ['CHILD', 'ADULT', 'ANY']
 const genderOptions = ['MALE', 'FEMALE', 'ANY']
 
+// Estado local para nueva propiedad
 const newProperty = ref({
   name: '',
   unit: '',
   variations: []
 })
 
+// Agrega una variación a la propiedad local
 function addVariation() {
   newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' })
 }
 
+// Elimina una variación local
 function removeLocalVariation(index) {
   newProperty.value.variations.splice(index, 1)
 }
 
+// Agrega la propiedad local a la lista de referencias
 function addPropertyDirect() {
   if (
     newProperty.value.name &&
@@ -470,40 +449,31 @@ function addPropertyDirect() {
   }
 }
 
-function handleSaveReference() {
-  const idx = saveReference()
-  if (typeof idx === 'number') {
-    // Espera a que el modal de referencia se cierre antes de abrir el de variación
-    setTimeout(() => {
-      openModalForNewVariation(idx)
-    }, 0)
-  }
-}
-
+// Valida si se puede guardar el examen
 const canSubmitExam = computed(() => {
-  // Validar campos requeridos
   if (!String(newExam.value.name).trim()) return false
-  // Puedes agregar más validaciones aquí si lo necesitas
   return true
 })
 
-// Filtrar la columna 'id' para no mostrarla en la tabla
+// Oculta la columna 'id' en la tabla
 const columnsWithoutId = computed(() => columns.filter(col => col.key !== 'id'))
 
-onMounted(() => {
-  fetchExams()
-})
-
+// Modal de detalles del examen
 const showExamDetailsModal = ref(false)
 const selectedExam = ref<any>(null)
 
+// Abre el modal de detalles al hacer click en una fila
 function onExamRowClick(event: { item: any }) {
   selectedExam.value = event.item
   showExamDetailsModal.value = true
 }
 
-</script>
+// Carga los exámenes al montar el componente
+onMounted(() => {
+  fetchExams()
+})
 
+</script>
 
 <style scoped>
 
@@ -651,6 +621,27 @@ li {
   min-width: 0;
   word-break: break-word;
 }
+
+@media (max-width: 600px) {
+  .property-header {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .property-name,
+  .property-unit {
+    white-space: normal;
+    text-align: left;
+  }
+}
+
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
+
 
 @media (max-width: 600px) {
   .property-header {

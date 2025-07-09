@@ -86,225 +86,48 @@
 
     <!-- Modal para agregar nuevo rol -->
     <va-modal v-model="showNewRoleModal" hide-default-actions size="800px">
-      <va-card class="w-full">
-        <va-card-title>
-          <span class="text-lg font-bold">Agregar nuevo rol</span>
-        </va-card-title>
-        <va-card-content>
-          <form @submit.prevent="handleCreateRole">
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Nombre</label>
-              <va-input
-                v-model="newRoleName"
-                class="w-full"
-                placeholder="Ej: Administrador"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Descripción</label>
-              <va-input
-                v-model="newRoleDescription"
-                class="w-full"
-                placeholder="Descripción del rol"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Permisos</label>
-              <div class="grid grid-cols-4 gap-2 m-2">
-                <va-select
-                  v-model="newPermission.subject"
-                  :options="subjectOptions"
-                  placeholder="Área"
-                  size="small"
-                  class="col-span-1"
-                />
-                <va-select
-                  v-model="newPermission.actions"
-                  :options="actionsOptions"
-                  placeholder="Acciones"
-                  size="small"
-                  multiple
-                  class="col-span-1"
-                />
-                <va-select
-                  v-model="newPermission.fields"
-                  :options="getFieldsOptions(newPermission.subject)"
-                  placeholder="Campos"
-                  size="small"
-                  multiple
-                  class="col-span-1"
-                />
-                <va-button
-                  color="primary"
-                  size="small"
-                  @click="addPermission"
-                  class="col-span-1"
-                >
-                  Agregar permiso
-                </va-button>
-              </div>
-
-              <!-- Lista de permisos añadidos -->
-              <div
-                v-for="(permission, index) in permissions"
-                :key="index"
-                class="permission-block mt-4"
-              >
-                <div class="permission-header grid grid-cols-4 gap-2 items-center mb-2 w-full">
-                  <div class="col-span-1 font-semibold permission-name">
-                    {{ permission.subject }}
-                  </div>
-                  <div class="col-span-1 permission-actions flex flex-wrap gap-1">
-                    <VaChip
-                      v-for="(action, aIdx) in (Array.isArray(permission.actions) ? permission.actions : String(permission.actions).split(','))"
-                      :key="aIdx"
-                      size="small"
-                      color="primary"
-                      class="mr-1 mb-1"
-                    >
-                      {{ action }}
-                    </VaChip>
-                  </div>
-                  <div class="col-span-1 permission-fields flex flex-wrap gap-1">
-                    <VaChip
-                      v-for="(field, fIdx) in (Array.isArray(permission.fields) ? permission.fields : String(permission.fields || '').split(',').filter(f => f.trim() !== ''))"
-                      :key="fIdx"
-                      size="small"
-                      color="info"
-                      class="mr-1 mb-1"
-                    >
-                      {{ field }}
-                    </VaChip>
-                  </div>
-                  <div class="flex justify-end">
-                    <VaButton
-                      preset="primary" 
-                      icon="va-delete"
-                      color="danger"
-                      size="small"
-                      @click="removePermission(index)"
-                      class="ml-2 self-start"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex justify-end gap-2 mt-6">
-              <VaButton color="danger" type="reset" @click="closeNewRoleModal">Cancelar</VaButton>
-              <VaButton
-                color="primary"
-                type="submit"
-                :disabled="!canSaveNewRole || modalLoading"
-                :loading="modalLoading"
-              >
-                Guardar
-              </VaButton>
-            </div>
-          </form>
-        </va-card-content>
-      </va-card>
+      <RoleFormWidget
+        :is-edit="false"
+        :role-name="newRoleName.value"
+        :role-description="newRoleDescription.value"
+        :permissions="permissions.value"
+        :new-permission="newPermission.value"
+        :subject-options="subjectOptions"
+        :actions-options="actionsOptions"
+        :get-fields-options="getFieldsOptions"
+        :loading="modalLoading.value"
+        :can-save="canSaveNewRole.value"
+        @update:roleName="v => newRoleName.value = v"
+        @update:roleDescription="v => newRoleDescription.value = v"
+        @update:newPermission="v => newPermission.value = v"
+        @add-permission="addPermission"
+        @remove-permission="removePermission"
+        @submit="handleCreateRole"
+        @cancel="closeNewRoleModal(resetRoleForm)"
+      />
     </va-modal>
 
     <!-- Modal para editar rol -->
     <va-modal v-model="showEditRoleModal" hide-default-actions size="800px">
-      <va-card class="w-full">
-        <va-card-title>
-          <span class="text-lg font-bold">Editar rol</span>
-        </va-card-title>
-        <va-card-content>
-          <form @submit.prevent="saveEditRoleModal">
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Nombre</label>
-              <va-input
-                v-model="editRoleModalData.name"
-                class="w-full"
-                placeholder="Ej: Administrador"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Descripción</label>
-              <va-input
-                v-model="editRoleModalData.description"
-                class="w-full"
-                placeholder="Descripción del rol"
-                required
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block mb-1 font-semibold text-m">Permisos</label>
-              <div
-                v-for="(perm, idx) in editRoleModalData.permissions"
-                :key="idx"
-                class="flex flex-wrap gap-2 mb-2 items-center"
-              >
-                <va-select
-                  v-model="perm.subject"
-                  :options="subjectOptions"
-                  class="input-xs"
-                  placeholder="Subject"
-                  size="small"
-                  clearable
-                  style="min-width: 120px; max-width: 180px;"
-                />
-                <va-select
-                  v-model="perm.actions"
-                  :options="actionsOptions"
-                  class="input-xs"
-                  placeholder="Actions"
-                  size="small"
-                  multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  style="min-width: 120px; max-width: 180px;"
-                />
-                <va-select
-                  v-model="perm.fields"
-                  :options="getFieldsOptions(perm.subject)"
-                  class="input-xs"
-                  placeholder="Fields"
-                  size="small"
-                  multiple
-                  clearable
-                  :reduce="(a: string) => a"
-                  :map-options="false"
-                  :disabled="!perm.subject || getFieldsOptions(perm.subject).length === 0"
-                  style="min-width: 120px; max-width: 180px;"
-                />
-                <va-button
-                  color="danger"
-                  size="small"
-                  @click="removeEditRoleModalPermission(idx)"
-                  icon="delete"
-                  class="ml-1"
-                  aria-label="Eliminar permiso"
-                />
-              </div>
-              <VaButton
-                color="primary"
-                size="small"
-                class="mt-2"
-                @click="addEditRoleModalPermission"
-                icon="add"
-                type="button"
-              >
-                Agregar Permiso
-              </VaButton>
-            </div>
-            <div class="flex justify-end gap-2 mt-6">
-              <VaButton color="danger" type="reset" @click="closeEditRoleModal">Cancelar</VaButton>
-              <VaButton
-                color="primary"
-                type="submit"
-                :disabled="!canSaveEditRole"
-              >Guardar</VaButton>
-            </div>
-          </form>
-        </va-card-content>
-      </va-card>
+      <RoleFormWidget
+        :is-edit="true"
+        :role-name="editRoleModalData.value.name"
+        :role-description="editRoleModalData.value.description"
+        :permissions="editRoleModalData.value.permissions"
+        :new-permission="editRoleModalData.value.newPermission"
+        :subject-options="subjectOptions"
+        :actions-options="actionsOptions"
+        :get-fields-options="getFieldsOptions"
+        :loading="false"
+        :can-save="canSaveEditRole.value"
+        @update:roleName="v => editRoleModalData.value.name = v"
+        @update:roleDescription="v => editRoleModalData.value.description = v"
+        @update:newPermission="v => editRoleModalData.value.newPermission = v"
+        @add-permission="addEditRoleModalPermission"
+        @remove-permission="removeEditRoleModalPermission"
+        @submit="saveEditRoleModal(editRoleIdForModal)"
+        @cancel="closeEditRoleModal"
+      />
     </va-modal>
 
     <!-- Modal para ver detalles del rol -->
@@ -384,6 +207,54 @@
         </template>
       </va-card>
     </va-modal>
+
+    <!-- Modal de advertencia por cambios no guardados -->
+    <va-modal v-model="showEditUnsavedModal" hide-default-actions size="400px">
+      <va-card>
+        <va-card-title>
+          <span class="text-lg font-bold">Advertencia</span>
+        </va-card-title>
+        <va-card-content>
+          <div class="py-4">
+            <p class="text-sm text-gray-700">
+              Tienes cambios sin guardar en el formulario de edición. Si cierras este modal, se perderán los cambios.
+            </p>
+          </div>
+        </va-card-content>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <VaButton
+              color="danger"
+              @click="showEditUnsavedModal = false; pendingEditFormHide?.(); pendingEditFormHide = null"
+            >
+              Cerrar sin guardar
+            </VaButton>
+            <VaButton
+              color="primary"
+              @click="showEditUnsavedModal = false"
+            >
+              Cancelar
+            </VaButton>
+          </div>
+        </template>
+      </va-card>
+    </va-modal>
+
+    <!-- Modal personalizado para advertir sobre cambios no guardados en edición -->
+    <va-modal v-model="showEditUnsavedModal" hide-default-actions size="380px">
+      <va-card>
+        <va-card-title>
+          <span class="text-lg font-bold text-danger">Cambios sin guardar</span>
+        </va-card-title>
+        <va-card-content>
+          <div>El formulario tiene cambios sin guardar. ¿Seguro que lo quiere cerrar?</div>
+        </va-card-content>
+        <template #footer>
+          <va-button color="danger" @click="() => { showEditUnsavedModal = false; if (pendingEditFormHide) { pendingEditFormHide(); pendingEditFormHide = null } }">Cerrar sin guardar</va-button>
+          <va-button color="primary" @click="() => { showEditUnsavedModal = false; pendingEditFormHide = null }">Seguir editando</va-button>
+        </template>
+      </va-card>
+    </va-modal>
   </div>
 </template>
 
@@ -396,6 +267,7 @@ import { useRoleApi } from './composables/useRoleApi'
 import { useRoleForm } from './composables/useRoleForm'
 import { useRoleActions } from './composables/useRoleActions'
 import { useRoleModals } from './composables/useRoleModals'
+import RoleFormWidget from './RoleFormWidget.vue'
 
 // Estado de loading global y modal
 const loading = ref(false)
@@ -409,7 +281,6 @@ const {
   showEditRoleModal,
   showRoleDetailsModal,
   selectedRole,
-  editRoleIdForModal,
   editRoleModalData,
   openEditRoleModal,
   closeEditRoleModal,
@@ -464,34 +335,25 @@ const handleCreateRole = async () => {
 }
 
 const editFormRef = ref()
-const { confirm } = useModal()
+const showEditUnsavedModal = ref(false)
+let pendingEditFormHide: null | (() => unknown) = null
 
+// Modal personalizado para advertir sobre cambios no guardados al cerrar el modal de edición
 const beforeEditFormModalClose = async (hide: () => unknown) => {
   if (editFormRef.value?.isFormHasUnsavedChanges) {
-    const agreed = await confirm({
-      maxWidth: '380px',
-      message: 'El formulario tiene cambios sin guardar. ¿Seguro que lo quiere cerrar?',
-      size: 'small',
-    });
-    if (agreed) {
-      hide();
-    }
+    showEditUnsavedModal.value = true
+    pendingEditFormHide = hide
   } else {
-    hide();
+    hide()
   }
 }
 
 // Eliminar rol con confirmación
 const deleteRole = async (roleId: string) => {
   // Elimina cualquier confirm nativo, solo usa el modal de Vuestic UI
-  const agreed = await confirm({
-    title: 'Eliminar rol',
-    message: '¿Seguro que quieres eliminar este rol?',
-    okText: 'Eliminar',
-    cancelText: 'Cancelar',
-    size: 'small',
-    maxWidth: '380px',
-  })
+  const agreed = await confirm(
+    '¿Seguro que quieres eliminar este rol?'
+  )
   if (!agreed) return
   loading.value = true
   try {

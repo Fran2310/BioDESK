@@ -8,10 +8,11 @@ export function useRoleModals() {
   const showRoleDetailsModal = ref(false)
   const selectedRole = ref<RoleFromApi | null>(null)
   const editRoleIdForModal = ref<string | null>(null)
-  const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string; fields?: string }[] }>({
+  const editRoleModalData = ref<{ name: string; description: string; permissions: { subject: string; actions: string; fields?: string }[]; newPermission?: any }>({
     name: '',
     description: '',
-    permissions: [{ subject: '', actions: '', fields: '' }]
+    permissions: [{ subject: '', actions: '', fields: '' }],
+    newPermission: { subject: '', actions: [], fields: [] }
   })
 
   function openEditRoleModal(role: RoleFromApi) {
@@ -24,6 +25,7 @@ export function useRoleModals() {
       actions: Array.isArray(p.actions) ? p.actions.join(',') : (p.actions ?? ''),
       fields: (p as any).fields ?? ''
     }))
+    editRoleModalData.value.newPermission = { subject: '', actions: [], fields: [] }
   }
 
   function closeEditRoleModal() {
@@ -32,6 +34,7 @@ export function useRoleModals() {
     editRoleModalData.value.name = ''
     editRoleModalData.value.description = ''
     editRoleModalData.value.permissions = [{ subject: '', actions: '', fields: '' }]
+    editRoleModalData.value.newPermission = { subject: '', actions: [], fields: [] }
   }
 
   function closeNewRoleModal(resetRoleForm: () => void) {
