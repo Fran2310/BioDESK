@@ -120,13 +120,21 @@ export class LabService {
       const userLab = await labPrisma.labUser.findUnique({
         where: { systemUserUuid: uuid },
       });
-      if (userLab) {
+      if (userLab?.roleId) {
         const permissions = await labPrisma.role.findUnique({
-          where: { id: userLab.id },
+          where: { id: userLab.roleId },
         });
         if (permissions) {
           await this.sharedCacheService.setUser(uuid, labId, permissions);
+        } else {
+          throw new ForbiddenException(
+            'El usuario no tiene permisos',
+          );
         }
+      } else {
+        throw new ForbiddenException(
+          'El usuario no existe en este laboratorio',
+        );
       }
     } else {
       throw new ForbiddenException(
