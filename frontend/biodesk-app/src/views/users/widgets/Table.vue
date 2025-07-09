@@ -224,11 +224,8 @@
   };
 
   // Al final del <script setup>
-  function refresh() {
-    fetchUsers(); // o tu función que recarga la tabla
-  }
-
-  defineExpose({ refresh });
+  // Exponer función para actualizar los usuarios
+  defineExpose({ refreshUsers });
 </script>
 
 <style scoped>
