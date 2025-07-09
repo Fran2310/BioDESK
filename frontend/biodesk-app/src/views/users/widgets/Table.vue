@@ -42,7 +42,7 @@
         <VaButton
           preset="primary"
           size="medium"
-          icon="va-close"
+          icon="delete"
           color="danger"
           aria-label="Delete patient"
           @click="onUserDelete(rowData)"
@@ -109,7 +109,7 @@
 
   const { init: notify } = useToast();
 
-  const emit = defineEmits(['delete-user'])
+  const emit = defineEmits(['delete-user']);
 
   const users = ref<any[]>([]);
   const usersLoading = ref(true);
@@ -211,7 +211,7 @@
 
     if (agreed) {
       usersLoading.value = true;
-      emit('delete-user', user)
+      emit('delete-user', user);
       try {
         await userApi.deleteSoftUser(user.systemUser.uuid);
       } catch (error) {}

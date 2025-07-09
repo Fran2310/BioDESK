@@ -229,7 +229,7 @@
         <VaButton
           preset="primary"
           size="medium"
-          icon="va-delete"
+          icon="delete"
           color="danger"
           aria-label="Delete patient"
           @click.stop="onPatientDelete(rowData as Patient)"
