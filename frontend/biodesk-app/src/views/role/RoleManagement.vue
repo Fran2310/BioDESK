@@ -21,13 +21,13 @@
         </va-card-content>
     </va-card>
           
-    <va-card class="max-w-full w-full">
-      <va-card-content style="position: relative; min-height: 220px;">
+    <va-card class="roles-table-card max-w-full w-full" style="margin:0;padding:0;box-shadow:none;">
+      <va-card-content class="roles-table-content" style="padding:0;margin:0;">
         <div style="position: relative;">
           <va-data-table
             :columns="roleColumns"
             :items="filteredRoles"
-            class="shadow rounded min-h-[200px]"
+            class="shadow-none rounded-none min-h-[200px] roles-data-table"
             :virtual-scroller="false"
             @row:click="onRowClick"
             
@@ -630,5 +630,59 @@ onMounted(async () => {
     min-width: 320px;
     font-size: 12px;
   }
+}
+
+/* Tabla de roles ocupa todo el espacio, sin padding ni margen */
+.roles-table-card {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+}
+
+.roles-table-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.roles-data-table {
+  margin: 0 !important;
+  padding: 1rem !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+/* Ajusta la tabla interna para ocupar todo el ancho */
+.va-data-table__table {
+  width: 100% !important;
+  margin: 0 !important;
+  border-collapse: collapse !important;
+}
+
+.va-data-table__table th,
+.va-data-table__table td {
+  padding: 0.5rem 0.75rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.va-data-table__table th {
+  background: #f3f4f6 !important;
+  font-weight: bold !important;
+}
+
+.va-data-table__table tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Elimina bordes y padding de la tarjeta */
+.va-card,
+.va-card-content {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #fff !important;
 }
 </style>
