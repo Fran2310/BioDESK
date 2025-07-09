@@ -188,7 +188,6 @@
   };
 
   function handleRowClick(event: any) {
-    console.log('row press', event);
     userData.value = event.item;
     isUserModalOpen.value = true;
   }
