@@ -151,4 +151,17 @@ export class LabController {
 
     return this.manageLogoLabService.saveLabLogo(logo, labId, req.user.sub);
   }
+
+  // Obtener el respaldo de la base de datos del laboratorio
+  @Get('this/database/sql')
+  @ApiBearerAuth()
+  @ApiHeaders([X_LAB_ID_HEADER])
+  @ApiOperation({ summary: 'Obtener el respaldo de la base de datos del laboratorio' })
+  @CheckAbility({ actions: 'manage', subject: 'all' })
+  getLabSQL(
+    @Request() req,
+  ) {
+    const labId = Number(req.headers['x-lab-id']);
+    return this.labService.getDatabaseSQL(labId);
+  }
 }

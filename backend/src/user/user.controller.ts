@@ -251,11 +251,6 @@ export class UserController {
   }
 
   @Patch('system')
-  @CheckAbility({
-    actions: 'update',
-    subject: 'SystemUser',
-    fields: 'name,lastName,email',
-  })
   @ApiOperation({ summary: 'Actualizar datos de un usuario del sistema' })
   @ApiQuery({
     name: 'uuid',

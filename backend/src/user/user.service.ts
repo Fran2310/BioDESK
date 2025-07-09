@@ -102,7 +102,7 @@ export class UserService {
 
     // Obtener usuarios del laboratorio con filtro inteligente
     const { results: labUsersResults, total: labUsersTotal } =
-      await intelligentSearch(labPrisma.labUser, labUsersSearchOptions);
+      await intelligentSearch(labPrisma.labUser, labUsersSearchOptions, "", [], true); // Refactorizar esto
 
     // Obtener UUIDs de los usuarios del sistema encontrados
     const systemUserUuids = labUsersResults.map((item) => item.systemUserUuid);
@@ -169,7 +169,7 @@ export class UserService {
     const filteredTotal = enrichedData.length;
 
     return {
-      total: labUsersTotal,
+      total: filteredTotal,
       offset,
       limit,
       data: enrichedData, // Ahora devolvemos los datos combinados

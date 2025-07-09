@@ -26,6 +26,7 @@ export async function intelligentSearch<T>(
   } = {},
   searchTerm?: string, // TODO pasar a array y modificar los DTOs
   searchFields?: string[],
+  allData?: boolean,
 ): Promise<{ results: T[]; total: number }> {
   try {
     const {
@@ -37,10 +38,22 @@ export async function intelligentSearch<T>(
       ...restOptions
     } = options;
 
-    if (!searchTerm?.trim() || !searchFields?.length) {
+    console.log(searchTerm, searchFields)
+
+    if (allData) {
+      console.log("busqueda completa")
       const [total, results] = await Promise.all([
         model.count({ where }),
-        model.findMany({ where, skip, take, ...restOptions }),
+        model.findMany({ where, ...restOptions }),
+      ]);
+      return { results, total };
+    }
+
+    if (!searchTerm?.trim() || !searchFields?.length) {
+      console.log("busqueda simple")
+      const [total, results] = await Promise.all([
+        model.count({ where }),
+        model.findMany({ where, take, skip, ...restOptions }),
       ]);
       return { results, total };
     }
@@ -115,12 +128,14 @@ export async function intelligentSearch<T>(
       searchFields,
       normalizedTerms,
     );
-    const paginatedResults = sortedResults.slice(skip, skip + take);
 
+    console.log("busqueda compleja")
+    const paginatedResults = sortedResults.slice(skip, skip + take);
     return {
       results: paginatedResults,
       total,
     };
+
   } catch (error) {
     // Cacha el error
     console.error('❌ Error en la función intelligentSearch:', error);

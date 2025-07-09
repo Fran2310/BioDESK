@@ -21,6 +21,7 @@ import { normalizeDbName } from 'src/common/utils/normalize-db-name';
 import { UpdateLabDto } from '../dto/update-lab.dto';
 import { SystemUserService } from 'src/user/system-user/system-user.service';
 import { AuditService } from 'src/audit/audit.service';
+import { StorageService } from 'src/storage/services/storage.service';
 
 @Injectable()
 export class LabService {
@@ -32,6 +33,7 @@ export class LabService {
     private readonly sharedCacheService: SharedCacheService,
     private readonly labDbManageService: LabDbManageService,
     private readonly auditService: AuditService,
+    private readonly storageService: StorageService,
   ) {}
 
   /**
@@ -118,13 +120,21 @@ export class LabService {
       const userLab = await labPrisma.labUser.findUnique({
         where: { systemUserUuid: uuid },
       });
-      if (userLab) {
+      if (userLab?.roleId) {
         const permissions = await labPrisma.role.findUnique({
-          where: { id: userLab.id },
+          where: { id: userLab.roleId },
         });
         if (permissions) {
           await this.sharedCacheService.setUser(uuid, labId, permissions);
+        } else {
+          throw new ForbiddenException(
+            'El usuario no tiene permisos',
+          );
         }
+      } else {
+        throw new ForbiddenException(
+          'El usuario no existe en este laboratorio',
+        );
       }
     } else {
       throw new ForbiddenException(
@@ -302,6 +312,18 @@ export class LabService {
         error,
       );
       throw new BadRequestException('Failed to rollback lab creation');
+    }
+  }
+
+  async getDatabaseSQL(labId) {
+    try {
+      const bucket = 'db-dumps'
+      const dbName = await this.systemPrisma.getLabDbName(labId);
+      const fullPath = `${bucket}/${dbName}.sql`;
+      return this.storageService.getFileUrl(fullPath);
+    } catch (error) {
+      this.logger.error(`Error al obtener el SQL`);
+      throw new NotFoundException(`${error.message}`);
     }
   }
 }
