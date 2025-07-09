@@ -49,14 +49,9 @@
 
   // Columnas de la tabla de pacientes, con sus llaves y opciones de ordenamiento
   const columns = defineVaDataTableColumns([
-    { label: 'Nombre', key: 'name', sortable: true },
-    { label: 'Apellido', key: 'lastName', sortable: true },
-    { label: 'Segundo Nombre', key: 'secondName', sortable: true },
-    {
-      label: 'Segundo Apellido',
-      key: 'secondLastName',
-      sortable: true,
-    },
+    { label: 'Nombres', key: 'name', sortable: true },
+    { label: 'Apellidos', key: 'lastName', sortable: true },
+
     { label: 'CI', key: 'ci', sortable: true },
     { label: 'Fecha de Nacimiento', key: 'birthDate', sortable: true },
     { label: 'Dirección', key: 'dir', sortable: true },
@@ -188,25 +183,13 @@
     <template #cell(name)="{ rowData }">
       <div class="flex items-center gap-2 max-w-[230px] ellipsis capitalize">
         <!-- <UserAvatar :user="rowData as Patient" size="small" /> -->
-        {{ rowData.name }}
+        {{ rowData.name }} {{ rowData.secondName }}
       </div>
     </template>
 
     <template #cell(lastName)="{ rowData }">
       <div class="max-w-[120px] ellipsis capitalize">
-        {{ rowData.lastName }}
-      </div>
-    </template>
-
-    <template #cell(secondName)="{ rowData }">
-      <div class="ellipsis max-w-[230px] capitalize">
-        {{ rowData.secondName ? rowData.secondName : 'N/A' }}
-      </div>
-    </template>
-
-    <template #cell(secondLastName)="{ rowData }">
-      <div class="ellipsis max-w-[230px] capitalize">
-        {{ rowData.secondLastName ? rowData.secondLastName : 'N/A' }}
+        {{ rowData.lastName }} {{ rowData.secondLastName }}
       </div>
     </template>
 
