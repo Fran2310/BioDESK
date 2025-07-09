@@ -109,12 +109,6 @@
         <div class="text-2xl font-bold capitalize">
           {{ fullName }}
         </div>
-        <VaChip
-          :color="userData.systemUser.isActive ? 'success' : 'danger'"
-          size="small"
-        >
-          {{ userData.systemUser.isActive ? 'Activo' : 'Inactivo' }}
-        </VaChip>
       </div>
     </template>
 
