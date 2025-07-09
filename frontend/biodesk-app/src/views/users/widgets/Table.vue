@@ -38,10 +38,10 @@
     </template>
 
     <template #cell(actions)="{ rowData }">
-      <div class="flex gap-2 justify-center">
+      <div v-if="rowData.role !== 'admin'" class="flex gap-2 justify-center">
         <VaButton
           preset="primary"
-          size="small"
+          size="medium"
           icon="va-close"
           color="danger"
           aria-label="Delete patient"
@@ -109,6 +109,8 @@
 
   const { init: notify } = useToast();
 
+  const emit = defineEmits(['delete-user'])
+
   const users = ref<any[]>([]);
   const usersLoading = ref(true);
 
@@ -128,6 +130,10 @@
   const shouldShowPagination = computed(() => {
     return pagination.value.total > pagination.value.perPage;
   });
+
+  const refreshUsers = async () => {
+    await fetchUsers();
+  };
 
   async function fetchUsers() {
     usersLoading.value = true;
@@ -191,10 +197,6 @@
     }))
   );
 
-  function editUser(user: any) {
-    console.log('Edit user:', user);
-  }
-
   const { confirm } = useModal();
 
   const onUserDelete = async (user: any) => {
@@ -208,7 +210,8 @@
     });
 
     if (agreed) {
-      //emit('delete-user', user)
+      usersLoading.value = true;
+      emit('delete-user', user)
       try {
         await userApi.deleteSoftUser(user.systemUser.uuid);
       } catch (error) {}
@@ -216,6 +219,7 @@
         message: 'Usuario removido exitosamente', // TODO Refactorizar eso
         color: 'success',
       });
+      refreshUsers();
     }
   };
 
