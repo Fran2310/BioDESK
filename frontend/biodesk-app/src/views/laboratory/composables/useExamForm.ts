@@ -1,11 +1,18 @@
+// Importa función para obtener un examen vacío
 import { getEmptyExam } from '../helpers/laboratoryCatalogHelpers';
+// Importa el composable para manejar el modal de referencias
 import { useReferenceModal } from './useReferenceModal';
+// Importa reactive de Vue para la reactividad
 import { reactive } from 'vue';
+// Importa el API para interactuar con el catálogo de exámenes
 import { medicTestCatalogApi } from '../../../services/api';
+// Tipos para validación de datos
 import type { AgeGroup, GenderValueRef } from '@/services/types/global.type';
 import type { CreateMedicTestCatalogData } from '@/services/interfaces/medicTestCatalog';
 
+// Composable principal para manejar el formulario de exámenes
 export function useExamForm() {
+  // Construye el payload para crear o actualizar un examen
   function buildExamPayload(): CreateMedicTestCatalogData {
     return {
       name: examForm.newExam.name.trim(),
@@ -24,18 +31,21 @@ export function useExamForm() {
     };
   }
 
+  // Instancia el composable del modal de referencias
   const referenceModal = useReferenceModal();
+  // Estado reactivo del formulario de examen
   const examForm = reactive({
-    newExam: getEmptyExam(),
-    newSupply: '',
-    supplies: [] as string[],
-    propertiesPairs: [] as { key: string; value: string }[],
-    propertiesError: '',
-    isEditing: false,
-    editingExamId: null as number | null,
-    showAddModal: false,
+    newExam: getEmptyExam(), // Datos del nuevo examen
+    newSupply: '', // Insumo temporal
+    supplies: [] as string[], // Lista de insumos
+    propertiesPairs: [] as { key: string; value: string }[], // Pares clave-valor de propiedades
+    propertiesError: '', // Mensaje de error de propiedades
+    isEditing: false, // Modo edición
+    editingExamId: null as number | null, // ID del examen en edición
+    showAddModal: false, // Estado del modal
   });
 
+  // Cierra y limpia el modal de examen
   const closeModal = () => {
     examForm.showAddModal = false;
     examForm.isEditing = false;
@@ -47,6 +57,7 @@ export function useExamForm() {
     referenceModal.referenceData.value = [];
   };
 
+  // Agrega un nuevo examen usando el API
   const addExam = async (
     fetchExams: () => Promise<void>,
     showError: (msg: string) => void
@@ -63,6 +74,7 @@ export function useExamForm() {
     }
   };
 
+  // Actualiza un examen existente
   const updateExam = async (
     fetchExams: () => Promise<void>,
     showError: (msg: string) => void
@@ -84,6 +96,7 @@ export function useExamForm() {
     }
   };
 
+  // Elimina un examen del catálogo
   const deleteExam = async (
     row: any,
     fetchExams: () => Promise<void>,
@@ -97,6 +110,7 @@ export function useExamForm() {
     }
   };
 
+  // Prepara el formulario para editar un examen existente
   function editExam(row: any) {
     examForm.isEditing = true;
     examForm.editingExamId = row.rowData.id;
@@ -147,6 +161,7 @@ export function useExamForm() {
     examForm.showAddModal = true;
   }
 
+  // Exporta las funciones y el estado para ser usado en los componentes
   return {
     examForm,
     closeModal,

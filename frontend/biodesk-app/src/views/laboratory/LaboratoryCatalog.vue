@@ -22,10 +22,7 @@
 
     <va-card>
       <va-card-content>
-        <div
-          v-if="tableState.loading"
-          class="flex justify-center items-center py-8"
-        >
+        <div v-if="tableState.loading" class="flex justify-center items-center py-8">
           <va-progress-circle indeterminate size="large" color="primary" />
         </div>
         <va-data-table
@@ -34,48 +31,141 @@
           :items="filteredExams"
           :loading="loading"
           class="shadow rounded min-h-[200px]"
+          @row:click="onExamRowClick"
         >
           <template #cell(supplies)="{ value }">
             <span>{{ Array.isArray(value) ? value.length : 0 }}</span>
           </template>
-
           <template #cell(actions)="{ row }">
-            <div class="flex gap-2 justify-end">
-              <VaButton
-                preset="primary"
-                size="small"
-                icon="edit"
-                aria-label="Editar examen"
-                @click.stop="editExam(row)"
-              />
-              <VaButton
-                preset="primary"
-                size="small"
-                icon="va-delete"
-                color="danger"
-                aria-label="Eliminar examen"
-                @click.stop="deleteExam(row, fetchExams, showError)"
-              />
+            <div class="flex gap-2 justify-start">
+              <VaPopover
+                message="Editar examen"
+                class="flex items-center justify-center"
+                hover-out-timeout="0"
+                placement="top-end"
+                :auto-placement="true"
+              >
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="edit"
+                  color="info"
+                  aria-label="Editar examen"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="editExam(row)"
+                />
+              </VaPopover>
+              <VaPopover
+                message="Eliminar examen"
+                class="flex items-center justify-center"
+                hover-out-timeout="0"
+                placement="top-end"
+                :auto-placement="true"
+              >
+                <VaButton
+                  preset="primary"
+                  size="medium"
+                  icon="delete"
+                  color="danger"
+                  aria-label="Eliminar examen"
+                  class="no-hover-effect flex items-center justify-center"
+                  @click.stop="deleteExam(row, fetchExams, showError)"
+                />
+              </VaPopover>
             </div>
           </template>
         </va-data-table>
       </va-card-content>
     </va-card>
 
+    <!-- Modal de detalles del examen -->
+    <VaModal v-model="showExamDetailsModal" hide-default-actions size="large">
+      <h2 class="va-h3 text-primary mb-4 text-left">Detalles del examen</h2>
+      <div v-if="selectedExam">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <strong>Nombre:</strong>
+            <span>{{ selectedExam.name }}</span>
+          </div>
+          <div>
+            <strong>Precio:</strong>
+            <span>${{ selectedExam.price }}</span>
+          </div>
+          <div class="md:col-span-2">
+            <strong>Descripción:</strong>
+            <span>{{ selectedExam.description || '-' }}</span>
+          </div>
+        </div>
+        <div class="mb-2 font-semibold text-base text-primary">Insumos:</div>
+        <div class="mb-4">
+          <span v-if="selectedExam.supplies && selectedExam.supplies.length">
+            <VaChip
+              v-for="(supply, idx) in selectedExam.supplies"
+              :key="idx"
+              size="small"
+              color="info"
+              class="mr-1 mb-1"
+            >
+              {{ supply }}
+            </VaChip>
+          </span>
+          <span v-else>-</span>
+        </div>
+        <div class="mb-2 font-semibold text-base text-primary">Propiedades:</div>
+        <div class="overflow-auto">
+          <table class="w-full text-left border-collapse border rounded">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border-b pb-1 px-2 py-1">Nombre</th>
+                <th class="border-b pb-1 px-2 py-1">Unidad</th>
+                <th class="border-b pb-1 px-2 py-1">Variaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(prop, idx) in selectedExam.properties" :key="idx">
+                <td class="pr-4 border-b px-2 py-1 font-semibold">{{ prop.name }}</td>
+                <td class="pr-4 border-b px-2 py-1">{{ prop.unit }}</td>
+                <td class="pr-4 border-b px-2 py-1">
+                  <div class="flex flex-wrap gap-1">
+                    <VaChip
+                      v-for="(variation, vIdx) in (prop.variations || prop.valueReferences || [])"
+                      :key="vIdx"
+                      outline
+                      size="small"
+                      class="flex items-center gap-2 px-2"
+                    >
+                      <span
+                        :class="[
+                          'inline-block w-3 h-3 rounded-full mr-2',
+                          variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
+                          variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
+                          variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
+                          'bg-purple-300'
+                        ]"
+                      ></span>
+                      {{ variation.gender }}/{{ variation.ageGroup }}: {{ variation.range }}
+                    </VaChip>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div v-else>No se ha seleccionado un examen válido.</div>
+      <template #footer>
+        <VaButton color="primary" @click="showExamDetailsModal = false">Cerrar</VaButton>
+      </template>
+    </VaModal>
+
     <!-- Modal para agregar/editar examen -->
-    <va-modal v-model="examForm.showAddModal" hide-default-actions close-button>
+    <va-modal v-model="examForm.showAddModal" hide-default-actions>
       <va-card class="w-full">
         <va-card-title>
           {{ isEditing ? 'Editar examen' : 'Agregar nuevo examen' }}
         </va-card-title>
         <va-card-content class="flex">
-          <form
-            @submit.prevent="
-              isEditing
-                ? updateExam(fetchExams, showError)
-                : addExam(fetchExams, showError)
-            "
-          >
+          <form @submit.prevent="isEditing ? updateExam(fetchExams,showError) : addExam(fetchExams,showError)">
             <va-input
               v-model="newExam.name"
               label="Nombre"
@@ -87,43 +177,41 @@
               label="Descripción"
               class="w-full mb-3"
             />
-
-            <div class="flex gap-2 flex-wrap items-end mb-3">
-              <!-- <div class="flex flex-col sm:flex-row gap-2"> -->
+            
+            <div class="flex gap-2 flex-wrap items-end mb-3"> <!-- <div class="flex flex-col sm:flex-row gap-2"> -->
               <div class="w-full sm:w-1/2">
-                <va-input
-                  v-model="examForm.newSupply"
-                  label="Agregar Insumo"
-                  placeholder="Escribe un insumo y presiona agregar"
-                  class="w-5/6"
-                />
+                <va-input 
+                v-model="examForm.newSupply" 
+                label="Agregar Insumo"
+                placeholder="Escribe un insumo y presiona agregar"
+                class="w-5/6"
+              />
               </div>
 
               <div class="flex items-end mt">
-                <va-button
-                  color="primary"
-                  size="small"
-                  @click="addSupplies"
-                  class="p-1"
-                >
-                  Agregar
+                <va-button 
+                color="primary"
+                size="small"
+                @click="addSupplies"
+                class="p-1">
+                  Agregar 
                 </va-button>
               </div>
-            </div>
-            <!-- Lista de insumos -->
-            <ul>
-              <li v-for="(supply, index) in examForm.supplies" :key="index">
-                {{ supply }}
-                <va-button
-                  icon="close"
-                  color="danger"
-                  size="small"
-                  @click="removeSupply(index)"
-                  type="button"
-                />
-              </li>
-            </ul>
-
+            </div>  
+              <!-- Lista de insumos -->
+              <ul>
+                <li v-for="(supply, index) in examForm.supplies" :key="index">
+                  {{ supply }}
+                  <va-button 
+                    icon="close" 
+                    color="danger" 
+                    size="small" 
+                    @click="removeSupply(index)"
+                    type="button"
+                  />
+                </li>
+              </ul>
+            
             <va-input
               v-model.number="newExam.price"
               label="Precio"
@@ -133,6 +221,7 @@
             />
 
             <!-- Propiedades-->
+
 
             <div class="flex flex-col">
               <label class="block mb-3 especial">PROPIEDADES</label>
@@ -210,9 +299,7 @@
                 class="property-block mt-4"
               >
                 <!-- Encabezado: nombre y unidad en una fila -->
-                <div
-                  class="property-header grid grid-cols-3 gap-2 items-center mb-2 w-full"
-                >
+                <div class="property-header grid grid-cols-3 gap-2 items-center mb-2 w-full">
                   <div class="col-span-2 font-semibold property-name truncate">
                     {{ reference.name }}
                   </div>
@@ -222,9 +309,7 @@
                 </div>
 
                 <!-- Variaciones como chips en una fila separada, con wrap -->
-                <div
-                  class="property-variations flex flex-wrap gap-2 w-full mb-2"
-                >
+                <div class="property-variations flex flex-wrap gap-2 w-full mb-2">
                   <VaChip
                     v-for="(variation, vIdx) in reference.variations"
                     :key="vIdx"
@@ -235,13 +320,10 @@
                     <span
                       :class="[
                         'inline-block w-3 h-3 rounded-full mr-2',
-                        variation.gender?.toLowerCase() === 'male'
-                          ? 'bg-blue-300'
-                          : variation.gender?.toLowerCase() === 'female'
-                          ? 'bg-pink-300'
-                          : variation.gender?.toLowerCase() === 'child'
-                          ? 'bg-yellow-300'
-                          : 'bg-purple-300',
+                        variation.gender?.toLowerCase() === 'male' ? 'bg-blue-300' :
+                        variation.gender?.toLowerCase() === 'female' ? 'bg-pink-300' :
+                        variation.gender?.toLowerCase() === 'child' ? 'bg-yellow-300' :
+                        'bg-purple-300'
                       ]"
                     ></span>
                     {{ variation.gender }}/{{ variation.ageGroup }}
@@ -266,15 +348,16 @@
               <va-button color="secondary" @click="closeModal" type="button">
                 Cancelar
               </va-button>
-              <va-button
-                color="primary"
-                type="submit"
+              <va-button 
+                color="primary" 
+                type="submit" 
                 @click="closeModal"
                 :disabled="!canSubmitExam"
               >
                 Guardar
               </va-button>
             </div>
+            
           </form>
         </va-card-content>
       </va-card>
@@ -283,295 +366,302 @@
 </template>
 
 <script setup lang="ts">
-  import { onMounted } from 'vue';
-  import {
-    VaInput,
-    VaDataTable,
-    VaButton,
-    VaModal,
-    VaCard,
-    VaCardTitle,
-    VaCardContent,
-    VaSpacer,
-    VaTextarea,
-    VaSelect,
-  } from 'vuestic-ui';
+// Importaciones principales de Vue y Vuestic UI
+import { onMounted, ref, computed, watch } from 'vue'
+import {
+  VaInput, VaDataTable, VaButton, VaModal, VaCard,
+  VaCardTitle, VaCardContent, VaSpacer, VaSelect
+} from 'vuestic-ui'
 
-  import { computed, ref, watch } from 'vue';
+// Importa el composable principal para la lógica del catálogo
+import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog'
 
-  import { useLaboratoryCatalog } from './composables/useLaboratoryCatalog';
+// Desestructura helpers y estados del composable
+const {
+  columns,
+  filteredExams,
+  tableState,
+  examForm,
+  addExam,
+  editExam,
+  updateExam,
+  deleteExam,
+  closeModal,
+  addSupplies,
+  removeSupply,
+  referenceModal,
+  removeReference,
+  showError,
+  fetchExams,
+} = useLaboratoryCatalog()
 
-  const {
-    columns,
-    filteredExams,
-    tableState,
-    // Modal y formulario de examen
-    examForm,
-    addExam,
-    editExam,
-    updateExam,
-    deleteExam,
-    closeModal,
-    // Insumos
-    addSupplies,
-    removeSupply,
-    // Propiedades
-    addProperty,
-    removeProperty,
-    // Referencias y variaciones
-    referenceModal,
-    removeVariation,
-    saveVariation,
-    openModalForNewReference,
-    openModalForNewVariation,
-    saveReference,
-    removeReference,
-    editVariation,
-    // Otros
-    viewDetails,
-    showError,
-    fetchExams,
-  } = useLaboratoryCatalog();
+// Estado para el input de búsqueda
+const search = ref(tableState.search)
+watch(search, (val) => {
+  tableState.search = val
+})
 
-  // Mapear los estados internos a los usados en el template
-  const search = ref(tableState.search);
+// Estados de loading y edición
+const loading = tableState.loading
+const isEditing = examForm.isEditing
 
-  watch(search, (val) => {
-    tableState.search = val;
-  });
-  const loadingCatalog = ref(false);
-  const loading = tableState.loading;
-  const supplies = examForm.supplies;
-  const newSupply = examForm.newSupply;
-  const isEditing = examForm.isEditing;
+// Computed para el examen en edición/creación
+const newExam = computed({
+  get: () => examForm.newExam,
+  set: v => examForm.newExam = v
+})
 
-  const newExam = computed({
-    get: () => examForm.newExam,
-    set: (v) => (examForm.newExam = v),
-  });
+// Referencias para propiedades y variaciones
+const referenceData = referenceModal.referenceData
+const ageGroups = ['CHILD', 'ADULT', 'ANY']
+const genderOptions = ['MALE', 'FEMALE', 'ANY']
 
-  // Referencias para modales y propiedades
-  const referenceData = referenceModal.referenceData;
-  const showModal = referenceModal.showModal;
-  const showVariationModal = referenceModal.showVariationModal;
-  const selectedReference = referenceModal.selectedReference;
-  const isEditingReference = referenceModal.isEditingReference;
-  const selectedReferenceIndex = referenceModal.selectedReferenceIndex;
-  const selectedVariation = referenceModal.selectedVariation;
-  const selectedVariationIndex = referenceModal.selectedVariationIndex;
-  const isEditingVariation = referenceModal.isEditingVariation;
-  const ageGroups = ['CHILD', 'ADULT', 'ANY'];
-  const genderOptions = ['MALE', 'FEMALE', 'ANY'];
+// Estado local para nueva propiedad
+const newProperty = ref({
+  name: '',
+  unit: '',
+  variations: []
+})
 
-  const newProperty = ref({
-    name: '',
-    unit: '',
-    variations: [],
-  });
+// Agrega una variación a la propiedad local
+function addVariation() {
+  newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' })
+}
 
-  function addVariation() {
-    newProperty.value.variations.push({ ageGroup: '', gender: '', range: '' });
+// Elimina una variación local
+function removeLocalVariation(index) {
+  newProperty.value.variations.splice(index, 1)
+}
+
+// Agrega la propiedad local a la lista de referencias
+function addPropertyDirect() {
+  if (
+    newProperty.value.name &&
+    newProperty.value.unit &&
+    newProperty.value.variations.length > 0
+  ) {
+    referenceData.value.push({
+      name: newProperty.value.name,
+      unit: newProperty.value.unit,
+      variations: [...newProperty.value.variations]
+    })
+    newProperty.value = { name: '', unit: '', variations: [] }
   }
+}
 
-  function removeLocalVariation(index) {
-    newProperty.value.variations.splice(index, 1);
-  }
+// Valida si se puede guardar el examen
+const canSubmitExam = computed(() => {
+  if (!String(newExam.value.name).trim()) return false
+  return true
+})
 
-  function addPropertyDirect() {
-    if (
-      newProperty.value.name &&
-      newProperty.value.unit &&
-      newProperty.value.variations.length > 0
-    ) {
-      referenceData.value.push({
-        name: newProperty.value.name,
-        unit: newProperty.value.unit,
-        variations: [...newProperty.value.variations],
-      });
-      newProperty.value = { name: '', unit: '', variations: [] };
-    }
-  }
+// Oculta la columna 'id' en la tabla
+const columnsWithoutId = computed(() => columns.filter(col => col.key !== 'id'))
 
-  function handleSaveReference() {
-    const idx = saveReference();
-    if (typeof idx === 'number') {
-      // Espera a que el modal de referencia se cierre antes de abrir el de variación
-      setTimeout(() => {
-        openModalForNewVariation(idx);
-      }, 0);
-    }
-  }
+// Modal de detalles del examen
+const showExamDetailsModal = ref(false)
+const selectedExam = ref<any>(null)
 
-  const canSubmitExam = computed(() => {
-    // Validar campos requeridos
-    if (!String(newExam.value.name).trim()) return false;
-    // Puedes agregar más validaciones aquí si lo necesitas
-    return true;
-  });
+// Abre el modal de detalles al hacer click en una fila
+function onExamRowClick(event: { item: any }) {
+  selectedExam.value = event.item
+  showExamDetailsModal.value = true
+}
 
-  // Filtrar la columna 'id' para no mostrarla en la tabla
-  const columnsWithoutId = computed(() =>
-    columns.filter((col) => col.key !== 'id')
-  );
+// Carga los exámenes al montar el componente
+onMounted(() => {
+  fetchExams()
+})
 
-  onMounted(() => {
-    fetchExams();
-  });
 </script>
 
 <style scoped>
-  .custom-button {
-    /*va-button style*/
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding: 5px;
-  }
 
-  ul {
-    display: flex; /* Hace que los elementos estén en línea */
-    gap: 12px; /* Espaciado entre los elementos */
-    flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
-    list-style: none; /* Elimina los estilos de la lista */
-    padding: 0; /* Ajusta el espaciado */
-  }
-  li {
-    display: flex;
-    margin-bottom: 12px;
-    margin-top: 12px;
-    align-items: center; /* Alinea los elementos verticalmente */
-    gap: 6px; /* Espaciado entre el texto y el botón */
-    background: #f9f9f9; /* Opcional: fondo para los ítems */
-    padding: 8px 12px;
-    border-radius: 6px;
-  }
+.custom-button { /*va-button style*/ 
+  margin-top: 10px; 
+  margin-bottom: 10px; 
+  padding: 5px;
+}
 
-  .especial {
-    font-size: 9px;
-    line-height: 14px;
-    letter-spacing: 0.4px;
-    min-height: 14px;
-    --va-font-family: 'Inter', sans-serif;
-    font-weight: bold;
-    color: var(--va-primary);
-  }
 
-  .mb-3 {
-    margin-bottom: 16px;
-  }
+ul {
+  display: flex;  /* Hace que los elementos estén en línea */
+  gap: 12px;      /* Espaciado entre los elementos */
+  flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
+  list-style: none; /* Elimina los estilos de la lista */
+  padding: 0; /* Ajusta el espaciado */
+}
+li {
+  display: flex;
+  margin-bottom: 12px;
+  margin-top: 12px;
+  align-items: center; /* Alinea los elementos verticalmente */
+  gap: 6px; /* Espaciado entre el texto y el botón */
+  background: #f9f9f9; /* Opcional: fondo para los ítems */
+  padding: 8px 12px;
+  border-radius: 6px;
+}
 
-  .espcial-2 {
-    display: flex;
-    flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
-    gap: 12px; /* Espaciado entre elementos */
-  }
+.especial {
+  font-size: 9px;
+  line-height: 14px; 
+  letter-spacing: 0.4px; 
+  min-height: 14px;
+  --va-font-family: 'Inter', sans-serif;
+  font-weight: bold;
+  color: var(--va-primary);
+}
 
-  .card {
-    min-width: 180px;
-    padding: 10px;
-    cursor: pointer; /* Hace que la tarjeta parezca interactiva */
-  }
+.mb-3 {
+  margin-bottom: 16px;
+}
 
-  .reference-block {
-    padding: 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    background-color: #f9f9f9;
-  }
+.espcial-2{
+  display: flex;
+  flex-wrap: wrap; /* Permite que los elementos bajen si no hay espacio */
+  gap: 12px; /* Espaciado entre elementos */
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
+}
 
-  .reference-name {
-    font-size: 16px;
-    color: #333;
-  }
+.card {
+  min-width: 180px;
+  padding: 10px;
+  cursor: pointer; /* Hace que la tarjeta parezca interactiva */
+}
 
-  .reference-unit {
-    font-size: 14px;
-    color: #666;
-  }
+.reference-block {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background-color: #f9f9f9;
+}
 
-  .variations {
-    margin-top: 8px;
-    border-top: 1px solid #ddd;
-    padding-top: 8px;
-  }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
 
-  .variation-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-  }
+.reference-name {
+  font-size: 16px;
+  color: #333;
+}
 
-  .variation-detail {
-    font-size: 14px;
-    color: #555;
-  }
+.reference-unit {
+  font-size: 14px;
+  color: #666;
+}
 
-  .table-responsive {
-    width: 100%;
-    overflow-x: auto;
-    margin-bottom: 16px;
-  }
+.variations {
+  margin-top: 8px;
+  border-top: 1px solid #ddd;
+  padding-top: 8px;
+}
 
-  .table-responsive table {
-    min-width: 600px;
-    font-size: 13px;
-  }
+.variation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
 
-  .va-card-content {
-    overflow-x: auto;
-  }
+.variation-detail {
+  font-size: 14px;
+  color: #555;
+}
 
-  .property-block {
-    display: flex;
-    flex-direction: column; /* Cambia a columna para evitar sobreposición */
-    align-items: stretch;
-    padding: 8px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    background-color: #f9f9f9;
-    min-width: 0;
-    word-break: break-word;
-  }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
 
+.table-responsive table {
+  min-width: 600px;
+  font-size: 13px;
+}
+
+
+.va-card-content {
+  overflow-x: auto;
+}
+
+.property-block {
+  display: flex;
+  flex-direction: column; /* Cambia a columna para evitar sobreposición */
+  align-items: stretch;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.property-header {
+  min-width: 0;
+}
+
+.property-name,
+.property-unit {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.property-variations {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+@media (max-width: 600px) {
   .property-header {
-    min-width: 0;
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
-
   .property-name,
   .property-unit {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    text-align: left;
   }
+}
 
-  .property-variations {
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 4px;
-    min-width: 0;
-    word-break: break-word;
-  }
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
 
-  @media (max-width: 600px) {
-    .property-header {
-      grid-template-columns: 1fr;
-      gap: 4px;
-    }
-    .property-name,
-    .property-unit {
-      white-space: normal;
-      text-align: left;
-    }
+
+@media (max-width: 600px) {
+  .property-header {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
+  .property-name,
+  .property-unit {
+    white-space: normal;
+    text-align: left;
+  }
+}
+
+/*
+  Esta clase eliminará el fondo que aparece al pasar
+  el mouse sobre los botones con preset="primary".
+*/
+.no-hover-effect:hover {
+  background: transparent !important;
+}
 </style>
+
+
